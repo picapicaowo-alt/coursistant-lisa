@@ -1,0 +1,26 @@
+{
+  "app": {
+    "title": "xLearnEdu LMS"
+  },
+  "menu": {
+    "profile": "Profile",
+    "signOut": "Sign out"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "myCourse": "My Course",
+    "chat": "Chat",
+    "aiChatbot": "AI Chatbot"
+  },
+  "actions": {
+    "save": "Save",
+    "saveChanges": "Save changes",
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "loading": "Loading..."
+  },
+  "common": {
+    "yes": "Yes",
+    "no": "No"
+  }
+}

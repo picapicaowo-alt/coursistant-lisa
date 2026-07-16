@@ -1,0 +1,21 @@
+.layoutContainer {
+    display: flex;
+    height: 100%;
+    box-sizing: border-box;
+    gap: 1rem;
+}
+
+
+.contentArea {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.mainContent {
+    height: 100%;
+    width: 100%;
+    flex-grow: 1;
+    overflow-y: auto;
+}

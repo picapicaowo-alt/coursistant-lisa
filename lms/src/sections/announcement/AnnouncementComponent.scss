@@ -1,0 +1,85 @@
+
+.announcement-container {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    .announcement-container-side {
+        background-color: #A8D2FF;
+        min-width: 35%;
+        border-top-left-radius: 1rem;
+        border-bottom-left-radius: 1rem;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+
+    }
+    .announcement-container-content {
+        width: 60%;
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 550;
+            margin-left: 1.8rem;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.02em;
+        }
+        .announcement-container-content-header {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            margin-left: 1.8rem;
+            margin-top: 0.3rem;
+            margin-bottom: 0.3rem;
+            .announcement-container-content-header-instructor-image {
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                border: 1px solid #E2E8F0;
+            }
+            .announcement-container-content-header-instructor-info {
+                margin-left: 0.7rem;
+                h1 {
+                    font-size: 1rem;
+                    font-weight: 400;
+                    margin: 0;
+                    color: #2D3748;
+                }
+                p {
+                    font-size: 0.95rem;
+                    color: #718096;
+                    margin: 0;
+                }
+            }
+            .spacer {
+                flex: 1;
+            }
+            .announcement-container-content-header-time {
+                margin-left: 1rem;
+                p {
+                    font-size: 0.95rem;
+                    color: #A0AEC0;
+                    margin: 0;
+                }
+            }
+        }
+        .announcement-container-content-body {
+            margin-left: 1.8rem;
+            margin-right: 1.8rem;
+            h2 {
+                font-size: 1.2rem;
+                font-weight: 550;
+                margin: 0;
+            }
+            p {
+                font-size: 1rem;
+                color: #718096;
+                margin: 0;
+                a {
+                    margin-left: 0.4rem;
+                    color: #4299E1;
+                    text-decoration: none;
+                }
+            }
+        }
+    }
+}

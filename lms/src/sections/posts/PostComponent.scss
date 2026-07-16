@@ -1,0 +1,100 @@
+$primary-color: #2D3748;
+$secondary-color: #718096;
+$brand-secondary: rgba(127, 156, 245, 1);
+$brand-pallete: rgba(195, 218, 254, 1);
+$brand-primary: rgba(86, 111, 232, 1);
+
+@mixin resources {
+    color: #566FE8;
+    margin-left: 2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    p {
+        font-size: 0.9rem;
+        margin: 0.2rem 0;
+    }
+    img {
+        margin-left: 0.5rem;
+    }
+}
+
+.horizontal-line {
+    width: 100%;
+    height: 1px;
+    border: 1px dashed rgba(226, 232, 240, 1);
+    margin: 1rem auto;
+}
+
+.text-primary-color {
+    color: $primary-color;
+}
+
+.spacer {
+    flex: 1;
+}
+
+.text-brand-primary {
+    color: $brand-primary;
+}
+
+.brand-color {
+    color: $brand-secondary;
+    background-color: $brand-pallete;
+}
+
+.posts-container {
+    .posts-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        .posts-header-see-all {
+            @include resources;
+            margin-right: 1rem;
+        }
+    }
+    .posts-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0rem;
+        margin-left: -0.2rem;
+        
+        .post-item {
+            width: 95%;
+            display: flex;
+            margin: 0.4rem auto;
+            flex-direction: row;
+            gap: 1rem;
+            border-radius: 1rem;
+            border: 1px solid #E2E8F0;
+            padding: 1rem 1rem 0.5rem 1rem;
+            .post-item-content {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                .post-item-content-header {
+                    display: flex;
+                    justify-content: flex-start;
+                    align-items: center;
+                    letter-spacing: 0.02em;
+                    p {
+                        margin-left: 0.5rem;
+                        font-size: 0.8rem;
+                        color: #A0AEC0;
+                    }
+                }
+                .post-item-content-body {
+                    display: flex;
+                    flex-direction: row;
+                    p {
+                        font-size: 1.1rem;
+                        color: $primary-color;
+                        position: relative;
+                    }
+                }
+            }
+        }
+    }
+
+}

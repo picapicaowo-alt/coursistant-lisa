@@ -1,0 +1,100 @@
+.headerSection {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+    
+    @media (max-width: 768px) {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+}
+
+.assignmentInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.assignmentTitle {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 0.75rem;
+    word-wrap: break-word;
+}
+
+.metaInfo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.typeBadge {
+    background-color: #ebf8ff;
+    color: #3182ce;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.dueTime {
+    color: #718096;
+    font-size: 0.875rem;
+    white-space: nowrap;
+}
+
+.submissionCount {
+    background-color: #f0fff4;
+    color: #38a169;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.reviewSummary {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    min-width: 200px;
+    flex-shrink: 0;
+    
+    @media (max-width: 768px) {
+        width: 100%;
+    }
+}
+
+.gradeDisplay {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.gradeLabel {
+    color: #718096;
+    font-size: 0.875rem;
+}
+
+.gradeValue {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #566fe8;
+}
+
+.commentPreview {
+    color: #4a5568;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    max-height: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}

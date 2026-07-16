@@ -1,0 +1,24 @@
+.DS_Store
+lms/.DS_Store
+lms/node_modules
+
+lms_chat_history/
+lms_course/
+lms_signup/
+
+# Logs
+lms/logs
+lms/*.log
+lms/npm-debug.log*
+lms/yarn-debug.log*
+lms/yarn-error.log*
+lms/pnpm-debug.log*
+lms/lerna-debug.log*
+
+lms/dist
+lms/dist-ssr
+lms/lms@0.0.0
+lms/vite
+node_modules/
+
+.idea

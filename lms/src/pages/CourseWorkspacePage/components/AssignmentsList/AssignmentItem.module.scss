@@ -1,0 +1,187 @@
+﻿.assignmentItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.assignmentItem:hover {
+    background-color: #F7FAFC;
+    border-color: #CBD5E0;
+}
+
+.assignmentInfo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.assignmentType {
+    flex-shrink: 0;
+    width: 110px;
+}
+
+.typeBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+.homeworkBadge {
+    background-color: #4299E1;
+}
+
+.quizBadge {
+    background-color: #48BB78;
+}
+
+.projectBadge {
+    background-color: #ED8936;
+}
+
+.examBadge {
+    background-color: #9F7AEA;
+}
+
+.labBadge {
+    background-color: #F56565;
+}
+
+.defaultBadge {
+    background-color: #718096;
+}
+
+.assignmentTitle {
+    font-size: 0.85rem;
+    color: #2D3748;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+.actionButtonsList {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 0.75rem;
+}
+
+.assignmentItem.viewMode {
+    border-color: #E2E8F0;
+    background-color: #FFFFFF;
+}
+
+.assignmentItem.editMode {
+    border-color: #4299E1;
+    background-color: #EBF8FF;
+    border-width: 2px;
+    box-shadow: 0 2px 4px rgba(66, 153, 225, 0.1);
+}
+
+.assignmentItem.editMode:hover {
+    background-color: #E6FFFA;
+    border-color: #38B2AC;
+}
+
+.titleContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.editableTitle {
+    font-size: 0.85rem;
+    color: #2D3748;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    cursor: text;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.editableTitle:hover {
+    background-color: transparent;
+}
+
+.titleInput {
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    background-color: white;
+    color: #2D3748;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.dueTime {
+    font-size: 0.75rem;
+    color: #718096;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+    margin-right: 1rem;
+}
+
+@media (max-width: 768px) {
+    .assignmentType {
+        width: 90px;
+    }
+    
+    .typeBadge {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.5rem;
+    }
+    
+    .assignmentTitle {
+        font-size: 0.8rem;
+    }
+    
+    .titleContainer {
+        gap: 0.15rem;
+    }
+    
+    .dueTime,
+    .dueTimeEdit {
+        font-size: 0.7rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .titleContainer {
+        flex-direction: row;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .dueTime,
+    .dueTimeEdit {
+        flex-shrink: 0;
+    }
+}

@@ -1,0 +1,104 @@
+﻿.unitEditor {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.unitHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    background: transparent;
+}
+
+.unitTitleInput {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2D3748;
+    background: transparent;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+    
+    &::placeholder {
+        color: #94A3B8;
+        font-weight: 500;
+    }
+    
+    &:hover {
+        background: #F8FAFC;
+    }
+    
+    &:focus {
+        outline: none;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(86, 111, 232, 0.1);
+    }
+}
+
+.unitSubtitleInput {
+    font-size: 0.875rem;
+    color: #64748B;
+    background: transparent;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+    
+    &::placeholder {
+        color: #94A3B8;
+    }
+    
+    &:hover {
+        background: #F8FAFC;
+    }
+    
+    &:focus {
+        outline: none;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(86, 111, 232, 0.1);
+    }
+}
+
+.unitDescription {
+    padding: 1.5rem;
+    background: transparent;
+}
+
+.textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    color: #2D3748;
+    background: white;
+    border: 1px solid #E2E8F0;
+    border-radius: 0.75rem;
+    resize: vertical;
+    transition: all 0.2s ease;
+    line-height: 1.5;
+    
+    &::placeholder {
+        color: #94A3B8;
+    }
+    
+    &:hover {
+        border-color: #CBD5E0;
+    }
+    
+    &:focus {
+        outline: none;
+        border-color: #566FE8;
+        box-shadow: 0 0 0 3px rgba(86, 111, 232, 0.1);
+    }
+}
+
+.assignmentsSection {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: transparent;
+}

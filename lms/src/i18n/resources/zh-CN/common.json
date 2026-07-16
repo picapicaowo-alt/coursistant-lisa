@@ -1,0 +1,26 @@
+{
+  "app": {
+    "title": "xLearnEdu 教学系统"
+  },
+  "menu": {
+    "profile": "个人资料",
+    "signOut": "退出登录"
+  },
+  "sidebar": {
+    "dashboard": "仪表盘",
+    "myCourse": "我的课程",
+    "chat": "聊天",
+    "aiChatbot": "AI 助手"
+  },
+  "actions": {
+    "save": "保存",
+    "saveChanges": "保存更改",
+    "cancel": "取消",
+    "continue": "继续",
+    "loading": "加载中..."
+  },
+  "common": {
+    "yes": "是",
+    "no": "否"
+  }
+}

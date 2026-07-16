@@ -1,0 +1,138 @@
+﻿import React, {useState} from 'react';
+import {useTranslation} from 'react-i18next';
+import styles from './Editor.module.scss';
+import {RichTextEditor} from "@/components/RichTextEditor";
+import {ChevronDown, ChevronUp} from "lucide-react";
+import {useCourseWorkspaceStore} from "../../stores/useCourseWorkspaceStore";
+import {PropertyRow} from "@/components/PropertyRow";
+import {PropertyForm} from "@/components/PropertyForm";
+
+export const Editor: React.FC = () => {
+  const {t} = useTranslation('course');
+  const {course, update} = useCourseWorkspaceStore();
+  
+  return (
+    <div className={styles.courseInfoEditor}>
+      <PropertyForm title={t('form.basicInfo')} columns={2}>
+        <PropertyRow title={t('form.courseCode')}>
+          <input
+            type="text"
+            value={course.id}
+            className={styles.textInput}
+            placeholder="CS101"
+            disabled={false}
+          />
+        </PropertyRow>
+        
+        <PropertyRow title={t('form.courseName')}>
+          <input
+            type="text"
+            value={course.name}
+            onChange={(e) => update("courses", course.id, {name: e.target.value})}
+            className={styles.textInput}
+            placeholder={t('form.courseNamePlaceholder')}
+          />
+        </PropertyRow>
+        
+        <PropertyRow title={t('form.school')}>
+          <input
+            type="text"
+            value={course.school}
+            onChange={(e) => update("courses", course.id, {school: e.target.value})}
+            className={styles.textInput}
+            placeholder={t('form.schoolPlaceholder')}
+          />
+        </PropertyRow>
+        
+        <PropertyRow title={t('form.semester')}>
+          <input
+            type="text"
+            value={course.semester}
+            onChange={(e) => update("courses", course.id, {semester: e.target.value})}
+            className={styles.textInput}
+            placeholder="2024 Spring"
+          />
+        </PropertyRow>
+      </PropertyForm>
+      
+      <PropertyForm title={t('form.teacherInfo')}>
+        <PropertyRow title={t('form.teacherName')}>
+          <input
+            type="text"
+            value={course.teacherName}
+            onChange={(e) => update("courses", course.id, {teacherName: e.target.value})}
+            className={styles.textInput}
+            placeholder={t('form.teacherNamePlaceholder')}
+          />
+        </PropertyRow>
+        
+        <PropertyRow title={t('form.teacherEmail')}>
+          <input
+            type="email"
+            value={course.teacherEmail}
+            onChange={(e) => update("courses", course.id, {teacherEmail: e.target.value})}
+            className={styles.textInput}
+            placeholder="teacher@example.com"
+          />
+        </PropertyRow>
+        
+        <PropertyRow title={t('form.teacherPhone')}>
+          <input
+            type="tel"
+            value={course.teacherPhone}
+            onChange={(e) => update("courses", course.id, {teacherPhone: e.target.value})}
+            className={styles.textInput}
+            placeholder="1234567890"
+          />
+        </PropertyRow>
+      </PropertyForm>
+      
+      <CollapsibleSection title={t('form.courseDescription')}>
+        <RichTextEditor
+          content={course.description}
+          onChange={(content) => {
+            update("courses", course.id, {description: content});
+          }}
+          placeholder={t('form.descriptionPlaceholder')}
+        />
+      </CollapsibleSection>
+    </div>
+  );
+};
+
+interface CollapsibleSectionProps {
+  title: string;
+  children: React.ReactNode;
+}
+
+const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
+                                                                 title,
+                                                                 children
+                                                               }) => {
+  const [isExpanded, setIsExpanded] = useState(true);
+  
+  return (
+    <div className={`${styles.collapsibleSection}`}>
+      <div
+        className={styles.collapsibleHeader}
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <h3 className={styles.sectionTitle}>{title}</h3>
+        <button
+          type="button"
+          className={styles.toggleButton}
+          aria-label={isExpanded ? 'fold' : 'expand'}
+        >
+          {isExpanded ? <ChevronUp size={20}/> : <ChevronDown size={20}/>}
+        </button>
+      </div>
+      
+      <div
+        className={`${styles.collapsibleContent} ${isExpanded ? styles.expanded : styles.collapsed}`}
+        aria-hidden={!isExpanded}
+      >
+        {children}
+      </div>
+    </div>
+  );
+};

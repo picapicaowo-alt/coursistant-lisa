@@ -1,0 +1,96 @@
+﻿.footerContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 0;
+    margin-top: 2rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.errorMessage {
+    color: #e53e3e;
+    font-size: 0.875rem;
+    min-height: 1.25rem;
+}
+
+.buttonGroup {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.cancelButton {
+    cursor: pointer;
+    background-color: #f7fafc;
+    color: #718096;
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.625rem 1.5rem;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s;
+    
+    &:hover:not(:disabled) {
+        background-color: #e2e8f0;
+        color: #4a5568;
+    }
+    
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+.saveButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background-color: #566fe8;
+    cursor: pointer;
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.625rem 1.5rem;
+    border-radius: 0.75rem;
+    border: none;
+    transition: all 0.2s;
+    min-width: 100px;
+    
+    &:hover:not(:disabled) {
+        background-color: #4a5fd6;
+    }
+    
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background-color: #a0aec0;
+    }
+}
+
+.spinner {
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 768px) {
+    .footerContainer {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .buttonGroup {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+}

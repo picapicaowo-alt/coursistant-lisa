@@ -1,0 +1,101 @@
+
+.postListContainer {
+    width: 100%;
+    h1 {
+        font-size: 1.8rem;
+        font-weight: 550;
+        margin-left: 1.2rem;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+        letter-spacing: 0.02em;
+    }
+    .postList {
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+        margin-top: 1.5rem;
+        .postItem {
+            background-color: #FFFFFF;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            border-radius: 1rem;
+            border: 1px solid #E2E8F0;
+            padding: 1.5rem 1.5rem 1rem 1.5rem;
+            .postItemContent {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+                .postItemContentHeader {
+                    display: flex;
+                    justify-content: flex-start;
+                    align-items: center;
+                    letter-spacing: 0.02em;
+                    h2 {
+                        font-size: 1.3rem;
+                    }
+                    p {
+                        margin-left: 0.5rem;
+                        font-size: 0.8rem;
+                        color: #A0AEC0;
+                    }
+                    .spacer {
+                        flex: 1;
+                    }
+                }
+                .postItemActionsPostType {
+                    font-size: 0.8rem;
+                    background-color: #C3DAFE;
+                    color: #7F9CF5;
+                    padding: 0.2rem 0.8rem;
+                    border-radius: 0.5rem;
+                    margin-left: 1.2rem;
+                }
+                .postItemContentBody {
+                    display: flex;
+                    flex-direction: row;
+                    p {
+                        font-size: 1.1rem;
+                        color: #718096;
+                    }
+                }
+            }
+            .postItemFooter {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                .postItemActionsActions {
+                        display: flex;
+                        flex-direction: row;
+                        gap: 3rem;
+                        .postItemActionsActionsItem {
+                            display: flex;
+                            flex-direction: row;
+                            gap: 0.2rem;
+                            align-items: center;
+                            color: #A0AEC0;
+                            img {
+                                cursor: pointer;
+                            }   
+                            .message {
+                                color: #566FE8;
+                            }
+                        }
+                        
+                }
+                .spacer {
+                    flex: 1;
+                }
+                a {
+                    color: #566FE8;
+                    text-decoration: none;
+                    margin-left: 0.5rem;
+                    cursor: pointer;
+                }
+
+            }
+        }
+    }
+
+}

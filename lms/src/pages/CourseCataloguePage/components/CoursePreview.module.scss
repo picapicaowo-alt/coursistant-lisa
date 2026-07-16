@@ -1,0 +1,119 @@
+﻿.courseItem {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    border: 1px solid #f0f0f0;
+    
+    &:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+    }
+}
+
+.courseHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.courseCode {
+    font-size: 14px;
+    font-weight: 500;
+    color: #566FE8;
+    background-color: #f0f3ff;
+    padding: 4px 12px;
+    border-radius: 16px;
+}
+
+.courseContent {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.courseTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a1a;
+    line-height: 1.4;
+}
+
+.instructorInfo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.avatarContainer {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.instructorName {
+    font-size: 14px;
+    color: #666;
+}
+
+.courseMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.metaItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #666;
+}
+
+.metaIcon {
+    width: 16px;
+    height: 16px;
+    fill: #888;
+}
+
+.scheduleContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.scheduleItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.scheduleIcon {
+    width: 16px;
+    height: 16px;
+    fill: #888;
+    flex-shrink: 0;
+}
+
+.scheduleText {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.4;
+}
+
+.schedulePlaceholder {
+    font-size: 14px;
+    color: #999;
+    font-style: italic;
+}

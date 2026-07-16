@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+body,
+html,
+#root {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+    background-color: #EDF2F7;
+    font-family: 'Inter', sans-serif;
+}
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    scroll-behavior: smooth;
+}
+
+*::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    background: transparent;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 0;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 0;
+    border: 0 solid transparent;
+}
+
+*:hover::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+*:hover::-webkit-scrollbar-thumb {
+    background: rgba(160, 160, 160, 0.4);
+    border-radius: 3px;
+    
+    &:hover {
+        background: rgba(160, 160, 160, 0.6);
+    }
+}
+
+*:hover::-webkit-scrollbar-track {
+    background: transparent;
+}

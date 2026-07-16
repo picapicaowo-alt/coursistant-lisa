@@ -1,0 +1,70 @@
+﻿.mainContent {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+}
+
+.typeBadge {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.dueTime {
+    color: #64748b;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.contentContainer {
+    flex: 1;
+    height: 100%;
+    width: 100%;
+    overflow-y: auto;
+    margin-top: 2rem;
+}
+
+.contentArea {
+    width: 100%;
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: 2fr 1px 1fr;
+    align-items: start;
+}
+
+.verticalDivider {
+    height: 100%;
+    width: 1px;
+    background-color: #e2e8f0;
+}
+
+.submissionContent {
+    flex: 1;
+}
+
+.noSubmission {
+    padding: 48px 24px;
+    text-align: center;
+    color: #64748b;
+    background-color: #f8fafc;
+    border-radius: 8px;
+    border: 2px dashed #e2e8f0;
+    font-size: 14px;
+}
+
+@media (max-width: 1024px) {
+    .contentArea {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}

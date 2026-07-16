@@ -1,0 +1,32 @@
+﻿.container {
+    display: flex;
+    gap: 2rem;
+    padding: 1rem;
+    background-color: #f8fafc;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    
+    @media (max-width: 768px) {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+
+.dictionaryItem {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.itemKey {
+    color: #718096;
+    font-size: 0.875rem;
+}
+
+.itemValue {
+    color: #2d3748;
+    font-weight: 500;
+    font-size: 0.875rem;
+}

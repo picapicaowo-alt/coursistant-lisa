@@ -1,0 +1,58 @@
+.sidebar {
+    min-width: 128px;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 20px;
+    border: 1px solid #E2E8F0;
+    min-height: 51rem;
+    
+    .logo img {
+        width: 56px;
+        height: auto;
+    }
+    
+    nav ul {
+        list-style-type: none;
+        padding: 0;
+    }
+    
+    .itemContent {
+        margin: 20px 0;
+        text-align: center;
+        cursor: pointer;
+        color: #718096;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 15px 0;
+        font-size: 12px;
+        
+        .responsiveImage {
+            width: 24px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        
+        span {
+            margin: 0 1rem;
+        }
+        
+        &.active {
+            background-color: #566FE8;
+            color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 4px 0 #C3DAFE;
+            
+            .responsiveImage {
+                &.iconAiBot {
+                    opacity: 1;
+                    filter: none;
+                    transform: translateY(-0.5px);
+                }
+            }
+        }
+    }
+}

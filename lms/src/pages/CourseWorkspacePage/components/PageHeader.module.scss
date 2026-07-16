@@ -1,0 +1,119 @@
+﻿.workspaceHeader {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    background: white;
+    border-bottom: 1px solid #E2E8F0;
+    z-index: 10;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.backButton {
+    cursor: pointer;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 0.75rem;
+    padding: 0.625rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    
+    &:hover {
+        background: #F1F5F9;
+        border-color: #CBD5E0;
+    }
+    
+    svg {
+        width: 20px;
+        height: 20px;
+        color: #475569;
+    }
+}
+
+.titleContainer {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.75rem;
+    transition: all 0.3s;
+    
+    &:hover {
+        background: #F8FAFC;
+    }
+}
+
+.courseTitle {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2D3748;
+    max-width: 400px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    
+    &.placeholderTitle {
+        color: #94A3B8;
+        font-style: italic;
+    }
+}
+
+.titleArrow {
+    color: #94A3B8;
+    opacity: 0.6;
+    transition: transform 0.3s;
+    
+    .titleContainer:hover & {
+        color: #64748B;
+    }
+}
+
+.headerActions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.cancelButton {
+    cursor: pointer;
+    background: white;
+    border: 1px solid #E2E8F0;
+    border-radius: 0.75rem;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #475569;
+    transition: all 0.3s;
+    
+    &:hover {
+        background: #F8FAFC;
+        border-color: #CBD5E0;
+        color: #2D3748;
+    }
+}
+
+.publishButton {
+    cursor: pointer;
+    background: #566FE8;
+    border: 1px solid #566FE8;
+    border-radius: 0.75rem;
+    padding: 0.625rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: white;
+    transition: all 0.3s;
+    
+    &:hover {
+        background: #4A5FD4;
+        border-color: #4A5FD4;
+        box-shadow: 0 4px 12px rgba(86, 111, 232, 0.2);
+    }
+    
+    &:active {
+        transform: translateY(1px);
+    }
+}

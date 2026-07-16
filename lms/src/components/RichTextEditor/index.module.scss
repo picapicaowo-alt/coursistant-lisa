@@ -1,0 +1,371 @@
+@use "sass:color";
+
+$primary-color: #566FE8;
+$primary-light: #EDF2FF;
+$border-color: #E2E8F0;
+$border-hover: #CBD5E0;
+$bg-color: white;
+$bg-hover: #F8FAFC;
+$bg-disabled: #F1F5F9;
+$text-primary: #2D3748;
+$text-secondary: #64748B;
+$text-tertiary: #94A3B8;
+$border-radius: 1rem;
+$spacing-xs: 0.25rem;
+$spacing-sm: 0.5rem;
+$spacing-md: 0.75rem;
+$spacing-lg: 1rem;
+$shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+$shadow-focus: 0 0 0 3px rgba(86, 111, 232, 0.1);
+
+.container {
+    position: relative;
+    width: 100%;
+    min-height: 200px;
+    border: 1px solid $border-color;
+    border-radius: $border-radius;
+    background-color: $bg-color;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    
+    &:focus-within {
+        border-color: $primary-color;
+        box-shadow: $shadow-focus;
+    }
+    
+    &.disabled {
+        background-color: $bg-disabled;
+        border-color: $border-color;
+        cursor: not-allowed;
+        opacity: 0.7;
+        
+        &:focus-within {
+            border-color: $border-color;
+            box-shadow: none;
+        }
+        
+        .editor {
+            cursor: not-allowed;
+            
+            * {
+                color: $text-tertiary !important;
+            }
+        }
+    }
+}
+
+.toolbarContainer {
+    padding: $spacing-sm $spacing-md;
+    border-bottom: 1px solid $border-color;
+    background: linear-gradient(to bottom, #F8FAFC, #F1F5F9);
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-sm;
+    align-items: center;
+}
+
+.toolbarGroup {
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+    padding: 0 $spacing-sm;
+    border-right: 1px solid $border-color;
+    
+    &:last-child {
+        border-right: none;
+    }
+}
+
+.toolbarSelect {
+    padding: $spacing-xs $spacing-sm;
+    border: 1px solid $border-color;
+    border-radius: 0.75rem;
+    background: $bg-color;
+    color: $text-secondary;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+        border-color: $border-hover;
+        background: $bg-hover;
+    }
+    
+    &:focus {
+        outline: none;
+        border-color: $primary-color;
+        box-shadow: 0 0 0 2px rgba(86, 111, 232, 0.1);
+    }
+}
+
+.toolbarButton {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 $spacing-sm;
+    border: 1px solid $border-color;
+    border-radius: 0.75rem;
+    background: $bg-color;
+    color: $text-secondary;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    
+    &:hover {
+        background: $bg-hover;
+        border-color: $border-hover;
+        color: $text-primary;
+        transform: translateY(-1px);
+    }
+    
+    &:active {
+        transform: translateY(0);
+    }
+    
+    &.active {
+        background: $primary-color;
+        border-color: $primary-color;
+        color: white;
+        
+        &:hover {
+            background: #4A5FD4;
+            border-color: #4A5FD4;
+        }
+    }
+}
+
+.editor {
+    flex: 1;
+    padding: $spacing-lg;
+    outline: none;
+    overflow-y: auto;
+    min-height: 150px;
+    max-height: calc(100vh - 300px);
+    
+    p {
+        margin: 0 0 1em 0;
+        line-height: 1.7;
+        font-size: 0.9375rem;
+        color: $text-primary;
+        
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+    
+    h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 1em 0 0.5em;
+        line-height: 1.3;
+        color: $text-primary;
+        padding-bottom: 0.25em;
+        border-bottom: 1px solid $border-color;
+    }
+    
+    h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 1em 0 0.5em;
+        line-height: 1.4;
+        color: $text-primary;
+    }
+    
+    h3 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin: 0.875em 0 0.375em;
+        line-height: 1.4;
+        color: $text-primary;
+    }
+    
+    strong {
+        font-weight: 600;
+        color: color.adjust($text-primary, $lightness: 10%);
+    }
+    
+    em {
+        font-style: italic;
+    }
+    
+    u {
+        text-decoration: underline;
+    }
+    
+    s {
+        text-decoration: line-through;
+        color: $text-secondary;
+    }
+    
+    a {
+        color: $primary-color;
+        text-decoration: none;
+        border-bottom: 1px dashed transparent;
+        transition: all 0.2s ease;
+        font-weight: 500;
+        
+        &:hover {
+            border-bottom: 1px dashed $primary-color;
+        }
+    }
+    
+    ul, ol {
+        margin: 0.75em 0;
+        padding-left: 1.75em;
+        
+        li {
+            margin: 0.375em 0;
+            line-height: 1.6;
+        }
+    }
+    
+    ul {
+        list-style-type: disc;
+        
+        ul {
+            list-style-type: circle;
+            
+            ul {
+                list-style-type: square;
+            }
+        }
+    }
+    
+    ol {
+        list-style-type: decimal;
+    }
+    
+    code {
+        background: #F1F5F9;
+        padding: 0.125em 0.375em;
+        border-radius: 0.375rem;
+        font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+        font-size: 0.875em;
+        color: #475569;
+    }
+    
+    pre {
+        background: #F1F5F9;
+        padding: 1em;
+        border-radius: 0.75rem;
+        overflow-x: auto;
+        margin: 1em 0;
+        border: 1px solid $border-color;
+        
+        code {
+            background: none;
+            padding: 0;
+            border-radius: 0;
+            color: $text-primary;
+        }
+    }
+    
+    blockquote {
+        margin: 1em 0;
+        padding-left: 1em;
+        border-left: 3px solid $primary-color;
+        color: $text-secondary;
+        font-style: italic;
+        
+        p {
+            margin: 0.5em 0;
+        }
+    }
+    
+    hr {
+        margin: 2em 0;
+        border: none;
+        height: 1px;
+        background: linear-gradient(to right, transparent, $border-color, transparent);
+    }
+}
+
+.blank-node {
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0 2px;
+    
+    .blank-wrapper {
+        display: inline-flex;
+        align-items: center;
+        position: relative;
+    }
+    
+    .blank-input {
+        border: 1px solid $border-color;
+        border-radius: $border-radius;
+        padding: 0.25rem 0.75rem;
+        margin: 0 1px;
+        font-size: 0.9375rem;
+        min-width: 100px;
+        text-align: center;
+        outline: none;
+        transition: all 0.2s ease;
+        background-color: $bg-color;
+        box-sizing: border-box;
+        
+        &:focus {
+            border-color: $primary-color;
+            box-shadow: 0 0 0 2px rgba(86, 111, 232, 0.1);
+        }
+        
+        &.editing {
+            border-color: $primary-color;
+            background-color: $primary-light;
+        }
+        
+        &.filled {
+            background-color: $bg-hover;
+            border-color: $border-hover;
+        }
+        
+        &.empty {
+            background-color: $bg-hover;
+        }
+    }
+}
+
+.placeholder {
+    &::before {
+        content: attr(data-placeholder);
+        color: $text-tertiary;
+        pointer-events: none;
+        font-size: 0.9375rem;
+        font-style: italic;
+        position: absolute;
+    }
+}
+
+.loadingPlaceholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: $text-tertiary;
+    font-style: italic;
+}
+
+@media (max-width: 768px) {
+    .container {
+        border-radius: 0.75rem;
+    }
+    
+    .toolbarContainer {
+        padding: $spacing-sm;
+        gap: $spacing-xs;
+    }
+    
+    .toolbarGroup {
+        padding: 0 $spacing-xs;
+    }
+    
+    .editor {
+        padding: $spacing-md;
+    }
+}

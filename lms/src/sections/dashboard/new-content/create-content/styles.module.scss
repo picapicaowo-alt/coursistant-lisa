@@ -1,0 +1,153 @@
+.horizontalDivider {
+    width: calc(100% + 2rem);
+    height: 1px;
+    border: 1px solid rgba(226, 232, 240, 1);
+    margin: 0 auto 0.5rem -1rem;
+}
+.addContentContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 0rem;
+}
+
+.correctedBox {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.1rem;
+    border: 1px solid #CBD5E0;
+    border-radius: 0.5rem;
+    padding: 0.1rem 0.1rem;
+    .submitted {
+        font-size: 0.9rem;
+        letter-spacing: 0.05em;
+        color: #A0AEC0;
+        cursor: pointer; 
+        border-radius: 0.5rem;
+        padding: 0.1rem 0.5rem;
+        transition: background-color 0.3s ease;
+        &:hover {
+            color: white;
+            background-color: #566FE8;
+        }
+        &.active {
+            color: white;
+            background-color: #566FE8;
+        }
+    }
+    .notSubmitted {
+        font-size: 0.9rem;
+        letter-spacing: 0.05em;
+        color: #A0AEC0;
+        cursor: pointer; 
+        border-radius: 0.5rem;
+        padding: 0.1rem 0.5rem;
+        transition: background-color 0.3s ease;
+        &:hover {
+            color: white;
+            background-color: rgba(203, 213, 224, 1);
+        }
+        &.active {
+            color: white;
+            background-color: rgba(203, 213, 224, 1);
+        }
+    }
+}
+.courseUnitsContent {
+    max-width: 95%;
+    display: flex;
+    flex-direction: row;
+    gap: 3rem;
+    margin: 2rem auto;
+    .courseUnitsCategory {
+        width: 45%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.7rem;    
+        p {
+            font-size: 1.8rem;
+            font-weight: 550;
+            letter-spacing: 0.05rem;
+        }
+        .unitsSkills {
+            display: flex;
+            flex-direction: row;
+            gap: 0.5rem;
+            p {
+                font-size: 1rem;
+                font-weight: 400;
+                color: #718096;
+                letter-spacing: 0;
+            }
+            
+        }
+        .horizontalDivider {
+            margin: 0.7rem 0;
+            width: 100%;
+            border: 1px dashed #E2E8F0;
+        }
+        .courseUnitsListContainer {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            .courseUnitsItem {
+                display: flex;
+                flex-direction: row;
+                gap: 0.7rem;
+                align-items: center;
+                justify-content: space-between;
+                border: 1px solid #CBD5E0;
+                border-radius: 1rem;
+                padding: 1rem;
+                cursor: pointer;
+                &:hover {
+                    border: 1px solid #566FE8;
+                }
+                &.active {
+                    border: 1px solid #566FE8;
+                }
+                .courseUnitsItemHeader {
+                    display: flex;
+                    flex-direction: column;
+                }
+                .spacer {
+                    width: 1rem;
+                }
+            }
+        }
+    }
+    .courseUnitsDescription {
+        width: 60%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.7rem;
+        border-radius: 0.5rem;
+        padding: 2rem;
+        .courseUnitsDescriptionHeader {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            .arrowDownIcon {
+                cursor: pointer;
+                margin-right: 0.5rem;
+            }
+            .separator {
+                margin-left: 0rem;
+                margin-right: 0.5rem;
+            }   
+            p {
+                font-size: 1.1rem;
+                font-weight: 550;
+                letter-spacing: 0.05rem;
+            }
+
+        }
+        .horizontalDivider {
+            width: calc(100% + 2rem);
+            height: 1px;
+            border: 1px dashed rgba(226, 232, 240, 1);
+            margin: 1rem auto 1rem -1rem;
+        }
+    }
+}

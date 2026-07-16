@@ -1,0 +1,45 @@
+﻿.actionButton {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: #F1F5F9;
+    color: #64748B;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    
+    &:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    svg {
+        display: block;
+    }
+    
+    &.delete {
+        color: #f67c7c;
+        
+        &:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+    }
+    
+    &.edit {
+        color: #729ee5;
+        
+        &:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+    }
+    
+    &.view {
+        color: #5fcba5;
+        
+        &:hover {
+            background-color: rgba(16, 185, 129, 0.1);
+        }
+    }
+}

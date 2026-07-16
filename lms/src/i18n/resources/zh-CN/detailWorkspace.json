@@ -1,0 +1,61 @@
+{
+  "sidebar": {
+    "expand": "展开侧边栏",
+    "collapse": "折叠侧边栏"
+  },
+  "assignmentEdit": {
+    "attachments": "附件",
+    "attachmentsHint": "支持图片、文档、压缩包等文件",
+    "description": "作业描述",
+    "descriptionHint": "详细描述作业要求和提交规范",
+    "settings": "作业设置",
+    "allowLateSubmission": "允许迟交",
+    "allowLateSubmissionHint": "学生可以在截止时间后提交作业",
+    "allowedResubmissionCount": "允许重新提交次数",
+    "allowedResubmissionCountHint": "学生可以重新提交作业的最大次数",
+    "saving": "保存中..."
+  },
+  "assignmentReview": {
+    "students": "学生",
+    "submission": "提交内容",
+    "grading": "评分",
+    "submissionFiles": "提交文件",
+    "noSubmission": "暂无提交",
+    "grade": "成绩",
+    "gradePlaceholder": "0-100",
+    "comment": "评语",
+    "commentPlaceholder": "请输入您的反馈...",
+    "saveGrade": "保存成绩",
+    "saving": "保存中...",
+    "previousGrade": "历史成绩",
+    "status": {
+      "not-submitted": "未提交",
+      "submitted": "已提交",
+      "graded": "已评分"
+    }
+  },
+  "assignmentSubmit": {
+    "yourSubmission": "您的提交",
+    "submit": "提交作业",
+    "resubmit": "重新提交",
+    "submissionContent": "提交内容",
+    "submittedFiles": "已提交文件",
+    "submittedAt": "提交时间",
+    "attempt": "尝试次数",
+    "uploadFiles": "上传文件",
+    "uploadHint": "拖放文件到此处或点击上传",
+    "submitting": "提交中...",
+    "submitButton": "提交",
+    "resubmitButton": "重新提交"
+  },
+  "assignment": {
+    "dueTime": "截止时间",
+    "submissionCount": "提交次数",
+    "grade": "成绩",
+    "description": "描述",
+    "attachments": "附件",
+    "allowLateSubmission": "允许迟交",
+    "allowedResubmissionCount": "允许重新提交次数",
+    "remainingResubmissions": "剩余提交次数"
+  }
+}

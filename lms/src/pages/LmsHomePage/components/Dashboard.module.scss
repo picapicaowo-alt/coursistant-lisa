@@ -1,0 +1,29 @@
+﻿.grid-layout-container {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+}
+
+.chat {
+    width: 100%;
+    position: relative;
+    padding: 1rem;
+    border-radius: 1rem;
+    border: 1.5px solid transparent;
+    background: linear-gradient(#F4F7FA, #F4F7FA) padding-box, /* inner fill */
+    linear-gradient(45deg, #2D0FB4, #4983FF, #3EF8C3) border-box; /* border */
+    
+    background-clip: padding-box, border-box;
+    background-origin: padding-box, border-box;
+    
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px); /* for Safari */
+}
+
+.assignments {
+    width: 100%;
+    height: 100%;
+    background-color: #FFFFFF;
+    border-radius: 1rem;
+    padding: 1rem;
+}

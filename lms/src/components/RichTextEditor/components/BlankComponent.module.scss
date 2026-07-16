@@ -1,0 +1,73 @@
+.blankNode {
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    vertical-align: baseline;
+    line-height: 1.5;
+}
+
+.blankWrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.blankInput {
+    transition: all 0.2s ease;
+    text-align: center;
+    outline: none;
+    border: 2px solid;
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: inherit;
+    font-family: inherit;
+    line-height: 1.5;
+    background-color: white;
+    box-sizing: border-box;
+    vertical-align: baseline;
+    margin: 0 2px;
+}
+
+.blankInput:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.measureElement {
+    position: absolute;
+    visibility: hidden;
+    white-space: pre;
+}
+
+.teacherMode .blankInput {
+    border-color: #d1d5db;
+    background-color: #f9fafb;
+}
+
+.studentMode .blankInput.correct {
+    border-color: #10b981;
+    background-color: rgba(16, 185, 129, 0.05);
+    color: #065f46;
+}
+
+.studentMode .blankInput.incorrect {
+    border-color: #ef4444;
+    background-color: rgba(239, 68, 68, 0.05);
+    color: #7f1d1d;
+}
+
+.blankInput.isEditing {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.blankInput.hasAnswer.correct {
+    border-color: var(--correct-color, #10b981);
+    background-color: rgba(16, 185, 129, 0.05);
+    color: #065f46;
+}
+
+.blankInput.hasAnswer.incorrect {
+    border-color: var(--incorrect-color, #ef4444);
+    background-color: rgba(239, 68, 68, 0.05);
+    color: #7f1d1d;
+}

@@ -1,0 +1,164 @@
+.chatContainer {
+    position: fixed;
+    right: 3rem;
+    bottom: 6rem;
+    width: 30%;     /* 25% of the viewport width */
+    height: 60%;    /* 60% of the viewport height */
+    font-family: 'Inter', sans-serif;
+    border-radius: 1rem;
+    border: 1.5px solid transparent;
+    background:
+        linear-gradient(#F4F7FA, #F4F7FA) padding-box, /* inner fill */
+        linear-gradient(45deg, #2D0FB4, #4983FF, #3EF8C3) border-box; /* border */
+
+    background-clip: padding-box, border-box;
+    background-origin: padding-box, border-box;
+
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px); /* for Safari */
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+
+    .chatHeader {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+        margin-top: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        .chatMenu {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #A0AEC0;
+            border-radius: 20%;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .chatTitle {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .glassButton {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.6rem 0.6rem;
+            border-radius: 0.5rem;
+            background: rgba(237, 242, 247, 1);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+          
+            color: rgba(113, 128, 150, 1);
+            font-weight: 500;
+            font-size: 1.2rem;
+          
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+          
+            &:hover {
+              background: rgba(255, 255, 255, 0.75);
+            }
+        }
+    }
+    .spacer {
+        flex: 1;
+    }
+    .horizontalLine {
+        width: 100%;
+        height: 1px;
+        border: 1px dashed rgba(226,232,240,1);
+        margin: 1rem auto;
+    }
+    .chatContent {
+        padding: 1rem;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        .chatInputContainer {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #E2E8F0;
+            border-radius: 1rem;
+            padding: 0.7rem;
+            margin: 0.1rem auto;
+            .chatCourse {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid #566FE8;
+                border-radius: 0.6rem;
+                padding: 0.2rem 0.3rem;
+                width: 100px;
+                cursor: pointer;
+                .chatCourseIcon {
+                    margin-left: -0.2rem;
+                }
+                p {
+                    font-size: 0.7rem;
+                    color: #566FE8;
+                    margin: 0;
+                    margin-left: 0.3rem;
+                }
+                
+            }
+            .chatInputMessage {
+                .chatTextarea {
+                    border: none;
+                    outline: none;
+                    background-color: transparent;
+                    width: 100%;
+                    font-size: 0.9rem;
+                    margin: 1rem 0.3rem;
+                    font-family: 'Inter', sans-serif;
+                    resize: none; /* optional: prevent manual resizing */
+                    /* Set min and max height via rows */
+                    min-height: calc(1.5rem * 3); /* 3 lines */
+                    max-height: calc(1.5rem * 5); /* 5 lines */
+                    overflow-y: auto;
+                    letter-spacing: 0.05em;
+                }
+                
+                .chatTextarea::placeholder {
+                    color: #A0AEC0;
+                }
+            }
+            .chatFooter {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                .chatFooterIcon {
+                    cursor: pointer;
+                    margin-right: 5px;
+                }
+                .spacer {
+                    flex: 1;
+                }
+                .chatFooterSend {
+                    cursor: pointer;
+                    background-color: #566FE8;
+                    color: white;
+                    padding: 0.5rem 1rem;
+                    border-radius: 0.5rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 0.9rem;
+                    transition: background-color 0.3s ease;
+                    img {
+                        margin-left: 0.5rem;
+                    }
+                    &:hover {
+                        background-color: #4983FF;
+                    }
+                }
+            }
+        }
+    }
+}

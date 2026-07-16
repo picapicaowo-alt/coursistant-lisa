@@ -1,0 +1,61 @@
+{
+  "sidebar": {
+    "expand": "Expand sidebar",
+    "collapse": "Collapse sidebar"
+  },
+  "assignmentEdit": {
+    "attachments": "Attachments",
+    "attachmentsHint": "Supports images, documents, archives, and other files",
+    "description": "Assignment Description",
+    "descriptionHint": "Describe assignment requirements and submission guidelines in detail",
+    "settings": "Assignment Settings",
+    "allowLateSubmission": "Allow Late Submission",
+    "allowLateSubmissionHint": "Students can submit assignments after the deadline",
+    "allowedResubmissionCount": "Allowed Resubmission Count",
+    "allowedResubmissionCountHint": "Maximum number of times students can resubmit assignments",
+    "saving": "Saving..."
+  },
+  "assignmentReview": {
+    "students": "Students",
+    "submission": "Submission",
+    "grading": "Grading",
+    "submissionFiles": "Submission Files",
+    "noSubmission": "No submission",
+    "grade": "Grade",
+    "gradePlaceholder": "0-100",
+    "comment": "Comment",
+    "commentPlaceholder": "Enter your feedback...",
+    "saveGrade": "Save Grade",
+    "saving": "Saving...",
+    "previousGrade": "Previous Grade",
+    "status": {
+      "not-submitted": "Not Submitted",
+      "submitted": "Submitted",
+      "graded": "Graded"
+    }
+  },
+  "assignmentSubmit": {
+    "yourSubmission": "Your Submission",
+    "submit": "Submit Assignment",
+    "resubmit": "Resubmit",
+    "submissionContent": "Submission Content",
+    "submittedFiles": "Submitted Files",
+    "submittedAt": "Submitted At",
+    "attempt": "Attempt",
+    "uploadFiles": "Upload Files",
+    "uploadHint": "Drag and drop files here or click to upload",
+    "submitting": "Submitting...",
+    "submitButton": "Submit",
+    "resubmitButton": "Resubmit"
+  },
+  "assignment": {
+    "dueTime": "Due Time",
+    "submissionCount": "Submission Count",
+    "grade": "Grade",
+    "description": "Description",
+    "attachments": "Attachments",
+    "allowLateSubmission": "Allow Late Submission",
+    "allowedResubmissionCount": "Allowed Resubmissions",
+    "remainingResubmissions": "Remaining Resubmissions"
+  }
+}

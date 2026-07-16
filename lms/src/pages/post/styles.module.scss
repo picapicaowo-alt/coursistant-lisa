@@ -1,0 +1,65 @@
+
+.postContainer {
+    width: 95%;
+    margin: 0 auto;
+    
+    .postFooterContainer {
+        margin-left: -1.5rem;
+        margin-top: 2rem;
+        max-width: 1050px;
+        position: fixed;
+        bottom: 3rem;
+        width: 100%;
+        z-index: 1000; // ensure it floats above other elements
+        display: flex;
+        justify-content: center;
+        pointer-events: none;
+        
+        .postFooter {
+            width: 50%;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+            border-radius: 18px;
+            padding: 0.5rem;
+            border: 2px solid transparent;
+            box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
+            background-image: linear-gradient(white, white), /* inside */
+            linear-gradient(45deg, #2D0FB4, #4983FF, #3EF8C3); /* border */
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+            
+            p {
+                color: #A0AEC0;
+                margin-left: 0.3rem;
+            }
+            
+            .postFooterActions {
+                display: flex;
+                align-items: center;
+                cursor: pointer;
+                background-color: #566FE8;
+                padding: 0.5rem 0.5rem;
+                border-radius: 1rem;
+                font-size: 0.9rem;
+                transition: background-color 0.3s ease;
+                pointer-events: auto;
+                
+                img {
+                    margin-left: 0.5rem;
+                }
+                
+                &:hover {
+                    background-color: #4983FF;
+                }
+                
+                p {
+                    color: white;
+                }
+            }
+        }
+        
+    }
+}
