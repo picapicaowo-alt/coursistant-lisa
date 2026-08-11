@@ -22,3 +22,9 @@ lms/vite
 node_modules/
 
 .idea
+
+# Claude
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+docs/
