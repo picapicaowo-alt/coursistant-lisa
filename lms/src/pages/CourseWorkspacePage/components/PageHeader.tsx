@@ -14,14 +14,23 @@ export const PageHeader: React.FC = () => {
     if (workspaceMode === "view") {
       return role === "teacher" ? (
         <React.Fragment>
-          <button className={styles.publishButton}>
-            {t("detail.manageGroup")}
-          </button>
           <button
-            className={styles.publishButton}
+            className={styles.secondaryButton}
             onClick={() => setWorkspaceMode("edit")}
           >
             {t("detail.editCourse")}
+          </button>
+          {/* Publishing happens per week — POST .../weeks/{id}/publish — and
+              there is no course-level publish to call. Whether a course, a
+              week or an item is the unit of publication is still open (S-6),
+              so the button keeps its place in the design but does nothing
+              rather than guessing which of those it means. */}
+          <button
+            className={styles.publishButton}
+            disabled
+            title={t("detail.publishUnavailable")}
+          >
+            {t("addContent.publishButton")}
           </button>
         </React.Fragment>
       ) : null;

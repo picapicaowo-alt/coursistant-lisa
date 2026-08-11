@@ -117,3 +117,29 @@
         transform: translateY(1px);
     }
 }
+// Outline button beside Publish, as Edit Course is drawn in the design.
+.secondaryButton {
+    cursor: pointer;
+    background: t.$card-bg;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-control;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: t.$text;
+    transition: background-color 0.2s, border-color 0.2s;
+
+    &:hover {
+        background: t.$subcard-bg;
+        border-color: t.$text-placeholder;
+    }
+}
+
+// A disabled Publish still occupies its slot in the header, so it has to read
+// as unavailable rather than merely unstyled.
+.publishButton:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}

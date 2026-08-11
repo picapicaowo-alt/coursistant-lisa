@@ -4,6 +4,7 @@
   AssignmentForReviewResponse,
   AssignmentForSubmissionResponse,
   AssignmentSubmissionRequest,
+  AssignmentSummary,
   CreateSubmissionReviewRequest,
   EditAssignmentRequest,
   UpdateSubmissionReviewRequest,
@@ -19,6 +20,23 @@ export class AssignmentApiService {
     }
   }
   
+  /**
+   * Assignment list cards for a course, ordered by due date.
+   *
+   * The slim endpoint rather than `/assignments`, which returns every field
+   * including descriptions and attachments — far more than a list needs.
+   */
+  async getCourseAssignmentSummaries(courseId: number): Promise<ApiResponse<AssignmentSummary[]>> {
+    try {
+      return await this.apiClient.get<AssignmentSummary[]>(
+        `/v2/courses/${courseId}/assignments/summaries`
+      );
+    } catch (error) {
+      console.error(`Failed to get assignment summaries for courseId: ${courseId}`, error);
+      throw error;
+    }
+  }
+
   async getAssignmentForEdit(assignmentId: number): Promise<ApiResponse<AssignmentForEditResponse>> {
     return this.apiClient.get<AssignmentForEditResponse>(`/v2/assignments/${assignmentId}/edit`);
   }

@@ -1,0 +1,282 @@
+// Course detail, view mode — see docs/design/13-course-detail-view.png.
+// Week outline on the left at a fixed width, content cards filling the rest.
+
+.layout {
+    display: grid;
+    grid-template-columns: 400px minmax(0, 1fr);
+    gap: 2.5rem;
+    align-items: start;
+    padding: 2rem 2.5rem;
+    height: 100%;
+    overflow-y: auto;
+}
+
+@media (max-width: 1100px) {
+    .layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1.5rem;
+    }
+}
+
+.status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 4rem 1rem;
+    color: t.$text-muted;
+}
+
+.retry {
+    padding: 0.55rem 1.2rem;
+    border-radius: t.$radius-control;
+    background-color: t.$brand;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+// ------------------------------------------------------------ left column
+
+.outline {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.courseTitle {
+    font-size: t.$fs-h1;
+    font-weight: t.$fw-extrabold;
+    color: t.$text;
+    line-height: 1.2;
+}
+
+.divider {
+    border-top: 1px dashed t.$border;
+}
+
+.outlineEmpty {
+    font-size: t.$fs-label;
+    color: t.$text-muted;
+}
+
+.weekList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.weekCard {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+    width: 100%;
+    text-align: left;
+    padding: 1rem 1.15rem;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-card;
+    background-color: t.$subcard-bg;
+    cursor: pointer;
+    transition: border-color 0.15s, background-color 0.15s;
+
+    &:hover {
+        border-color: t.$brand;
+    }
+}
+
+.weekCardActive {
+    border-color: t.$brand;
+    background-color: t.$card-bg;
+}
+
+.weekLabel {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: t.$fs-label;
+    color: t.$text-muted;
+}
+
+.draftTag {
+    font-size: t.$fs-caption;
+    padding: 0.05rem 0.45rem;
+    border-radius: t.$radius-pill;
+    background-color: t.$neutral-fill;
+    color: t.$text-muted;
+}
+
+.weekTitle {
+    font-size: t.$fs-item-sub;
+    color: t.$text;
+}
+
+// ----------------------------------------------------------- right column
+
+.cards {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-width: 0;
+}
+
+.card {
+    background-color: t.$card-bg;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-card-lg;
+    padding: 1.5rem;
+}
+
+.cardLabel {
+    font-size: t.$fs-label;
+    color: t.$text-muted;
+    margin-bottom: 0.75rem;
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.cardTitle {
+    font-size: t.$fs-card-title;
+    font-weight: t.$fw-bold;
+    color: t.$text;
+}
+
+.cardEmpty {
+    font-size: t.$fs-label;
+    color: t.$text-muted;
+}
+
+.contentTitle {
+    font-size: t.$fs-doc-title;
+    font-weight: t.$fw-bold;
+    color: t.$text;
+    line-height: 1.25;
+    margin-bottom: 1rem;
+}
+
+.materialList,
+.rowList {
+    display: flex;
+    flex-direction: column;
+}
+
+.material,
+.row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0;
+    min-width: 0;
+
+    & + & {
+        border-top: 1px solid t.$border;
+    }
+}
+
+.materialIcon {
+    flex: 0 0 auto;
+    min-width: 2.6rem;
+    text-align: center;
+    font-size: 0.65rem;
+    font-weight: t.$fw-semibold;
+    padding: 0.25rem 0.4rem;
+    border-radius: t.$radius-control-sm;
+    background-color: t.$subcard-bg;
+    color: t.$text-muted;
+}
+
+.materialName,
+.rowTitle {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: t.$fs-label;
+    color: t.$text;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.materialMeta,
+.rowMeta {
+    flex: 0 0 auto;
+    font-size: t.$fs-caption;
+    color: t.$text-muted;
+    white-space: nowrap;
+}
+
+.groupBadge {
+    flex: 0 0 auto;
+    font-size: 0.75rem;
+    font-weight: t.$fw-semibold;
+    color: #ffffff;
+    background-color: t.$type-green;
+    padding: 0.15rem 0.6rem;
+    border-radius: t.$radius-pill;
+}
+
+// -------------------------------------------------------------- schedule
+
+.gridScroll {
+    overflow-x: auto;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 4rem repeat(5, minmax(6.5rem, 1fr));
+    min-width: 38rem;
+}
+
+.dayHeader {
+    padding: 0.5rem;
+    text-align: center;
+    font-size: t.$fs-caption;
+    color: t.$text-muted;
+    border-bottom: 1px solid t.$border;
+}
+
+.hourLabel {
+    padding: 0.5rem;
+    font-size: t.$fs-caption;
+    color: t.$text-muted;
+    text-align: right;
+}
+
+.cell {
+    min-height: 3rem;
+    padding: 0.2rem;
+    border-top: 1px dashed t.$border;
+    border-left: 1px solid t.$border;
+
+    &:last-child {
+        border-right: 1px solid t.$border;
+    }
+}
+
+.chip {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    height: 100%;
+    padding: 0.35rem 0.5rem;
+    border-radius: t.$radius-control-sm;
+}
+
+.chipType {
+    font-size: 0.7rem;
+    font-weight: t.$fw-semibold;
+    color: t.$text;
+}
+
+.chipRoom {
+    font-size: t.$fs-caption;
+    color: t.$text-muted;
+}
+
+.chipCyan { background-color: t.$type-cyan-subtle; }
+.chipGreen { background-color: t.$type-green-subtle; }
+.chipOrange { background-color: t.$type-orange-subtle; }

@@ -19,7 +19,10 @@
         "moreActions": "More actions",
         "archive": "Archive Course",
         "archiving": "Archiving…",
-        "archiveFailed": "Couldn't archive this course. Please try again."
+        "archiveFailed": "Couldn't archive this course. Please try again.",
+        "weeksSingular": "WEEK",
+        "weeksPlural": "WEEKS",
+        "deleteCourse": "Delete Course"
     },
     "days": {
         "monday": "Monday",
@@ -47,7 +50,8 @@
         "filterByLabel": "Filter by label:",
         "filterAll": "All",
         "searchAssignmentsPlaceholder": "Search assignments by name...",
-        "untitledPagePlaceholder": "Untitled page"
+        "untitledPagePlaceholder": "Untitled page",
+        "publishUnavailable": "Publishing is done per week, not for the whole course yet."
     },
     "form": {
         "titleLabel": "Course title",
@@ -57,19 +61,6 @@
         "endDateLabel": "End date",
         "createButton": "Create course",
         "updateButton": "Update course"
-    },
-    "card": {
-        "instructorLabel": "Instructor",
-        "weeksSingular": "WEEK",
-        "weeksPlural": "WEEKS",
-        "classTimeHeader": "Class time",
-        "classroomHeader": "Class room",
-        "viewDetails": "View Details",
-        "shareCourse": "Share Course",
-        "deleteCourse": "Delete Course",
-        "deleteConfirm": "Do you want to delete \"{{title}}\"?",
-        "deleteFailed": "Failed to delete course.",
-        "deleteSuccess": "Course deleted successfully."
     },
     "downloads": {
         "sectionTitleAll": "All Course Contents Download",

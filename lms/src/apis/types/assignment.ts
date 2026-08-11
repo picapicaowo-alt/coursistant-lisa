@@ -101,3 +101,26 @@ export interface UpdateSubmissionReviewRequest {
   grade?: number;
   teacherComment?: string;
 }
+/**
+ * A list card for an assignment —
+ * `GET /v2/courses/{courseId}/assignments/summaries`.
+ *
+ * Any course member can call it. Students receive Published assignments only
+ * and see their own `submissionStatus`; staff see drafts too and get no
+ * status, since there is no single caller status to report.
+ *
+ * Assignments belong to the course, not to a week: nothing here references
+ * one, and the list is ordered by due date.
+ */
+export interface AssignmentSummary {
+  id: number;
+  title: string;
+  /** UTC instant. */
+  dueAtUtc: string;
+  /** The same instant as tenant wall-clock time. Display only. */
+  dueAtLocal: string;
+  timezone: string;
+  submissionType: 'Individual' | 'Group';
+  /** Student callers only; omitted for staff. */
+  submissionStatus?: 'NotSubmitted' | 'Submitted' | 'SubmittedLate' | 'NotSubmittedClosed';
+}
