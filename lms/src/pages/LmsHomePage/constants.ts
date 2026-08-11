@@ -1,4 +1,4 @@
-import {WidgetId, WidgetLayoutConfig} from "@/pages/LmsHomePage/types";
+import {WidgetInstance, WidgetLayoutConfig, WidgetType} from "@/pages/LmsHomePage/types";
 
 export const SCREEN_BREAKPOINTS = {
   SMALL: 540,
@@ -35,7 +35,7 @@ export const SCREEN_BREAKPOINTS = {
 const CARD_H = 9;
 const STACK_H = CARD_H * 3;
 
-export const WIDGET_CONFIGS: Record<WidgetId, WidgetLayoutConfig> = {
+export const WIDGET_CONFIGS: Record<WidgetType, WidgetLayoutConfig> = {
   // Left rail, full height of the middle stack.
   chat: {
     id: 'chat',
@@ -104,11 +104,72 @@ export const WIDGET_CONFIGS: Record<WidgetId, WidgetLayoutConfig> = {
  * it has left room — the middle stack has to be placed top to bottom, and the
  * right rail after the column it sits beside.
  */
-export const WIDGET_ORDER: WidgetId[] = [
+export const WIDGET_ORDER: WidgetType[] = [
   'chat',
   'course',
   'assignments',
   'learning-schedule',
   'posts',
   'skill-graph',
+];
+
+/**
+ * The canvas as it looks before the user rearranges anything.
+ *
+ * Default instances take their type as their id so the stored layout stays
+ * readable and the default arrangement matches WIDGET_CONFIGS one to one.
+ * Copies made later get generated ids instead.
+ */
+export const DEFAULT_WIDGET_INSTANCES: WidgetInstance[] = WIDGET_ORDER.map((type) => ({
+  id: type,
+  type,
+}));
+
+/**
+ * Widget kinds the Add Widget dialog offers.
+ *
+ * The design shows four tiles — Course, Assignments, Posts and Content. The
+ * first three map onto widgets that exist; Content does not exist as a widget
+ * and has no endpoint behind it, so it is listed as unavailable rather than
+ * quietly dropped, which would make the dialog look different from the design
+ * for no visible reason.
+ */
+export interface AddWidgetOption {
+  type: WidgetType | null;
+  label: string;
+  description: string;
+  /** Tailwind background for the tile icon, matching the design's swatches. */
+  iconClass: string;
+  available: boolean;
+}
+
+export const ADD_WIDGET_OPTIONS: AddWidgetOption[] = [
+  {
+    type: 'course',
+    label: 'Course',
+    description: 'Courses you are enrolled in.',
+    iconClass: 'bg-[#22CCEE]',
+    available: true,
+  },
+  {
+    type: 'assignments',
+    label: 'Assignments',
+    description: 'Upcoming work and deadlines.',
+    iconClass: 'bg-[#22C55E]',
+    available: true,
+  },
+  {
+    type: 'posts',
+    label: 'Posts',
+    description: 'Recent course announcements.',
+    iconClass: 'bg-[#F97316]',
+    available: true,
+  },
+  {
+    type: null,
+    label: 'Content',
+    description: 'Not available yet.',
+    iconClass: 'bg-[#E879F9]',
+    available: false,
+  },
 ];

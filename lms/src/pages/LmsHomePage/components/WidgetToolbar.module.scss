@@ -1,0 +1,82 @@
+.toolbar {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.4rem 0.6rem;
+    background-color: t.$card-bg;
+    border-radius: t.$radius-card;
+    box-shadow: t.$shadow-card;
+}
+
+.button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: t.$radius-control-sm;
+    color: t.$text-muted;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+
+    &:hover {
+        background-color: t.$subcard-bg;
+        color: t.$text;
+    }
+
+    &[aria-pressed="true"] {
+        background-color: t.$brand-subtle;
+        color: t.$brand;
+    }
+}
+
+.divider {
+    width: 1px;
+    height: 1.1rem;
+    background-color: t.$border;
+    margin: 0 0.15rem;
+}
+
+.menu {
+    position: absolute;
+    top: calc(100% + 0.4rem);
+    right: 0;
+    z-index: 20;
+    min-width: 12rem;
+    padding: 0.4rem;
+    display: flex;
+    flex-direction: column;
+    background-color: t.$card-bg;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-control;
+    box-shadow: t.$shadow-card;
+}
+
+.menuItem {
+    text-align: left;
+    padding: 0.5rem 0.7rem;
+    border-radius: t.$radius-control-sm;
+    font-size: t.$fs-caption;
+    color: t.$text;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        background-color: t.$subcard-bg;
+    }
+
+    &:disabled {
+        color: t.$text-placeholder;
+        cursor: not-allowed;
+    }
+}
+
+.danger:not(:disabled) {
+    color: t.$danger;
+}
+
+.menuDivider {
+    height: 1px;
+    background-color: t.$border;
+    margin: 0.3rem 0.2rem;
+}

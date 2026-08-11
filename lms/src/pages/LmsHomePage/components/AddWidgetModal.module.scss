@@ -1,0 +1,153 @@
+.backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    // Blurred, not dimmed — see design spec section 1.
+    backdrop-filter: blur(t.$modal-backdrop-blur);
+    -webkit-backdrop-filter: blur(t.$modal-backdrop-blur);
+    background-color: rgba(t.$text, 0.08);
+}
+
+.modal {
+    width: 100%;
+    max-width: 44rem;
+    padding: 1.75rem;
+    background-color: t.$card-bg;
+    border-radius: t.$radius-modal;
+    box-shadow: 0 12px 48px rgba(t.$text, 0.14);
+}
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.title {
+    font-size: t.$fs-modal-title;
+    font-weight: t.$fw-bold;
+    color: t.$text;
+}
+
+.close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: t.$radius-control-sm;
+    color: t.$text-muted;
+    cursor: pointer;
+
+    &:hover {
+        background-color: t.$subcard-bg;
+        color: t.$text;
+    }
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+@media (max-width: 640px) {
+    .grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.tile {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+        "icon label"
+        "icon description";
+    column-gap: 0.85rem;
+    row-gap: 0.35rem;
+    align-items: center;
+    text-align: left;
+    padding: 1.1rem;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-card;
+    background-color: t.$card-bg;
+    cursor: pointer;
+    transition: border-color 0.15s, background-color 0.15s;
+
+    &:hover:not(:disabled) {
+        border-color: t.$brand;
+    }
+}
+
+.tileSelected {
+    background-color: t.$neutral-fill;
+    border-color: t.$brand;
+}
+
+.tileDisabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.tileIcon {
+    grid-area: icon;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: t.$radius-control;
+}
+
+.tileLabel {
+    grid-area: label;
+    align-self: end;
+    font-size: t.$fs-item-title;
+    font-weight: t.$fw-semibold;
+    color: t.$text;
+}
+
+.tileDescription {
+    grid-area: description;
+    align-self: start;
+    font-size: t.$fs-caption;
+    color: t.$text-muted;
+}
+
+.footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.75rem;
+}
+
+.cancel,
+.create {
+    min-width: 6.5rem;
+    padding: 0.6rem 1.4rem;
+    border-radius: t.$radius-control;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.cancel {
+    background-color: t.$card-bg;
+    border: 1px solid t.$border;
+    color: t.$text;
+
+    &:hover {
+        background-color: t.$subcard-bg;
+    }
+}
+
+.create {
+    background-color: t.$brand;
+    color: #ffffff;
+
+    &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+}
