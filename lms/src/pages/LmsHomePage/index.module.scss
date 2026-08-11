@@ -8,30 +8,3 @@
     overflow-y: auto;
     overflow-x: hidden;
 }
-// Row above the canvas. The design centres the toolbar over the widget grid
-// and pins Add Widget to the right edge.
-.canvas-bar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    padding: 0 0 0.75rem;
-    flex: 0 0 auto;
-}
-
-.add-widget {
-    margin-left: auto;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.7rem 1.3rem;
-    border-radius: t.$radius-control;
-    background-color: t.$brand;
-    color: #ffffff;
-    font-weight: 500;
-    cursor: pointer;
-
-    &:hover {
-        filter: brightness(1.06);
-    }
-}

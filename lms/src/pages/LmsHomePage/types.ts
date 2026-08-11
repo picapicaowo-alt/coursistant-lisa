@@ -29,9 +29,7 @@ export interface GridLayoutItem {
 }
 
 export interface WidgetConfig {
-  /** The instance id. Doubles as the grid item key. */
   key: string;
-  type: WidgetType;
   component: React.ReactNode;
   ref?: React.RefObject<HTMLDivElement>;
 }
@@ -39,8 +37,6 @@ export interface WidgetConfig {
 export interface LayoutOptions {
   screenSize: ScreenSizeInfo;
   containerWidth: number;
-  /** Widgets to place. Defaults to the standard set. */
-  instances?: WidgetInstance[];
 }
 
 /**
@@ -61,24 +57,7 @@ export interface DashboardCourse {
   courseRole: 'Student' | 'TA' | 'Instructor';
 }
 
-/** The kind of widget. Determines what gets rendered and its default size. */
-export type WidgetType = 'chat' | 'course' | 'assignments' | 'learning-schedule' | 'posts' | 'skill-graph';
-
-/** @deprecated Use {@link WidgetType}. Kept so older imports keep compiling. */
-export type WidgetId = WidgetType;
-
-/**
- * A widget placed on the canvas.
- *
- * Type and identity are separate because the canvas can hold two of the same
- * kind — duplicating a widget is one of the toolbar actions — so the grid keys
- * off `id` while rendering keys off `type`. For the widgets present by
- * default, `id` equals `type`.
- */
-export interface WidgetInstance {
-  id: string;
-  type: WidgetType;
-}
+export type WidgetId = 'chat' | 'course' | 'assignments' | 'learning-schedule' | 'posts' | 'skill-graph';
 
 export interface WidgetLayoutConfig {
   default: { w: number; h: number };
@@ -86,7 +65,7 @@ export interface WidgetLayoutConfig {
   medium?: { w: number; h: number };
   large?: { w: number; h: number };
   constraints?: GridConstraints;
-  id: WidgetType;
+  id: WidgetId;
   defaultPosition?: { x: number; y: number };
 }
 

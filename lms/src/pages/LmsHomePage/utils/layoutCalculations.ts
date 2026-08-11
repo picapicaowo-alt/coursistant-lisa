@@ -1,4 +1,4 @@
-﻿import {DEFAULT_WIDGET_INSTANCES, SCREEN_BREAKPOINTS, WIDGET_CONFIGS} from '../constants';
+﻿import {SCREEN_BREAKPOINTS, WIDGET_CONFIGS, WIDGET_ORDER} from '../constants';
 import {GridConstraints, GridLayoutItem, LayoutOptions, OccupiedSpace, ScreenSizeInfo} from "@/pages/LmsHomePage/types";
 
 export const getScreenSize = (width: number): ScreenSizeInfo => {
@@ -46,85 +46,74 @@ export const getWidgetLayoutInfo = (
   };
 };
 
-/**
- * Builds the default arrangement for a set of widgets.
- *
- * Placement is sequential: each widget claims its configured slot if that slot
- * is still free, and otherwise falls into the first gap that fits. Copies of
- * an existing widget therefore land beside the original rather than on top of
- * it, since the original has already taken the configured slot.
- */
 export const calculateLayout = ({
                                   screenSize,
                                   containerWidth,
-                                  instances = DEFAULT_WIDGET_INSTANCES,
                                 }: LayoutOptions): GridLayoutItem[] => {
   const columns = getColumns(containerWidth);
   const layout: GridLayoutItem[] = [];
   const occupiedSpaces: OccupiedSpace[] = [];
-
+  
   if (screenSize.isSmall) {
     let currentY = 0;
-
-    instances.forEach(({id, type}) => {
-      const layoutInfo = getWidgetLayoutInfo(type, screenSize, columns);
-
+    
+    WIDGET_ORDER.forEach(widgetId => {
+      const layoutInfo = getWidgetLayoutInfo(widgetId, screenSize, columns);
+      
       layout.push({
-        i: id,
+        i: widgetId,
         x: 0,
         y: currentY,
         w: columns,
         h: layoutInfo.h,
         ...layoutInfo.constraints
       });
-
+      
       currentY += layoutInfo.h;
     });
-
-    return layout;
-  }
-
-  instances.forEach(({id, type}) => {
-    const layoutInfo = getWidgetLayoutInfo(type, screenSize, columns);
-    let x = 0;
-    let y = 0;
-
-    if (layoutInfo.x !== undefined && layoutInfo.y !== undefined) {
-      if (isPositionAvailable(layoutInfo.x, layoutInfo.y, layoutInfo.w, layoutInfo.h, occupiedSpaces, columns)) {
-        x = layoutInfo.x;
-        y = layoutInfo.y;
+  } else {
+    WIDGET_ORDER.forEach(widgetId => {
+      const layoutInfo = getWidgetLayoutInfo(widgetId, screenSize, columns);
+      let x = 0;
+      let y = 0;
+      
+      if (layoutInfo.x !== undefined && layoutInfo.y !== undefined) {
+        if (isPositionAvailable(layoutInfo.x, layoutInfo.y, layoutInfo.w, layoutInfo.h, occupiedSpaces, columns)) {
+          x = layoutInfo.x;
+          y = layoutInfo.y;
+        }
       }
-    }
-
-    if (x === 0 && y === 0) {
-      const position = findFirstAvailablePosition(layoutInfo.w, layoutInfo.h, occupiedSpaces, columns);
-      x = position.x;
-      y = position.y;
-    }
-
-    const optimizedPosition = optimizePosition(x, y, layoutInfo.w, layoutInfo.h, occupiedSpaces);
-    x = optimizedPosition.x;
-    y = optimizedPosition.y;
-
-    layout.push({
-      i: id,
-      x,
-      y,
-      w: layoutInfo.w,
-      h: layoutInfo.h,
-      ...layoutInfo.constraints,
+      
+      if (x === 0 && y === 0) {
+        const position = findFirstAvailablePosition(layoutInfo.w, layoutInfo.h, occupiedSpaces, columns);
+        x = position.x;
+        y = position.y;
+      }
+      
+      const optimizedPosition = optimizePosition(x, y, layoutInfo.w, layoutInfo.h, occupiedSpaces);
+      x = optimizedPosition.x;
+      y = optimizedPosition.y;
+      
+      layout.push({
+        i: widgetId,
+        x,
+        y,
+        w: layoutInfo.w,
+        h: layoutInfo.h,
+        ...layoutInfo.constraints,
+      });
+      
+      occupiedSpaces.push({
+        x,
+        y,
+        w: layoutInfo.w,
+        h: layoutInfo.h,
+        right: x + layoutInfo.w,
+        bottom: y + layoutInfo.h,
+      });
     });
-
-    occupiedSpaces.push({
-      x,
-      y,
-      w: layoutInfo.w,
-      h: layoutInfo.h,
-      right: x + layoutInfo.w,
-      bottom: y + layoutInfo.h,
-    });
-  });
-
+  }
+  
   return layout;
 };
 
