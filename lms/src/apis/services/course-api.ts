@@ -1,10 +1,11 @@
 ﻿import {
   ApiResponse,
   CourseBrowseParams,
-  CourseDetailDTO,
   CoursePageResponse,
+  CourseResponse,
   CourseSession,
   CourseSummary,
+  CourseWeek,
   CreateAssignmentRequest,
   idempotent,
   CreateCourseRequest,
@@ -83,13 +84,34 @@ export class CourseApiService {
     }
   }
 
-  async getCourseDetail(courseId: number): Promise<ApiResponse<CourseDetailDTO>> {
+  /**
+   * A single course.
+   *
+   * Not `/detail`: that path does not exist and the server answers it with a
+   * 500. There is no aggregate endpoint either — a course's weeks, materials,
+   * assignments and members are each fetched separately.
+   *
+   * A course the caller cannot see returns 404 COURSE_NOT_FOUND rather than a
+   * permission error, so membership cannot be probed by watching status codes.
+   */
+  async getCourse(courseId: number): Promise<ApiResponse<CourseResponse>> {
     try {
-      return await this.apiClient.get<CourseDetailDTO>(
-        `/v2/courses/${courseId}/detail`
-      );
+      return await this.apiClient.get<CourseResponse>(`/v2/courses/${courseId}`);
     } catch (error) {
-      console.error(`Failed to get course detail for courseId: ${courseId}`, error);
+      console.error(`Failed to get course: ${courseId}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * The course outline. Materials come embedded in each week.
+   * Students receive only Published weeks; staff see drafts too.
+   */
+  async getCourseWeeks(courseId: number): Promise<ApiResponse<CourseWeek[]>> {
+    try {
+      return await this.apiClient.get<CourseWeek[]>(`/v2/courses/${courseId}/weeks`);
+    } catch (error) {
+      console.error(`Failed to get weeks for courseId: ${courseId}`, error);
       throw error;
     }
   }

@@ -1,14 +1,27 @@
 ﻿import {BaseEntity, EntityConfig} from "@/types/core/base";
 
+/**
+ * A course in the workspace store.
+ *
+ * Optional fields have no source in the current API: `school`, `semester` and
+ * `teacherPhone` are left over from the previous backend, and instructor
+ * contact details only arrive when the course carries a primary instructor.
+ * A course does have term dates and a location, which the old shape lacked.
+ * Keeping the absent ones optional stops the UI from printing empty strings
+ * as though the values were blank rather than unavailable.
+ */
 export interface CourseEntity extends BaseEntity {
   courseCode: string;
   name: string;
   description: string;
-  school: string;
-  semester: string;
-  teacherName: string;
-  teacherPhone: string;
-  teacherEmail: string;
+  termStartDate?: string;
+  termEndDate?: string;
+  location?: string | null;
+  teacherName?: string;
+  teacherEmail?: string;
+  school?: string;
+  semester?: string;
+  teacherPhone?: string;
 }
 
 export interface CourseUnitEntity extends BaseEntity {

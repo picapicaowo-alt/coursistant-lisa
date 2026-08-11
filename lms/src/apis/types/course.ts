@@ -29,6 +29,83 @@ export interface CoursePageResponse {
   total: number;
 }
 
+/**
+ * A single course — `GET /v2/courses/{id}`.
+ *
+ * Identity and lifecycle only. Weeks, materials, assignments and members each
+ * live on their own endpoint; there is no aggregate that returns a course with
+ * its contents.
+ *
+ * Several fields are aliased pairs carrying the same value (`id`/`courseId`,
+ * `title`/`name`, `state`/`status`). Prefer the first of each.
+ */
+export interface CourseResponse {
+  id: number;
+  courseId: number;
+  tenantId: number;
+  courseCode: string;
+  title: string;
+  name: string;
+  termStartDate: string;
+  termEndDate: string;
+  description: string | null;
+  location: string | null;
+  instructorId: number | null;
+  primaryInstructor: {
+    userId: number;
+    name?: string;
+    email?: string;
+  } | null;
+  state: 'Active' | 'Archived';
+  status: 'Active' | 'Archived';
+  archivedAt: string | null;
+  /** How long staff can still grade after archiving. */
+  gradingGraceEndsAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type MaterialType = 'FILE' | 'LINK';
+
+/** A file or link inside a week. */
+export interface CourseMaterial {
+  id: number;
+  weekId: number;
+  courseId: number;
+  materialType: MaterialType;
+  displayName: string;
+  /** Zero-based, ascending. */
+  orderPosition: number;
+  originalFilename: string | null;
+  contentType: string | null;
+  extension: string | null;
+  sizeBytes: number | null;
+  linkUrl: string | null;
+  uploadedBy: number;
+  previewAvailable: boolean;
+  /** Same-origin API path. For a LINK this may redirect off-site. */
+  downloadUrl: string;
+  previewUrl?: string | null;
+}
+
+/**
+ * A week of course content — `GET /v2/courses/{courseId}/weeks`.
+ *
+ * Materials are embedded, so listing weeks is enough to render the outline.
+ * Students only ever receive `Published` weeks; drafts are staff-only.
+ */
+export interface CourseWeek {
+  id: number;
+  courseId: number;
+  title: string;
+  /** Zero-based, ascending. */
+  orderPosition: number;
+  state: 'Draft' | 'Published';
+  materials: CourseMaterial[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 /** Day codes used by sessions. */
 export type SessionDayOfWeek = 'MON' | 'TUE' | 'WED' | 'THU' | 'FRI' | 'SAT' | 'SUN';
 
@@ -64,6 +141,15 @@ export interface CourseBrowseParams {
   size?: number;
 }
 
+/**
+ * The course as the workspace store holds it.
+ *
+ * Optional fields have no source in the current API. `school`, `semester` and
+ * `teacherPhone` came from the previous backend and nothing returns them now;
+ * a course instead carries term dates and a location, which is what
+ * `/v2/courses/{id}` actually provides. They stay optional rather than being
+ * filled with empty strings, so a screen can tell "not provided" from "blank".
+ */
 export interface CourseInfo {
   id: number;
   createdAt: Date;
@@ -71,11 +157,14 @@ export interface CourseInfo {
   courseCode: string;
   name: string;
   description: string;
-  school: string;
-  semester: string;
-  teacherName: string;
-  teacherPhone: string;
-  teacherEmail: string;
+  termStartDate?: string;
+  termEndDate?: string;
+  location?: string | null;
+  teacherName?: string;
+  teacherEmail?: string;
+  school?: string;
+  semester?: string;
+  teacherPhone?: string;
 }
 
 export interface CourseUnit {
