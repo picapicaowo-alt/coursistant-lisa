@@ -1,14 +1,15 @@
 import React, {useState} from "react";
 import {useNavigate} from "react-router-dom";
-import {Course} from "@/pages/LmsHomePage/types";
+import {DashboardCourse} from "@/pages/LmsHomePage/types";
 
-const CourseCard: React.FC<Course> = ({
-                                        id,
-                                        instructor,
-                                        title,
-                                        subtitle,
-                                        avatar
-                                      }) => {
+const CourseCard: React.FC<DashboardCourse> = ({
+                                                 id,
+                                                 courseCode,
+                                                 title,
+                                                 instructorName,
+                                                 instructorAvatar,
+                                                 courseRole
+                                               }) => {
   const [isStarred, setIsStarred] = useState(false);
   const handleStarClick = () => {
     setIsStarred(!isStarred);
@@ -20,12 +21,16 @@ const CourseCard: React.FC<Course> = ({
       <div className="flex justify-between items-start">
         <div className="flex gap-3">
           <img
-            src={avatar}
-            alt={instructor}
+            src={instructorAvatar}
+            alt=""
             className="w-10 h-10 rounded-full"
           />
           <div>
-            <div className="font-medium text-[rgba(45,55,72,1)]">{instructor}</div>
+            {/* No name means the payload had only a userId. Leaving the line
+                out beats printing a placeholder that reads like a real name. */}
+            {instructorName && (
+              <div className="font-medium text-[rgba(45,55,72,1)]">{instructorName}</div>
+            )}
             <div className="text-sm text-gray-400">Instructor</div>
           </div>
         </div>
@@ -43,7 +48,10 @@ const CourseCard: React.FC<Course> = ({
       {/* Body */}
       <div className="mt-2">
         <h3 className="text-lg font-medium text-[rgba(45,55,72,1)]">{title}</h3>
-        <p className="text-sm text-[rgba(113,128,150,1)] mt-1">{subtitle}</p>
+        <p className="text-sm text-[rgba(113,128,150,1)] mt-1">
+          {courseCode}
+          {courseRole !== 'Student' && ` · ${courseRole}`}
+        </p>
       </div>
       
       {/* Footer */}

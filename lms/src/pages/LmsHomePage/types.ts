@@ -39,12 +39,22 @@ export interface LayoutOptions {
   containerWidth: number;
 }
 
-export interface Course {
-  id: string;
-  instructor: string;
+/**
+ * A course as the My Course widget renders it, mapped from `MyCourse`.
+ *
+ * The Figma card also shows "8 WEEKS · 95 SKILLS" under the title, but neither
+ * week count nor skill count exists in any dashboard endpoint, so there is
+ * nothing to populate it with. Showing a made-up number would be a false state
+ * (PRIN-03); the card falls back to the course code until an API provides it.
+ */
+export interface DashboardCourse {
+  id: number;
+  courseCode: string;
   title: string;
-  subtitle: string;
-  avatar: string;
+  /** Null when the payload carried only `userId` for the instructor. */
+  instructorName: string | null;
+  instructorAvatar: string;
+  courseRole: 'Student' | 'TA' | 'Instructor';
 }
 
 export type WidgetId = 'chat' | 'course' | 'assignments' | 'learning-schedule' | 'posts' | 'skill-graph';
