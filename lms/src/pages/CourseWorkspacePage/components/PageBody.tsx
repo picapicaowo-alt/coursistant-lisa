@@ -1,4 +1,5 @@
 ﻿import React, {Suspense, useMemo} from "react";
+import {useParams} from "react-router-dom";
 import styles from "./PageBody.module.scss";
 import {ChevronLeft} from "lucide-react";
 import {LoadingOverlay} from "@/components/LoadingOverlay";
@@ -11,16 +12,23 @@ import {CourseDetailView} from "./CourseDetailView";
 import {CourseEditView} from "./CourseEditView";
 
 export const PageBody: React.FC = () => {
+  const {courseId} = useParams();
   const {workspaceMode, closeDetailWorkspace, detailWorkspaceProps} = useCourseWorkspaceStore();
   
   const hideSidebar = useMemo(() => workspaceMode === "detailWorkspace", [workspaceMode]);
   
   const [activeUnitId, setActiveUnitId] = React.useState<number | null>(null);
   
+  // The create screen shares this component but has no course in its path,
+  // and it only switches the store out of "view" in an effect — so on its
+  // first render the mode still says "view". Keying off the route as well
+  // stops that frame from asking for a course that does not exist.
+  const isCourseRoute = Boolean(courseId);
+
   // View and edit are different screens, not two states of one. Rendering the
   // edit shell underneath view mode is what left an empty white panel down the
   // right-hand side of the detail page.
-  if (workspaceMode === "view") {
+  if (isCourseRoute && workspaceMode === "view") {
     return (
       <div className={styles.contentArea}>
         <CourseDetailView/>
@@ -28,7 +36,7 @@ export const PageBody: React.FC = () => {
     );
   }
 
-  if (workspaceMode === "edit") {
+  if (isCourseRoute && workspaceMode === "edit") {
     return (
       <div className={styles.contentArea}>
         <CourseEditView/>

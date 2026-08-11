@@ -17,7 +17,8 @@ import {assignmentApiService} from '@/apis/services/assignment-api';
  * failure there is left to that card rather than failing the page.
  */
 export interface CourseWorkspaceData {
-  courseId: number;
+  /** Null on routes with no course in the path, such as course creation. */
+  courseId: number | null;
   course?: CourseResponse;
   weeks: CourseWeek[];
   sessions: CourseSession[];
@@ -39,31 +40,41 @@ const shared = {
 
 export const useCourseWorkspaceData = (): CourseWorkspaceData => {
   const {courseId} = useParams();
-  if (!courseId) throw new Error('Course id is required');
 
-  const id = parseInt(courseId);
+  // No id means this is not a course route — the create screen shares these
+  // components and has nothing to load yet. Reporting it as an error state
+  // rather than throwing matters: a throw during render unmounts the tree
+  // through the error boundary, which is what made the page appear and then
+  // vanish.
+  const parsed = courseId ? parseInt(courseId, 10) : NaN;
+  const id = Number.isNaN(parsed) ? null : parsed;
+  const enabled = id !== null;
 
   const [course, weeks, sessions, assignments] = useQueries({
     queries: [
       {
         queryKey: ['course', id],
-        queryFn: async () => unwrapData(await courseApiService.getCourse(id), 'getCourse'),
+        queryFn: async () => unwrapData(await courseApiService.getCourse(id!), 'getCourse'),
+        enabled,
         ...shared,
       },
       {
         queryKey: ['course-weeks', id],
-        queryFn: async () => unwrapData(await courseApiService.getCourseWeeks(id), 'getCourseWeeks'),
+        queryFn: async () => unwrapData(await courseApiService.getCourseWeeks(id!), 'getCourseWeeks'),
+        enabled,
         ...shared,
       },
       {
         queryKey: ['course-sessions', id],
-        queryFn: async () => (await courseApiService.getCourseSessions(id)).data ?? [],
+        queryFn: async () => (await courseApiService.getCourseSessions(id!)).data ?? [],
+        enabled,
         ...shared,
       },
       {
         queryKey: ['course-assignments', id],
         queryFn: async () =>
-          (await assignmentApiService.getCourseAssignmentSummaries(id)).data ?? [],
+          (await assignmentApiService.getCourseAssignmentSummaries(id!)).data ?? [],
+        enabled,
         ...shared,
       },
     ],
@@ -75,8 +86,10 @@ export const useCourseWorkspaceData = (): CourseWorkspaceData => {
     weeks: weeks.data ?? [],
     sessions: sessions.data ?? [],
     assignments: assignments.data ?? [],
-    isLoading: course.isPending || weeks.isPending,
-    isError: course.isError || weeks.isError,
+    // A disabled query stays pending forever, so without an id this would
+    // otherwise report a load that never finishes.
+    isLoading: enabled && (course.isPending || weeks.isPending),
+    isError: !enabled || course.isError || weeks.isError,
     sessionsFailed: sessions.isError,
     assignmentsFailed: assignments.isError,
     refetch: () => {

@@ -45,13 +45,21 @@ export const CourseEditView: React.FC = () => {
   };
 
   const renameCourse = useMutation({
-    mutationFn: (title: string) => courseApiService.updateCourse(courseId, {title}),
+    // Declared above the guard that narrows courseId, so it checks again.
+    // Throwing here lands in onError rather than unmounting the page.
+    mutationFn: (title: string) => {
+      if (courseId === null) throw new Error('No course to rename');
+      return courseApiService.updateCourse(courseId, {title});
+    },
     onSuccess: invalidate,
   });
 
   if (isLoading) return <div className={styles.status}>Loading course…</div>;
 
-  if (isError || !course) {
+  // courseId is null only on a route with no course in it, which this screen
+  // is never reached from — isError already covers it, and naming it here
+  // lets the mutations below take a plain number.
+  if (isError || !course || courseId === null) {
     return (
       <div className={styles.status} role="alert">
         <p>This course couldn&apos;t be loaded.</p>
