@@ -6,6 +6,7 @@ import {CoursePreview} from "./components/CoursePreview";
 import {LoadingOverlay} from "@/components/LoadingOverlay";
 import {useSuspenseQuery} from "@tanstack/react-query";
 import {courseApiService} from "@/apis/services/course-api";
+import {unwrapData} from "@/apis";
 import {useRequiredAuth} from "@/contexts/RequiredAuthContext";
 
 const CourseCataloguePage: React.FC = () => {
@@ -60,7 +61,7 @@ const CoursesList: React.FC = () => {
   const {data} = useSuspenseQuery({
     queryKey: ['courses-list', user.id, currentPage],
     queryFn: async () => {
-      return (await courseApiService.getCourseCatalogues()).data;
+      return unwrapData(await courseApiService.getCourseCatalogues(), 'getCourseCatalogues');
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 5 * 60 * 1000,

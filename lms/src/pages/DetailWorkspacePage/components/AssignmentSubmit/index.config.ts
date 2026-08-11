@@ -2,6 +2,7 @@
 import {useAssignmentSubmitStore} from "../../stores/useAssignmentSubmitStore";
 import {AssignmentSubmit} from "./index";
 import {assignmentApiService} from "@/apis/services/assignment-api";
+import {unwrapData} from "@/apis";
 
 export interface StudentAssignmentQuery {
   assignmentId: number;
@@ -13,7 +14,10 @@ export const StudentAssignmentConfig: DetailWorkspaceConfig<"student-assignment"
   store: useAssignmentSubmitStore,
   
   queryFn: (query) => async () => {
-    return (await assignmentApiService.getAssignmentForSubmission(query.assignmentId)).data;
+    return unwrapData(
+      await assignmentApiService.getAssignmentForSubmission(query.assignmentId),
+      'getAssignmentForSubmission'
+    );
   },
   
   queryKey: (query) => {

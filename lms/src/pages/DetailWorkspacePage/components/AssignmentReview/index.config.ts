@@ -2,6 +2,7 @@
 import {DetailWorkspaceConfig} from "../../types";
 import {AssignmentReview} from "./index"
 import {assignmentApiService} from "@/apis/services/assignment-api";
+import {unwrapData} from "@/apis";
 
 export interface AssignmentReviewQuery {
   assignmentId: number;
@@ -13,7 +14,10 @@ export const AssignmentReviewConfig: DetailWorkspaceConfig<"teacher-assignment-r
   store: useAssignmentReviewStore,
   
   queryFn: (query) => async () => {
-    return (await assignmentApiService.getAssignmentForReview(query.assignmentId)).data;
+    return unwrapData(
+      await assignmentApiService.getAssignmentForReview(query.assignmentId),
+      'getAssignmentForReview'
+    );
   },
   
   queryKey: (query) => {

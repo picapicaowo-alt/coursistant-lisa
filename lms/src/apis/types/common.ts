@@ -1,12 +1,41 @@
-﻿export interface ApiResponse<T = any> {
-  code: number;
+﻿/**
+ * The unified response envelope — see docs/api/auth_module-api_en.md 1.4.
+ *
+ * Success and failure share this shape, so `status` is what you branch on;
+ * `code` is a string enum (`"SUCCESS"`, `"INVALID_CREDENTIALS"`, …), not a
+ * number. `data` is genuinely optional: the server serializes NON_NULL, so a
+ * response with nothing to return omits the field entirely.
+ */
+export interface ApiResponse<T = any> {
+  /** HTTP status, mirrored into the body. */
+  status: number;
+  code: string;
   message: string;
-  data: T;
-  timestamp: number;
+  data?: T;
+  /** ISO-8601 instant, e.g. "2026-07-25T01:00:00Z". */
+  timestamp: string;
 }
 
 export interface ApiError {
   code: number;
   message: string;
   details?: Record<string, any>;
+}
+
+/**
+ * Reads `data` off a response, failing loudly when it is not there.
+ *
+ * A 2xx envelope with no `data` where the caller needs one means the contract
+ * was broken, and the one thing we must not do is pass the absence downstream
+ * as an empty result — a missing list is not an empty list, and rendering it
+ * as "nothing here" is the false state PRIN-03 forbids. Throwing puts the
+ * caller's error branch in charge instead.
+ */
+export function unwrapData<T>(response: ApiResponse<T>, context: string): T {
+  if (response.data === undefined || response.data === null) {
+    throw new Error(
+      `${context}: response had no data (status ${response.status}, code ${response.code})`
+    );
+  }
+  return response.data;
 }

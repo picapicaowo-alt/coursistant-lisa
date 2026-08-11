@@ -2,6 +2,7 @@
 import {AssignmentEdit} from "./index";
 import {useAssignmentEditStore} from "../../stores/useAssignmentEditStore";
 import {assignmentApiService} from "@/apis/services/assignment-api";
+import {unwrapData} from "@/apis";
 
 export interface AssignmentEditQuery {
   assignmentId?: number;
@@ -13,7 +14,10 @@ export const AssignmentEditConfig: DetailWorkspaceConfig<"teacher-assignment-edi
   store: useAssignmentEditStore,
   
   queryFn: (query) => async () => {
-    return (await assignmentApiService.getAssignmentForEdit(query.assignmentId)).data;
+    return unwrapData(
+      await assignmentApiService.getAssignmentForEdit(query.assignmentId),
+      'getAssignmentForEdit'
+    );
   },
   
   queryKey: (query) => {
