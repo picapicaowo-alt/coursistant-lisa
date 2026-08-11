@@ -172,3 +172,87 @@ $secondary-color: #718096;
         }
     }
 }
+// Row layout matching the dashboard design: type badge and title on the left,
+// a status dot in the middle, an action button on the right. Kept separate
+// from the older .assignment-body-item-* rules above, which style the due date
+// as a filled pill and do not match the current design.
+.xl-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.35rem 0;
+}
+
+.xl-row-main {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.xl-row-title {
+    font-size: 0.9rem;
+    color: t.$text;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+// Saturated fill with white text, as the content type badges are drawn.
+.xl-type-badge {
+    flex: 0 0 auto;
+    font-size: 0.75rem;
+    font-weight: t.$fw-semibold;
+    color: #ffffff;
+    background-color: t.$type-cyan;
+    padding: 0.15rem 0.6rem;
+    border-radius: t.$radius-pill;
+}
+
+.xl-row-status {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex: 0 0 auto;
+    font-size: 0.85rem;
+    color: t.$text-muted;
+    white-space: nowrap;
+}
+
+.xl-dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: t.$radius-pill;
+    background-color: t.$text-placeholder;
+
+    &--green { background-color: t.$type-green; }
+    &--orange { background-color: t.$type-orange; }
+    &--red { background-color: t.$danger; }
+}
+
+.xl-row-action {
+    flex: 0 0 auto;
+    min-width: 6rem;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.35rem 0.9rem;
+    border-radius: t.$radius-control-sm;
+    background-color: t.$subcard-bg;
+    color: t.$text;
+    cursor: pointer;
+
+    &--primary {
+        background-color: t.$brand;
+        color: #ffffff;
+    }
+}
+
+.xl-row-progress {
+    flex: 0 0 auto;
+    font-size: 0.85rem;
+    color: t.$text-muted;
+    white-space: nowrap;
+}

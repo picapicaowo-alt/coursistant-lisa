@@ -5,19 +5,23 @@ import {AssignmentRow, useDashboardAssignments} from "@/pages/LmsHomePage/hooks/
 import {formatDeadline, isPastDeadline} from "@/utils/datetime";
 import {SubmissionStatus} from "@/apis";
 
-const ALL_COURSES = "__all__";
-
-/** Maps a submission state to the dot color the row already styles for. */
-const STATUS_TONE: Record<SubmissionStatus, "green" | "gray" | "red"> = {
+/**
+ * Dot color per submission state. Green means done, orange means it still
+ * needs the student's attention, red means the window closed without a
+ * submission — that last one is the only unrecoverable state, so it is the
+ * only one that gets the alarming color.
+ */
+const STATUS_TONE: Record<SubmissionStatus, "green" | "orange" | "red"> = {
   Submitted: "green",
-  SubmittedLate: "gray",
-  NotSubmitted: "red",
+  SubmittedLate: "orange",
+  NotSubmitted: "orange",
   NotSubmittedClosed: "red",
 };
 
+/** Wording follows the PRD submission states, not the Figma copy. */
 const STATUS_LABEL: Record<SubmissionStatus, string> = {
   Submitted: "Submitted",
-  SubmittedLate: "Submitted late",
+  SubmittedLate: "Submitted (late)",
   NotSubmitted: "Not submitted",
   NotSubmittedClosed: "Closed - not submitted",
 };
@@ -35,44 +39,52 @@ const STATUS_LABEL: Record<SubmissionStatus, string> = {
 const AssignmentComponent: React.FC = () => {
   const navigate = useNavigate();
   const {rows, isInstructor, isLoading, isError, refetch} = useDashboardAssignments();
-  const [courseFilter, setCourseFilter] = useState<string>(ALL_COURSES);
+  const [pickedCourseId, setPickedCourseId] = useState<number | null>(null);
 
-  // The header dropdown is built from whatever came back, so it can never
-  // offer a course the list has no rows for.
+  // The dropdown is built from whatever came back, so it can never offer a
+  // course the list has no rows for.
   const courses = useMemo(() => {
     const seen = new Map<number, string>();
     rows.forEach((row) => seen.set(row.courseId, row.courseCode));
     return [...seen].map(([id, code]) => ({id, code}));
   }, [rows]);
 
+  // The design scopes this widget to one course at a time rather than
+  // offering an "all courses" view, so fall back to the first one available.
+  const activeCourseId = pickedCourseId ?? courses[0]?.id ?? null;
+  const activeCourse = courses.find((course) => course.id === activeCourseId);
+
   const visibleRows = useMemo(
-    () => courseFilter === ALL_COURSES
-      ? rows
-      : rows.filter((row) => String(row.courseId) === courseFilter),
-    [rows, courseFilter]
+    () => rows.filter((row) => row.courseId === activeCourseId),
+    [rows, activeCourseId]
   );
 
   return (
     <div className="assignment-container">
       <div className="assignment-header">
-        <select
-          className="font-semibold text-[1.2rem] text-primary-color cursor-pointer bg-transparent"
-          value={courseFilter}
-          onChange={(event) => setCourseFilter(event.target.value)}
-          aria-label="Filter by course"
-        >
-          <option value={ALL_COURSES}>{isInstructor ? "Deadlines" : "Assignments"}</option>
-          {courses.map(({id, code}) => (
-            <option key={id} value={String(id)}>{code}</option>
-          ))}
-        </select>
+        {activeCourse ? (
+          <select
+            className="font-semibold text-[1.2rem] text-primary-color cursor-pointer bg-transparent"
+            value={String(activeCourse.id)}
+            onChange={(event) => setPickedCourseId(Number(event.target.value))}
+            aria-label="Course"
+          >
+            {courses.map(({id, code}) => (
+              <option key={id} value={String(id)}>{`[${code}]`}</option>
+            ))}
+          </select>
+        ) : (
+          <h1 className="font-semibold text-[1.2rem] text-primary-color ml-1">
+            {isInstructor ? "Deadlines" : "Assignments"}
+          </h1>
+        )}
 
         <div className="spacer"/>
 
-        {courseFilter !== ALL_COURSES && (
+        {activeCourse && (
           <div
             className="assignment-header-see-all"
-            onClick={() => navigate(`/course/${courseFilter}`)}
+            onClick={() => navigate(`/course/${activeCourse.id}`)}
           >
             <p>See all</p>
             <img src="icons/assignments/arrow-right.png" alt=""/>
@@ -134,56 +146,78 @@ const Body: React.FC<BodyProps> = ({rows, isInstructor, isLoading, isError, refe
   return <>{rows.map((row) => <Row key={row.key} row={row} isInstructor={isInstructor}/>)}</>;
 };
 
+/**
+ * The action a student can take on a row.
+ *
+ * The design also shows Download on some unsubmitted rows and Regrade on a
+ * graded one. Neither is produced here: nothing in the payload says whether an
+ * assignment has a file to download, and Regrade is not a PRD action for
+ * students at all (open-decisions.md Q-4). A closed assignment offers nothing.
+ */
+const studentAction = (status: SubmissionStatus): {label: string; primary: boolean} | null => {
+  switch (status) {
+    case "NotSubmitted":
+      return {label: "Submit", primary: true};
+    case "Submitted":
+    case "SubmittedLate":
+      return {label: "Resubmit", primary: false};
+    case "NotSubmittedClosed":
+      return null;
+  }
+};
+
 const Row: React.FC<{row: AssignmentRow; isInstructor: boolean}> = ({row, isInstructor}) => {
   const overdue = isPastDeadline(row.atLocal, row.timezone);
-  const tone = row.submissionStatus
-    ? STATUS_TONE[row.submissionStatus]
-    : overdue ? "red" : "green";
+  const navigate = useNavigate();
 
-  return (
-    <div className="assignment-body-item">
-      <div className="assignment-body-item-course">
-        <div className="assignment-body-item-course-header">
-          <img src="icons/assignments/ellipse_blue.png" alt=""/>
-          <p>{row.courseCode}</p>
+  if (isInstructor) {
+    return (
+      <div className="xl-row">
+        <div className="xl-row-main">
+          <p className="xl-row-title">{row.title}</p>
         </div>
-        <p>{row.title}</p>
-      </div>
-
-      <div className="assignment-body-item-due-date">
-        <div className="assignment-body-item-due-date-header">
-          <p>Due Date</p>
-        </div>
-        <div className={`assignment-body-item-due-date-date due-${tone}`}>
+        <div className="xl-row-status">
+          <span className={`xl-dot xl-dot--${overdue ? "red" : "green"}`}/>
           {formatDeadline(row.atLocal, row.timezone)}
         </div>
-      </div>
-
-      <div className="assignment-body-item-progress">
-        <div className="assignment-body-item-progress-header">
-          {/* Students get their own state; staff get submission counts. No
-              score is shown to either: grades are not part of this payload,
-              and a student must not see one before it is released. */}
-          <p>
-            {isInstructor && row.progress
-              ? `${row.progress.submitted} / ${row.progress.total}`
-              : row.submissionStatus
-                ? STATUS_LABEL[row.submissionStatus]
-                : ""}
-          </p>
-        </div>
-        {isInstructor && row.progress && row.progress.total > 0 && (
-          <div className="assignment-body-item-progress-bar">
-            <div
-              className="assignment-body-item-progress-bar-fill"
-              style={{
-                width: `${Math.round((row.progress.submitted / row.progress.total) * 100)}%`,
-                backgroundColor: "var(--xl-brand)",
-              }}
-            />
-          </div>
+        {/* Figma lists individual students with Graded / Notify buttons here.
+            No endpoint returns that roster, so this shows the submission
+            progress the API does report. */}
+        {row.progress && (
+          <span className="xl-row-progress">
+            {row.progress.submitted} / {row.progress.total} submitted
+          </span>
         )}
       </div>
+    );
+  }
+
+  const status = row.submissionStatus;
+  const action = status ? studentAction(status) : null;
+
+  return (
+    <div className="xl-row">
+      <div className="xl-row-main">
+        {/* This endpoint only ever returns assignments, so the badge is not a
+            guess — the type is implied by the source. */}
+        <span className="xl-type-badge">Assignments</span>
+        <p className="xl-row-title">{row.title}</p>
+      </div>
+
+      <div className="xl-row-status">
+        <span className={`xl-dot xl-dot--${status ? STATUS_TONE[status] : "orange"}`}/>
+        {status ? STATUS_LABEL[status] : formatDeadline(row.atLocal, row.timezone)}
+      </div>
+
+      {action && (
+        <button
+          type="button"
+          className={`xl-row-action${action.primary ? " xl-row-action--primary" : ""}`}
+          onClick={() => navigate(`/course/${row.courseId}`)}
+        >
+          {action.label}
+        </button>
+      )}
     </div>
   );
 };

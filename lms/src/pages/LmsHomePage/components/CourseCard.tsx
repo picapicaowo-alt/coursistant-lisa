@@ -1,14 +1,14 @@
 import React, {useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {DashboardCourse} from "@/pages/LmsHomePage/types";
+import {formatCourseName} from "@/utils/course";
 
 const CourseCard: React.FC<DashboardCourse> = ({
                                                  id,
                                                  courseCode,
                                                  title,
                                                  instructorName,
-                                                 instructorAvatar,
-                                                 courseRole
+                                                 instructorAvatar
                                                }) => {
   const [isStarred, setIsStarred] = useState(false);
   const handleStarClick = () => {
@@ -46,12 +46,12 @@ const CourseCard: React.FC<DashboardCourse> = ({
       </div>
       
       {/* Body */}
+      {/* Title only. The card has no subtitle in the design — the course code
+          is part of the name, and there is no second line under it. */}
       <div className="mt-2">
-        <h3 className="text-lg font-medium text-[rgba(45,55,72,1)]">{title}</h3>
-        <p className="text-sm text-[rgba(113,128,150,1)] mt-1">
-          {courseCode}
-          {courseRole !== 'Student' && ` · ${courseRole}`}
-        </p>
+        <h3 className="text-lg font-medium text-[rgba(45,55,72,1)]">
+          {formatCourseName(courseCode, title)}
+        </h3>
       </div>
       
       {/* Footer */}
