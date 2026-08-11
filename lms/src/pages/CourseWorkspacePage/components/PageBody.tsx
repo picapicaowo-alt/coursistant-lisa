@@ -8,6 +8,7 @@ import {CourseUnitPanel} from "./CourseUnitPanel";
 import {useCourseWorkspaceStore} from "../stores/useCourseWorkspaceStore";
 import {DetailWorkspacePage} from "@/pages/DetailWorkspacePage";
 import {CourseDetailView} from "./CourseDetailView";
+import {CourseEditView} from "./CourseEditView";
 
 export const PageBody: React.FC = () => {
   const {workspaceMode, closeDetailWorkspace, detailWorkspaceProps} = useCourseWorkspaceStore();
@@ -16,30 +17,40 @@ export const PageBody: React.FC = () => {
   
   const [activeUnitId, setActiveUnitId] = React.useState<number | null>(null);
   
+  // View and edit are different screens, not two states of one. Rendering the
+  // edit shell underneath view mode is what left an empty white panel down the
+  // right-hand side of the detail page.
+  if (workspaceMode === "view") {
+    return (
+      <div className={styles.contentArea}>
+        <CourseDetailView/>
+      </div>
+    );
+  }
+
+  if (workspaceMode === "edit") {
+    return (
+      <div className={styles.contentArea}>
+        <CourseEditView/>
+      </div>
+    );
+  }
+
   return (
     <div className={`${styles.contentArea} ${hideSidebar ? styles.withHiddenSidebar : ''}`}>
-      {/* View mode is its own screen: the design shows the week outline beside
-          a stack of content cards, not a panel that swaps with the outline.
-          Edit mode keeps the existing two-panel arrangement. */}
-      {workspaceMode === "view" && !hideSidebar && <CourseDetailView/>}
-
-      {workspaceMode !== "view" && (
-        <div className={`${styles.sidebar} ${hideSidebar ? styles.hidden : ''}`}>
-          <CourseUnitsManager activeUnitId={activeUnitId} setActiveUnitId={setActiveUnitId}/>
-        </div>
-      )}
+      <div className={`${styles.sidebar} ${hideSidebar ? styles.hidden : ''}`}>
+        <CourseUnitsManager activeUnitId={activeUnitId} setActiveUnitId={setActiveUnitId}/>
+      </div>
 
       <div className={styles.rightColumn}>
         <div className={`${styles.panelContainer} ${hideSidebar ? styles.withHiddenSidebar : ''}`}>
-          {workspaceMode !== "view" && (
-            <div className={`${styles.panel} ${hideSidebar ? styles.hidden : styles.visible}`}>
-              {
-                activeUnitId === null ?
-                  <CourseInfoPanel/> :
-                  <CourseUnitPanel activeUnitId={activeUnitId}/>
-              }
-            </div>
-          )}
+          <div className={`${styles.panel} ${hideSidebar ? styles.hidden : styles.visible}`}>
+            {
+              activeUnitId === null ?
+                <CourseInfoPanel/> :
+                <CourseUnitPanel activeUnitId={activeUnitId}/>
+            }
+          </div>
 
           <div className={`${styles.panel} ${hideSidebar ? styles.visible : styles.hidden}`}>
             <div className={styles.detailWorkspace}>

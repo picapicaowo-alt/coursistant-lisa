@@ -6,10 +6,7 @@
   CourseSession,
   CourseSummary,
   CourseWeek,
-  CreateAssignmentRequest,
   idempotent,
-  CreateCourseRequest,
-  CreateCourseUnitRequest,
   UpdateCourseRequest,
   V2ApiClient
 } from '@/apis';
@@ -116,102 +113,129 @@ export class CourseApiService {
     }
   }
   
-  async createCourse(
-    request: CreateCourseRequest
-  ): Promise<ApiResponse<number>> {
-    try {
-      return await this.apiClient.post<number>(
-        '/v2/courses/new',
-        request
-      );
-    } catch (error) {
-      console.error('Failed to create course', error);
-      throw error;
-    }
-  }
-  
-  async createCourseUnit(
-    courseId: number,
-    request: CreateCourseUnitRequest
-  ): Promise<ApiResponse<number>> {
-    try {
-      return await this.apiClient.post<number>(
-        `/v2/courses/${courseId}/units/new`,
-        request
-      );
-    } catch (error) {
-      console.error(`Failed to create course unit for courseId: ${courseId}`, error);
-      throw error;
-    }
-  }
-  
-  async createAssignment(
-    courseId: number,
-    courseUnitId: number,
-    request: CreateAssignmentRequest
-  ): Promise<ApiResponse<number>> {
-    try {
-      return await this.apiClient.post<number>(
-        `/v2/courses/${courseId}/units/${courseUnitId}/assignments/new`,
-        request
-      );
-    } catch (error) {
-      console.error(`Failed to create assignment for courseUnitId: ${courseUnitId}`, error);
-      throw error;
-    }
-  }
-  
+  /**
+   * Edits a course. Course Manager only.
+   *
+   * PATCH, not PUT, and partial — send only what changed. Tenant and primary
+   * instructor are rejected here; reassigning the instructor is an admin-only
+   * call of its own. Editing an archived course fails with COURSE_ARCHIVED.
+   */
   async updateCourse(
     courseId: number,
     request: UpdateCourseRequest
-  ): Promise<ApiResponse<number>> {
+  ): Promise<ApiResponse<CourseResponse>> {
     try {
-      return await this.apiClient.post<number>(
-        `/v2/courses/${courseId}/update`,
-        request
+      return await this.apiClient.patch<CourseResponse>(
+        `/v2/courses/${courseId}`,
+        request,
+        idempotent()
       );
     } catch (error) {
       console.error(`Failed to update course: ${courseId}`, error);
       throw error;
     }
   }
-  
-  async deleteCourse(courseId: number): Promise<ApiResponse<boolean>> {
+
+  /**
+   * Deletes a course outright.
+   *
+   * Only succeeds on a course with no dependencies and a single instructor
+   * enrolment; anything else returns 409 and must be archived instead. Prefer
+   * archiveCourse — INV-05 requires submissions, attempts and grades to
+   * survive every V1 action.
+   */
+  async deleteCourse(courseId: number): Promise<ApiResponse<void>> {
     try {
-      return await this.apiClient.post<boolean>(
-        `/v2/courses/${courseId}/delete`
-      );
+      return await this.apiClient.delete<void>(`/v2/courses/${courseId}`);
     } catch (error) {
       console.error(`Failed to delete course: ${courseId}`, error);
       throw error;
     }
   }
-  
-  async deleteCourseUnit(
-    courseId: number,
-    courseUnitId: number
-  ): Promise<ApiResponse<boolean>> {
+
+  // ---------------------------------------------------------------- weeks
+  //
+  // Weeks are the course outline. All writes are Course Manager only and fail
+  // with COURSE_ARCHIVED once the course is archived. A new week starts as a
+  // Draft and stays invisible to students until it is published.
+
+  async createWeek(courseId: number, title: string): Promise<ApiResponse<CourseWeek>> {
     try {
-      return await this.apiClient.post<boolean>(
-        `/v2/courses/${courseId}/units/${courseUnitId}/delete`
+      return await this.apiClient.post<CourseWeek>(
+        `/v2/courses/${courseId}/weeks`,
+        {title},
+        idempotent()
       );
     } catch (error) {
-      console.error(`Failed to delete course unit: ${courseUnitId}`, error);
+      console.error(`Failed to create week for courseId: ${courseId}`, error);
       throw error;
     }
   }
-  
-  async deleteAssignment(
+
+  async renameWeek(
     courseId: number,
-    courseUnitId: number,
-    assignmentId: number
-  ): Promise<ApiResponse<boolean>> {
+    weekId: number,
+    title: string
+  ): Promise<ApiResponse<CourseWeek>> {
     try {
-      return await this.apiClient.post<boolean>(
-        `/v2/courses/${courseId}/units/${courseUnitId}/assignments/${assignmentId}/delete`
+      return await this.apiClient.patch<CourseWeek>(
+        `/v2/courses/${courseId}/weeks/${weekId}`,
+        {title},
+        idempotent()
       );
     } catch (error) {
-      console.error(`Failed to delete assignment: ${assignmentId}`, error);
+      console.error(`Failed to rename week: ${weekId}`, error);
+      throw error;
+    }
+  }
+
+  /** Only an empty week can be deleted; one holding materials is refused. */
+  async deleteWeek(courseId: number, weekId: number): Promise<ApiResponse<void>> {
+    try {
+      return await this.apiClient.delete<void>(`/v2/courses/${courseId}/weeks/${weekId}`);
+    } catch (error) {
+      console.error(`Failed to delete week: ${weekId}`, error);
+      throw error;
+    }
+  }
+
+  /** Makes the week and its materials visible to students. */
+  async publishWeek(courseId: number, weekId: number): Promise<ApiResponse<CourseWeek>> {
+    try {
+      return await this.apiClient.post<CourseWeek>(
+        `/v2/courses/${courseId}/weeks/${weekId}/publish`,
+        undefined,
+        idempotent()
+      );
+    } catch (error) {
+      console.error(`Failed to publish week: ${weekId}`, error);
+      throw error;
+    }
+  }
+
+  async unpublishWeek(courseId: number, weekId: number): Promise<ApiResponse<CourseWeek>> {
+    try {
+      return await this.apiClient.post<CourseWeek>(
+        `/v2/courses/${courseId}/weeks/${weekId}/unpublish`,
+        undefined,
+        idempotent()
+      );
+    } catch (error) {
+      console.error(`Failed to unpublish week: ${weekId}`, error);
+      throw error;
+    }
+  }
+
+  /** `weekIds` must be a full permutation of the course's weeks. */
+  async reorderWeeks(courseId: number, weekIds: number[]): Promise<ApiResponse<CourseWeek[]>> {
+    try {
+      return await this.apiClient.put<CourseWeek[]>(
+        `/v2/courses/${courseId}/weeks/reorder`,
+        {weekIds},
+        idempotent()
+      );
+    } catch (error) {
+      console.error(`Failed to reorder weeks for courseId: ${courseId}`, error);
       throw error;
     }
   }

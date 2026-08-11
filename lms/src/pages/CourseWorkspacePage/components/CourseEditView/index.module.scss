@@ -1,0 +1,120 @@
+// Edit-mode additions. Layout and cards come from CourseDetailView so both
+// modes stay the same shape; only the editing affordances live here.
+
+.inlineEdit {
+    margin-left: 0.5rem;
+    font-size: 1.25rem;
+    color: t.$text-muted;
+    cursor: pointer;
+    vertical-align: middle;
+
+    &:hover {
+        color: t.$brand;
+    }
+}
+
+.titleInput {
+    width: 100%;
+    font-size: t.$fs-h1;
+    font-weight: t.$fw-extrabold;
+    color: t.$text;
+    line-height: 1.2;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid t.$brand;
+    outline: none;
+}
+
+.weekInput {
+    width: 100%;
+    font-size: t.$fs-item-sub;
+    color: t.$text;
+    background: t.$card-bg;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-control-sm;
+    padding: 0.35rem 0.5rem;
+    outline: none;
+
+    &:focus {
+        border-color: t.$brand;
+    }
+}
+
+.weekActions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+
+    button {
+        font-size: t.$fs-caption;
+        color: t.$text-muted;
+        cursor: pointer;
+
+        &:hover:not(:disabled) {
+            color: t.$brand;
+            text-decoration: underline;
+        }
+
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    }
+}
+
+.dangerAction:hover:not(:disabled) {
+    color: t.$danger !important;
+}
+
+// The design's trailing slot for the next week: dashed, not a solid card.
+.newWeekCard {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 1rem 1.15rem;
+    border: 1px dashed t.$border;
+    border-radius: t.$radius-card;
+}
+
+.newWeekRow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.addButton {
+    flex: 0 0 auto;
+    width: 2rem;
+    height: 2rem;
+    border-radius: t.$radius-control-sm;
+    background-color: t.$neutral-fill;
+    color: t.$text-muted;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        background-color: t.$brand;
+        color: #ffffff;
+    }
+
+    &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+}
+
+.notice {
+    margin-top: 1rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: t.$radius-control-sm;
+    background-color: t.$subcard-bg;
+    font-size: t.$fs-caption;
+    color: t.$text-muted;
+}
+
+.error {
+    margin-top: 0.6rem;
+    font-size: t.$fs-caption;
+    color: t.$danger;
+}

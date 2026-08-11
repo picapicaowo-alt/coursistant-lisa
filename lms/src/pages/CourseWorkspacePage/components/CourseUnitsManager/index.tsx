@@ -73,7 +73,11 @@ export const CourseUnitsManager: React.FC<CourseUnitsManagerProps> = ({
                 isActive={activeUnitId === unit.id}
                 onSelect={() => setActiveUnitId(unit.id)}
                 onDelete={() => {
-                  courseApiService.deleteCourseUnit(course.id, unit.id).then();
+                  // A course unit is a week. Deletion only succeeds on an
+                  // empty one — the API refuses a week that still holds
+                  // materials — so the local removal below can diverge from
+                  // the server. This screen is superseded by CourseEditView.
+                  void courseApiService.deleteWeek(course.id, unit.id);
                   
                   const assignments = getRelated("courseUnits", unit.id, "courseUnitAssignments");
                   assignments.forEach((a) => deleteEntity("assignments", a.id));

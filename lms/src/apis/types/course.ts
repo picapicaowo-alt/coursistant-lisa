@@ -237,8 +237,24 @@ export interface AssignmentUpdate {
   };
 }
 
+/**
+ * Body of `PATCH /v2/courses/{id}`. Partial — send only what changed.
+ *
+ * The previous shape bundled the course, its units and its assignments into
+ * one call. There is no such endpoint: weeks and assignments are edited
+ * through their own routes, so this covers the course record alone.
+ *
+ * `tenantId`, `primaryInstructorUserId` and `instructorId` are rejected here.
+ * Reassigning the primary instructor is an admin-only call of its own.
+ */
 export interface UpdateCourseRequest {
-  courseUpdate?: CourseUpdate;
-  courseUnitUpdateMap?: Record<number, CourseUnitUpdate>;
-  assignmentUpdateMap?: Record<number, AssignmentUpdate>;
+  courseCode?: string;
+  title?: string;
+  termStartDate?: string;
+  termEndDate?: string;
+  description?: string;
+  location?: string;
+  /** Clears the field, as sending an empty string would not. */
+  clearDescription?: boolean;
+  clearLocation?: boolean;
 }

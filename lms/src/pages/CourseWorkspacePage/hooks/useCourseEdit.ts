@@ -1,23 +1,21 @@
-import {useParams} from 'react-router-dom';
-import {useQueryClient, useSuspenseQuery} from "@tanstack/react-query";
-import {useCourseWorkspaceStore} from "../stores/useCourseWorkspaceStore";
 import React from "react";
-import {CourseDetailDTO, CourseResponse, CourseWeek, unwrapData} from "@/apis";
-import {courseApiService} from "@/apis/services/course-api";
-import {useRequiredAuth} from "@/contexts/RequiredAuthContext";
+import {useCourseWorkspaceStore} from "../stores/useCourseWorkspaceStore";
+import {CourseDetailDTO, CourseResponse, CourseWeek} from "@/apis";
+import {useCourseWorkspaceData} from "./useCourseWorkspaceData";
 
 /**
- * Assembles the workspace view of a course.
+ * Mirrors the loaded course into the workspace store, which edit mode and the
+ * header read from.
  *
- * There is no aggregate endpoint — the previous code called
- * `/v2/courses/{id}/detail`, which does not exist and answers 500 — so the
- * course and its weeks are fetched separately and combined here.
+ * Fetching lives in useCourseWorkspaceData, so both modes share one set of
+ * queries. This used to run its own useSuspenseQuery, which had two problems:
+ * it fetched the same course twice, and a suspense query reports failure by
+ * throwing — so a single failed request took down the whole page instead of
+ * letting the view render its own error.
  *
  * Assignments are not loaded. In this API they belong to the course and are
- * ordered by due date; they carry no week reference at all, while this page
- * models them as children of a week. That relationship has no backing and
- * inventing one would misfile every assignment, so the per-week assignment
- * list stays empty until the workspace structure is settled
+ * ordered by due date, with no reference to a week, while the store models
+ * them as children of one. Inventing that link would misfile every assignment
  * (open-decisions.md S-7).
  */
 const toCourseDetail = (course: CourseResponse, weeks: CourseWeek[]): CourseDetailDTO => ({
@@ -35,12 +33,12 @@ const toCourseDetail = (course: CourseResponse, weeks: CourseWeek[]): CourseDeta
     updatedAt: new Date(course.updatedAt),
   },
   // Weeks are this product's course units. `orderPosition` is zero-based and
-  // ascending, which is exactly what sortOrder means here.
+  // ascending, which is what sortOrder means here.
   courseUnits: weeks.map((week) => ({
     id: week.id,
     title: week.title,
     sortOrder: week.orderPosition,
-    // Weeks have no description field; they hold materials instead.
+    // Weeks carry materials, not a description.
     description: "",
     createdAt: new Date(week.createdAt),
     updatedAt: new Date(week.updatedAt),
@@ -49,36 +47,12 @@ const toCourseDetail = (course: CourseResponse, weeks: CourseWeek[]): CourseDeta
 });
 
 export const useCourseEdit = () => {
-  const {user} = useRequiredAuth();
-  const {courseId} = useParams();
-  if (!courseId) throw new Error("Course id is required");
-
   const {loadCourseInfo} = useCourseWorkspaceStore();
-  const numericCourseId = parseInt(courseId);
-
-  const queryClient = useQueryClient();
-  const {data} = useSuspenseQuery<CourseDetailDTO>({
-    queryKey: ['course-workspace', courseId, user.id],
-    queryFn: async () => {
-      const [course, weeks] = await Promise.all([
-        courseApiService.getCourse(numericCourseId),
-        courseApiService.getCourseWeeks(numericCourseId),
-      ]);
-
-      return toCourseDetail(
-        unwrapData(course, 'getCourse'),
-        unwrapData(weeks, 'getCourseWeeks')
-      );
-    },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 5 * 60 * 1000,
-    retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-  }, queryClient);
+  const {course, weeks} = useCourseWorkspaceData();
 
   React.useEffect(() => {
-    if (data) {
-      loadCourseInfo(data);
+    if (course) {
+      loadCourseInfo(toCourseDetail(course, weeks));
     }
-  }, [data]);
+  }, [course, weeks]);
 };
