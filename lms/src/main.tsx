@@ -1,4 +1,5 @@
 import {createRoot} from 'react-dom/client'
+import './styles/tokens.global.scss'
 import './index.css'
 import App from './App.js'
 import {QueryProvider} from "@/providers/QueryProvider";

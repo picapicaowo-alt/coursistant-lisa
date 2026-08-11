@@ -1,0 +1,56 @@
+// Emits the design tokens as CSS custom properties on :root.
+//
+// Import this exactly once, from main.tsx. SCSS modules should use the `t.$*`
+// variables instead — they are injected automatically and cost nothing at
+// runtime. These custom properties exist for the places SCSS cannot reach:
+// .tsx inline styles, MUI sx props, and third-party components.
+
+@use "tokens" as t;
+
+:root {
+  --xl-page-bg: #{t.$page-bg};
+  --xl-card-bg: #{t.$card-bg};
+  --xl-subcard-bg: #{t.$subcard-bg};
+  --xl-brand: #{t.$brand};
+  --xl-brand-subtle: #{t.$brand-subtle};
+  --xl-text: #{t.$text};
+  --xl-text-muted: #{t.$text-muted};
+  --xl-text-placeholder: #{t.$text-placeholder};
+  --xl-border: #{t.$border};
+  --xl-danger: #{t.$danger};
+  --xl-neutral-fill: #{t.$neutral-fill};
+
+  --xl-type-cyan: #{t.$type-cyan};
+  --xl-type-green: #{t.$type-green};
+  --xl-type-orange: #{t.$type-orange};
+  --xl-type-pink: #{t.$type-pink};
+  --xl-type-cyan-subtle: #{t.$type-cyan-subtle};
+  --xl-type-green-subtle: #{t.$type-green-subtle};
+  --xl-type-orange-subtle: #{t.$type-orange-subtle};
+  --xl-type-pink-subtle: #{t.$type-pink-subtle};
+
+  --xl-font-family: #{t.$font-family};
+
+  --xl-fs-hero: #{t.$fs-hero};
+  --xl-fs-h1: #{t.$fs-h1};
+  --xl-fs-doc-title: #{t.$fs-doc-title};
+  --xl-fs-course-name: #{t.$fs-course-name};
+  --xl-fs-modal-title: #{t.$fs-modal-title};
+  --xl-fs-card-title: #{t.$fs-card-title};
+  --xl-fs-item-title: #{t.$fs-item-title};
+  --xl-fs-item-sub: #{t.$fs-item-sub};
+  --xl-fs-label: #{t.$fs-label};
+  --xl-fs-caption: #{t.$fs-caption};
+  --xl-fs-logo: #{t.$fs-logo};
+
+  --xl-radius-card: #{t.$radius-card};
+  --xl-radius-card-lg: #{t.$radius-card-lg};
+  --xl-radius-modal: #{t.$radius-modal};
+  --xl-radius-control: #{t.$radius-control};
+  --xl-radius-control-sm: #{t.$radius-control-sm};
+  --xl-radius-pill: #{t.$radius-pill};
+
+  --xl-control-size: #{t.$control-size};
+  --xl-shadow-card: #{t.$shadow-card};
+  --xl-modal-backdrop-blur: #{t.$modal-backdrop-blur};
+}

@@ -1,0 +1,79 @@
+// Design tokens — see docs/design-spec.md section 1.
+//
+// This file is the single source of truth for color, type and shape.
+// SCSS modules get it injected automatically via additionalData in
+// vite.config.ts, so use `t.$brand` directly (no @use needed).
+// For .tsx inline styles and MUI, use the CSS custom properties that
+// tokens.global.scss emits on :root, e.g. var(--xl-brand).
+//
+// Never hardcode a color. If a color is missing, add it here first.
+
+// ---------------------------------------------------------------- Color
+
+$page-bg: #F1F3F8; // Every screen. Cards float as white on top of this.
+$card-bg: #FFFFFF; // Widgets, course cards, modals
+$subcard-bg: #F5F6FA; // Inner blocks, disabled inputs, dashed placeholders
+$brand: #4F46E5; // Publish/Create/Send buttons, active sidebar, selected date, links
+$brand-subtle: #E7E5FD; // Active sidebar item background
+$text: #141A2B; // Headings, values
+$text-muted: #69728A; // Labels, descriptions
+$text-placeholder: #A3AAB8; // "Name your Course", "Enter the name of the course"
+$border: #E4E7EE; // Cards, inputs, dividers
+$danger: #EF4444; // Delete Course, Delete project, delete icons
+$neutral-fill: #E9EBF0; // Back button background (sec. 2), selected card (sec. 9)
+
+// Content type colors — used on badges. Saturated fill with white text,
+// not the pale background other badges use.
+// Figma note: "Color automatically generates background color" — picking a
+// color derives a pale background. Derived values live in $type-*-subtle.
+$type-cyan: #22CCEE; // Assignments
+$type-green: #22C55E; // In Class ICE (1)
+$type-orange: #F97316; // In Class ICE (2)
+$type-pink: #F43F5E; // In Class ICE (3)
+
+$type-cyan-subtle: rgba($type-cyan, 0.12);
+$type-green-subtle: rgba($type-green, 0.12);
+$type-orange-subtle: rgba($type-orange, 0.12);
+$type-pink-subtle: rgba($type-pink, 0.12);
+
+// Lab Manual / Course Slides / Term Project / Textbook / Course Notes / Others
+// only appear as legend dots and their exact hex values are not readable from
+// the screenshots. Add them here once confirmed in Figma.
+
+// ---------------------------------------------------------------- Typography
+//
+// Plus Jakarta Sans, a geometric sans.
+// Note: this font is not loaded in the project yet, so it currently falls back.
+
+$font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+
+$fs-hero: 48px; // Sign up h1 (sec. 3)
+$fs-h1: 36px; // Page h1
+$fs-doc-title: 30px; // Document title inside modals, Content page h1
+$fs-course-name: 26px; // Course name on course cards (sec. 5)
+$fs-modal-title: 24px; // Modal title
+$fs-card-title: 22px; // Card title
+$fs-item-title: 20px; // Assignment name (sec. 15)
+$fs-item-sub: 17px; // Week card content title (sec. 6)
+$fs-label: 15px; // Section labels and body text
+$fs-caption: 13px; // Secondary text
+$fs-logo: 11px; // "X – LEARN" (sec. 2)
+
+$fw-extrabold: 800; // h1
+$fw-bold: 700; // Titles
+$fw-semibold: 600; // Section labels
+$fw-regular: 400; // Body
+
+// ---------------------------------------------------------------- Shape
+
+$radius-card: 16px; // Cards and sidebar (spec says 16–18px)
+$radius-card-lg: 18px;
+$radius-modal: 20px;
+$radius-control: 12px; // Buttons, inputs (10–12px), back button
+$radius-control-sm: 10px;
+$radius-pill: 9999px; // Badges
+
+$control-size: 44px; // Back button, avatar
+
+$shadow-card: 0 1px 2px rgba($text, 0.04), 0 4px 16px rgba($text, 0.04); // Very light
+$modal-backdrop-blur: 8px; // Modal backdrop is blurred, not dimmed
