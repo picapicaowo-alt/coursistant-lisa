@@ -2,10 +2,10 @@
 import {calculateLayout, getColumns, getScreenSize} from '../utils/layoutCalculations';
 import {useContainerWidth} from 'react-grid-layout';
 import ChatComponent from "@/pages/LmsHomePage/components/ChatComponent.js";
-import AssignmentComponent from "../../../sections/assignments/AssignmentComponent.jsx";
+import AssignmentComponent from "@/sections/assignments/AssignmentComponent";
 import CourseComponent from "../components/CourseComponent.js";
-import LearningScheduleComponent from "../../../sections/learning_schedule/LearningScheduleComponent.jsx";
-import PostComponent from "../../../sections/posts/PostComponent.jsx";
+import LearningScheduleComponent from "@/sections/learning_schedule/LearningScheduleComponent";
+import PostComponent from "@/sections/posts/PostComponent";
 import SkillGraphComponent from "../../../sections/skill_graph/SkillGraphComponent.jsx";
 import {GridLayoutItem, ScreenSizeInfo, WidgetConfig} from "@/pages/LmsHomePage/types";
 
@@ -32,7 +32,7 @@ export const useWidgetLayout = (): UseWidgetLayoutResult => {
     assignments: <AssignmentComponent/>,
     course: <CourseComponent/>,
     'learning-schedule': <LearningScheduleComponent/>,
-    posts: <PostComponent posts={[]}/>,
+    posts: <PostComponent/>,
     'skill-graph': <SkillGraphComponent/>,
   }), []);
   
