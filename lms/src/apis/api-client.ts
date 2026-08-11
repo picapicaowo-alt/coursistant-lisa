@@ -61,9 +61,12 @@ export class ApiClient {
   
   private handleRequest(config: InternalAxiosRequestConfig): InternalAxiosRequestConfig {
     config.headers = config.headers || {};
-    
-    config.headers['X-Request-Timestamp'] = Date.now().toString();
-    
+
+    // No X-Request-Timestamp header. It appears in no API contract, nothing
+    // reads it, and being a custom header it forces a CORS preflight that the
+    // server rejects: its Access-Control-Allow-Headers lists the name as
+    // "field-x-request-timestamp", so every cross-origin call fails outright.
+
     const requestConfig = config as unknown as RequestConfig;
     if (requestConfig.skipAuth !== undefined && requestConfig.skipAuth) {
       delete config.headers.Authorization;
