@@ -3,7 +3,8 @@ import {useNavigate} from 'react-router-dom';
 import {Icon} from '@iconify/react';
 import {useAuth} from "@/contexts/AuthContext";
 import {useTranslation} from 'react-i18next';
-import {LoginResponse, V2ApiClient} from "@/apis";
+import {ApiError, AUTH_ERROR_CODES, V2ApiClient} from "@/apis";
+import {authApiService} from "@/apis/services/auth-api";
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -81,30 +82,47 @@ const LoginPage: React.FC = () => {
     setFieldErrors({});
     
     try {
-      const response = await V2ApiClient.post<LoginResponse>("/login", {
-        email,
-        password,
-        role: 'USER'
-      });
-      
-      if (response.code === 200) {
-        login(response.data);
-        V2ApiClient.setAccessToken(response.data.nwAccessToken);
-        localStorage.setItem('accToken', response.data.nwAccessToken);
+      // `role` is fixed to USER: it picks the account table, and the design has
+      // no role selector. Tenant and system admins sign in elsewhere.
+      // See open-decisions.md Q-15.
+      const response = await authApiService.login({email, password, role: 'USER'});
+
+      if (response.status === 200 && response.data) {
+        const auth = response.data;
+
+        // Managed users (every instructor, since ops creates those accounts)
+        // land here on first login, and the backend then 403s every business
+        // API until the password changes. There is no screen for this yet —
+        // open-decisions.md Q-16 — so refuse the session rather than drop the
+        // user into an app where nothing works.
+        if (auth.mustChangePassword) {
+          setFieldErrors({password: t("errors.passwordChangeRequired")});
+          return;
+        }
+
+        login({...auth, id: auth.userId});
+        V2ApiClient.setAccessToken(auth.accessToken);
+        localStorage.setItem('accToken', auth.accessToken);
         navigate('/');
         return;
       }
-      
-      if (response.code === 6001) {
-        setFieldErrors({password: t("errors.accountLocked")});
-      } else if (response.code === 4021) {
-        setFieldErrors({email: t("errors.userNotExist")});
-      } else if (response.code === 6003) {
-        setFieldErrors({password: t("errors.passwordMismatch")});
-      }
-    } catch (err) {
-      console.log('Login Failed', err);
+
       setFieldErrors({password: t("errors.unexpected")});
+    } catch (err) {
+      // The API answers wrong password, unknown account and locked-out all as
+      // INVALID_CREDENTIALS on purpose (NFR-15). Do not try to tell the user
+      // which one it was — the frontend cannot know, and guessing would leak
+      // whether an account exists.
+      const code = (err as ApiError)?.details?.code;
+
+      if (code === AUTH_ERROR_CODES.invalidCredentials) {
+        setFieldErrors({password: t("errors.invalidCredentials")});
+      } else if (code === AUTH_ERROR_CODES.serviceUnavailable) {
+        setFieldErrors({password: t("errors.serviceUnavailable")});
+      } else {
+        console.error('Login failed', err);
+        setFieldErrors({password: t("errors.unexpected")});
+      }
     }
   };
   
