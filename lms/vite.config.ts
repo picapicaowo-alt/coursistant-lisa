@@ -37,7 +37,11 @@ export default defineConfig(({mode}) => {
             if (path.includes('/src/styles/_tokens.scss') || path.includes('/src/styles/tokens.global.scss')) {
               return source
             }
-            return `@use "${tokensPath}" as t;\n${source}`
+            // Strip a leading BOM before prepending. Sass ignores a BOM at the
+            // very start of a file but not one sitting mid-document, and
+            // prepending a line is exactly what pushes it there — which broke
+            // every one of the 28 stylesheets in this tree that carry one.
+            return `@use "${tokensPath}" as t;\n${source.replace(/^﻿/, '')}`
           },
         },
       },
