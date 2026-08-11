@@ -1,10 +1,43 @@
-﻿export interface CoursePreviewResponse {
+﻿/**
+ * An entry from `GET /v2/courses` — see docs/api/course_module-api_en.md 5.1.
+ *
+ * This is the browse listing for admins and instructors, not a personal one:
+ * a plain Student or TA calling it gets 403 ACCESS_DENIED. Anything showing
+ * "my courses" must use `GET /v2/me/courses` instead.
+ */
+export interface CourseSummary {
   id: number;
+  /** Same value as `id`. */
+  courseId: number;
+  tenantId: number;
   courseCode: string;
-  name: string;
-  teacherName: string;
-  courseUnitsCount: number;
-  avatarUrl?: string;
+  title: string;
+  state: 'Active' | 'Archived';
+  instructorId: number | null;
+  primaryInstructor: {
+    userId: number;
+    name?: string;
+    email?: string;
+  } | null;
+}
+
+/** `GET /v2/courses` returns this page object, not a bare array. */
+export interface CoursePageResponse {
+  items: CourseSummary[];
+  page: number;
+  size: number;
+  total: number;
+}
+
+export interface CourseBrowseParams {
+  /** Free-text search. */
+  q?: string;
+  state?: 'Active' | 'Archived';
+  /** SYSTEM_ADMIN only; ignored for other callers. */
+  tenantId?: number;
+  page?: number;
+  /** Default 20, capped at 100. */
+  size?: number;
 }
 
 export interface CourseInfo {

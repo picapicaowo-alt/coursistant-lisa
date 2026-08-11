@@ -177,3 +177,11 @@
         color: #ffffff;
     }
 }
+.emptyState {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 1rem;
+    color: t.$text-muted;
+    font-size: t.$fs-label;
+}

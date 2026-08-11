@@ -1,6 +1,8 @@
 ﻿import {
   ApiResponse,
-  CourseDetailDTO, CoursePreviewResponse,
+  CourseBrowseParams,
+  CourseDetailDTO,
+  CoursePageResponse,
   CreateAssignmentRequest,
   CreateCourseRequest,
   CreateCourseUnitRequest,
@@ -17,11 +19,18 @@ export class CourseApiService {
     }
   }
   
-  async getCourseCatalogues(): Promise<ApiResponse<CoursePreviewResponse[]>> {
+  /**
+   * Browses courses across the tenant.
+   *
+   * Admin and instructor only — a plain Student or TA gets 403 ACCESS_DENIED.
+   * For a user's own courses use `GET /v2/me/courses`
+   * (`dashboardApiService.getMyCourses`), which every USER account can call.
+   */
+  async browseCourses(params?: CourseBrowseParams): Promise<ApiResponse<CoursePageResponse>> {
     try {
-      return await this.apiClient.get<CoursePreviewResponse[]>("/v2/courses");
+      return await this.apiClient.get<CoursePageResponse>("/v2/courses", {params});
     } catch (error) {
-      console.error(`Failed to get course catalogues`, error);
+      console.error(`Failed to browse courses`, error);
       throw error;
     }
   }

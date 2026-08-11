@@ -5,7 +5,7 @@ import {useTranslation} from "react-i18next";
 import {CoursePreview} from "./components/CoursePreview";
 import {LoadingOverlay} from "@/components/LoadingOverlay";
 import {useSuspenseQuery} from "@tanstack/react-query";
-import {courseApiService} from "@/apis/services/course-api";
+import {dashboardApiService} from "@/apis/services/dashboard-api";
 import {unwrapData} from "@/apis";
 import {useRequiredAuth} from "@/contexts/RequiredAuthContext";
 
@@ -52,34 +52,65 @@ const CourseCataloguePage: React.FC = () => {
   );
 };
 
+const PAGE_SIZE = 20;
+
 const CoursesList: React.FC = () => {
+  const {t} = useTranslation("course");
   const {user} = useRequiredAuth();
   const [currentPage, setCurrentPage] = useState(1);
-  
-  const totalPages = 1;
-  
+
+  /**
+   * The user's own courses.
+   *
+   * Not `GET /v2/courses`: that is the tenant-wide browse listing, it answers
+   * 403 ACCESS_DENIED for any plain Student or TA, and it returns a page
+   * object rather than the array this page used to assume. `/v2/me/courses`
+   * is the endpoint every USER account can call for their own enrolments.
+   */
   const {data} = useSuspenseQuery({
-    queryKey: ['courses-list', user.id, currentPage],
+    queryKey: ['my-courses', user.id, currentPage],
     queryFn: async () => {
-      return unwrapData(await courseApiService.getCourseCatalogues(), 'getCourseCatalogues');
+      const response = await dashboardApiService.getMyCourses({
+        state: 'Active',
+        page: currentPage - 1,
+        size: PAGE_SIZE,
+      });
+      return unwrapData(response, 'getMyCourses');
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
+
+  const courses = data.items ?? [];
+  const totalPages = Math.max(1, Math.ceil((data.total ?? 0) / (data.size || PAGE_SIZE)));
+
+  // IA-06 asks every list for a designed empty state. This one is reachable:
+  // a student with no active enrolments lands here straight after signing up.
+  if (courses.length === 0) {
+    return (
+      <div className={styles.emptyState}>
+        <p>{t("list.noCourses")}</p>
+      </div>
+    );
+  }
+
   return (
     <React.Fragment>
       <div className={styles.courseGrid}>
-        {data.map((course, index) => (
+        {courses.map((course) => (
           <CoursePreview
-            key={`${course.courseCode}-${index}`}
-            {...course}
+            key={course.id}
+            id={course.id}
+            courseCode={course.courseCode}
+            title={course.title ?? course.name}
+            instructorName={course.primaryInstructor?.name ?? null}
           />
         ))}
       </div>
-      
-      {data.length > 0 && (
+
+      {courses.length > 0 && (
         <div className={styles.paginationContainer}>
           <button
             className={styles.paginationButton}
