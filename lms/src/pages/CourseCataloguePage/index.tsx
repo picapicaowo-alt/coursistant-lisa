@@ -106,6 +106,10 @@ const CoursesList: React.FC = () => {
             courseCode={course.courseCode}
             title={course.title ?? course.name}
             instructorName={course.primaryInstructor?.name ?? null}
+            // Archiving is a Course Manager action. A TA never qualifies, no
+            // matter which permission flags it holds, so this checks the
+            // enrolment role rather than any of them.
+            canManage={(course.courseRole ?? course.role) === 'Instructor'}
           />
         ))}
       </div>

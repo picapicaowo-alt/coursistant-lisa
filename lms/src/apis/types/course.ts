@@ -29,6 +29,30 @@ export interface CoursePageResponse {
   total: number;
 }
 
+/** Day codes used by sessions. */
+export type SessionDayOfWeek = 'MON' | 'TUE' | 'WED' | 'THU' | 'FRI' | 'SAT' | 'SUN';
+
+export type SessionType = 'Lecture' | 'Lab' | 'Tutorial';
+
+/**
+ * A recurring weekly class slot — `GET /v2/courses/{courseId}/sessions`.
+ *
+ * Recurring, so it has a day of week and no date. One-off items such as an
+ * exam are Events, on a separate endpoint. Times are in the course tenant's
+ * zone, which each item carries.
+ */
+export interface CourseSession {
+  id: number;
+  courseId: number;
+  type: SessionType;
+  dayOfWeek: SessionDayOfWeek;
+  /** `HH:mm:ss`. */
+  startTime: string;
+  endTime: string;
+  location: string | null;
+  timezone: string;
+}
+
 export interface CourseBrowseParams {
   /** Free-text search. */
   q?: string;

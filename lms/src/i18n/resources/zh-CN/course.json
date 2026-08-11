@@ -11,6 +11,16 @@
         "newContent": "新建内容",
         "linesPerPage": "每页行数"
     },
+    "card": {
+        "instructor": "授课教师",
+        "classTime": "上课时间",
+        "classroom": "教室",
+        "viewDetails": "查看详情",
+        "moreActions": "更多操作",
+        "archive": "归档课程",
+        "archiving": "正在归档…",
+        "archiveFailed": "课程归档失败，请重试。"
+    },
     "days": {
         "monday": "星期一",
         "tuesday": "星期二",

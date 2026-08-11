@@ -3,7 +3,10 @@
   CourseBrowseParams,
   CourseDetailDTO,
   CoursePageResponse,
+  CourseSession,
+  CourseSummary,
   CreateAssignmentRequest,
+  idempotent,
   CreateCourseRequest,
   CreateCourseUnitRequest,
   UpdateCourseRequest,
@@ -35,6 +38,51 @@ export class CourseApiService {
     }
   }
   
+  /** The course's recurring weekly schedule. Visible to any enrolled member. */
+  async getCourseSessions(courseId: number): Promise<ApiResponse<CourseSession[]>> {
+    try {
+      return await this.apiClient.get<CourseSession[]>(`/v2/courses/${courseId}/sessions`);
+    } catch (error) {
+      console.error(`Failed to get sessions for courseId: ${courseId}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Archives a course. Course Manager only, and idempotent when it is already
+   * archived.
+   *
+   * This is what retires a course — deletion is not. A course with any
+   * dependency refuses to delete, and PRD INV-05 requires submissions,
+   * attempts and grades to survive every V1 action, so archiving is the whole
+   * lifecycle rather than a softer alternative to removal.
+   */
+  async archiveCourse(courseId: number): Promise<ApiResponse<CourseSummary>> {
+    try {
+      return await this.apiClient.post<CourseSummary>(
+        `/v2/courses/${courseId}/archive`,
+        undefined,
+        idempotent()
+      );
+    } catch (error) {
+      console.error(`Failed to archive course: ${courseId}`, error);
+      throw error;
+    }
+  }
+
+  async unarchiveCourse(courseId: number): Promise<ApiResponse<CourseSummary>> {
+    try {
+      return await this.apiClient.post<CourseSummary>(
+        `/v2/courses/${courseId}/unarchive`,
+        undefined,
+        idempotent()
+      );
+    } catch (error) {
+      console.error(`Failed to unarchive course: ${courseId}`, error);
+      throw error;
+    }
+  }
+
   async getCourseDetail(courseId: number): Promise<ApiResponse<CourseDetailDTO>> {
     try {
       return await this.apiClient.get<CourseDetailDTO>(

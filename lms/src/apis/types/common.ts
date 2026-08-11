@@ -23,6 +23,19 @@ export interface ApiError {
 }
 
 /**
+ * Headers for a write that requires an `Idempotency-Key`.
+ *
+ * Only some writes need one — the module docs list them per endpoint. A new
+ * key means a new operation, so call this once per user action and reuse the
+ * result if you retry that same action after a timeout. Reusing a key with a
+ * different payload is rejected with 409 IDEMPOTENCY_KEY_MISMATCH, and
+ * generating a fresh key on retry can double-apply the write.
+ */
+export function idempotent(key: string = crypto.randomUUID()): {headers: Record<string, string>} {
+  return {headers: {'Idempotency-Key': key}};
+}
+
+/**
  * Reads `data` off a response, failing loudly when it is not there.
  *
  * A 2xx envelope with no `data` where the caller needs one means the contract

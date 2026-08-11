@@ -1,13 +1,19 @@
-﻿.courseItem {
-    background-color: #ffffff;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    transition: all 0.3s ease;
-    border: 1px solid #f0f0f0;
-    
+// Course card — see docs/design/11-my-course-list.png.
+// Header (instructor), title, a two-column meta row, a dotted divider, then
+// View details with the actions menu on the right.
+
+.courseItem {
+    display: flex;
+    flex-direction: column;
+    background-color: t.$card-bg;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-card-lg;
+    padding: 1.25rem;
+    box-shadow: t.$shadow-card;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+
     &:hover {
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        box-shadow: 0 4px 16px rgba(t.$text, 0.1);
         transform: translateY(-2px);
     }
 }
@@ -15,43 +21,23 @@
 .courseHeader {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-}
-
-.courseCode {
-    font-size: 14px;
-    font-weight: 500;
-    color: #566FE8;
-    background-color: #f0f3ff;
-    padding: 4px 12px;
-    border-radius: 16px;
-}
-
-.courseContent {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.courseTitle {
-    font-size: 18px;
-    font-weight: 600;
-    color: #1a1a1a;
-    line-height: 1.4;
+    align-items: flex-start;
+    min-height: t.$control-size;
+    margin-bottom: 0.75rem;
 }
 
 .instructorInfo {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 0.75rem;
 }
 
 .avatarContainer {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
+    width: t.$control-size;
+    height: t.$control-size;
+    border-radius: t.$radius-pill;
     overflow: hidden;
+    flex-shrink: 0;
 }
 
 .avatar {
@@ -61,59 +47,146 @@
 }
 
 .instructorName {
-    font-size: 14px;
-    color: #666;
+    font-size: t.$fs-label;
+    font-weight: 500;
+    color: t.$text;
+}
+
+.instructorRole {
+    font-size: t.$fs-caption;
+    color: t.$text-muted;
+}
+
+.courseContent {
+    display: flex;
+    flex-direction: column;
+    // Pushes the meta row to the bottom so cards line up even when a course
+    // has no sessions to show.
+    flex: 1;
+    gap: 1.5rem;
+}
+
+.courseTitle {
+    font-size: t.$fs-course-name;
+    font-weight: t.$fw-bold;
+    color: t.$text;
+    line-height: 1.3;
 }
 
 .courseMeta {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding-top: 12px;
-    border-top: 1px solid #f0f0f0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-top: auto;
 }
 
 .metaItem {
     display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.metaLabel {
+    font-size: t.$fs-label;
+    font-weight: t.$fw-semibold;
+    color: t.$text;
+}
+
+.metaValue {
+    font-size: t.$fs-caption;
+    color: t.$text-muted;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.courseFooter {
+    display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    color: #666;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px dashed t.$border;
 }
 
-.metaIcon {
-    width: 16px;
-    height: 16px;
-    fill: #888;
+.viewDetails {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 1.1rem;
+    border-radius: t.$radius-control;
+    background-color: t.$subcard-bg;
+    color: t.$text;
+    font-size: t.$fs-caption;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+
+    &:hover {
+        background-color: t.$brand;
+        color: #ffffff;
+    }
 }
 
-.scheduleContainer {
+.menuAnchor {
+    position: relative;
+}
+
+.menuButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: t.$radius-control-sm;
+    color: t.$text-muted;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+
+    &:hover {
+        background-color: t.$subcard-bg;
+        color: t.$text;
+    }
+}
+
+.menu {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 0.4rem);
+    z-index: 10;
+    min-width: 11rem;
+    padding: 0.35rem;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    background-color: t.$card-bg;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-control;
+    box-shadow: 0 8px 24px rgba(t.$text, 0.12);
 }
 
-.scheduleItem {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.menuItem {
+    text-align: left;
+    padding: 0.5rem 0.7rem;
+    border-radius: t.$radius-control-sm;
+    font-size: t.$fs-caption;
+    color: t.$text;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        background-color: t.$subcard-bg;
+    }
+
+    &:disabled {
+        color: t.$text-placeholder;
+        cursor: not-allowed;
+    }
 }
 
-.scheduleIcon {
-    width: 16px;
-    height: 16px;
-    fill: #888;
-    flex-shrink: 0;
-}
-
-.scheduleText {
-    font-size: 14px;
-    color: #666;
-    line-height: 1.4;
-}
-
-.schedulePlaceholder {
-    font-size: 14px;
-    color: #999;
-    font-style: italic;
+.error {
+    margin-top: 0.6rem;
+    font-size: t.$fs-caption;
+    color: t.$danger;
 }

@@ -11,6 +11,16 @@
         "newContent": "New Content",
         "linesPerPage": "Lines per page"
     },
+    "card": {
+        "instructor": "Instructor",
+        "classTime": "Class Time",
+        "classroom": "Classroom",
+        "viewDetails": "View details",
+        "moreActions": "More actions",
+        "archive": "Archive Course",
+        "archiving": "Archiving…",
+        "archiveFailed": "Couldn't archive this course. Please try again."
+    },
     "days": {
         "monday": "Monday",
         "tuesday": "Tuesday",
