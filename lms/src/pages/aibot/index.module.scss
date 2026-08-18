@@ -1,0 +1,375 @@
+.page {
+    min-height: calc(100vh - 110px);
+    padding: 2rem;
+    background: #eef4fb;
+    color: #1f2a3d;
+}
+
+.pageHeader {
+    max-width: 92rem;
+    margin: 0 auto 1.75rem;
+
+    h1 {
+        margin: 0.2rem 0 0.35rem;
+        color: #192338;
+        font-size: clamp(2rem, 3vw, 3rem);
+        font-weight: 600;
+        line-height: 1.12;
+    }
+
+    > p:last-child {
+        margin: 0;
+        color: #60708e;
+        font-size: 1rem;
+    }
+}
+
+.eyebrow {
+    margin: 0;
+    color: #58709b;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+}
+
+.workspaceGrid {
+    display: grid;
+    max-width: 92rem;
+    margin: 0 auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+    align-items: stretch;
+}
+
+.toolCard {
+    display: flex;
+    min-width: 0;
+    min-height: 46rem;
+    overflow: hidden;
+    flex-direction: column;
+    padding: 1.65rem;
+    border: 1px solid #c8d7ef;
+    border-radius: 1.5rem;
+    background: #fff;
+    box-shadow: 0 18px 50px rgb(56 81 120 / 0.07);
+}
+
+.toolHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+
+    h2 {
+        margin: 0 0 0.35rem;
+        color: #192338;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+}
+
+.toolIcon {
+    display: grid;
+    width: 3.25rem;
+    height: 3.25rem;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    font-size: 1rem;
+    font-weight: 700;
+    place-items: center;
+}
+
+.studyIcon {
+    background: #dcecff;
+    color: #285dc8;
+}
+
+.workflowIcon {
+    background: #eee1ff;
+    color: #7441c5;
+}
+
+.badge,
+.rolePill {
+    display: inline-flex;
+    width: fit-content;
+    padding: 0.28rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+.studyBadge {
+    background: #e1f1ff;
+    color: #2c5bc7;
+}
+
+.workflowBadge {
+    background: #f0e5ff;
+    color: #7040bc;
+}
+
+.toolDescription {
+    min-height: 3rem;
+    margin: 1.35rem 0 0;
+    color: #60708e;
+    line-height: 1.55;
+}
+
+.divider {
+    height: 1px;
+    margin: 1rem 0 1.1rem;
+    background: #dbe4f2;
+}
+
+.studyChat {
+    min-height: 0;
+    flex: 1;
+    overflow: hidden;
+
+    > div {
+        min-height: 100%;
+    }
+}
+
+.loading {
+    display: grid;
+    min-height: 26rem;
+    color: #60708e;
+    place-items: center;
+}
+
+.quickPrompts {
+    display: grid;
+    gap: 0.65rem;
+
+    p {
+        margin: 0 0 0.1rem;
+        color: #60708e;
+        font-size: 0.85rem;
+    }
+
+    button {
+        width: 100%;
+        padding: 0.75rem 0.9rem;
+        border: 1px solid #cbdaf2;
+        border-radius: 0.75rem;
+        background: #f8faff;
+        color: #34496c;
+        cursor: pointer;
+        font: inherit;
+        text-align: left;
+        transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+
+        &:hover:not(:disabled) {
+            border-color: #8ba8e0;
+            background: #f1f5ff;
+            transform: translateY(-1px);
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+    }
+}
+
+.workflowConversation {
+    min-height: 19rem;
+    max-height: 28rem;
+    margin: 1.1rem 0;
+    padding: 1rem;
+    overflow-y: auto;
+    border: 1px solid #d4def0;
+    border-radius: 1rem;
+    background: #fbfcff;
+    scrollbar-gutter: stable;
+}
+
+.rolePill {
+    margin-bottom: 0.85rem;
+    background: #f0e5ff;
+    color: #7040bc;
+}
+
+.message {
+    width: fit-content;
+    max-width: 88%;
+    margin-bottom: 0.75rem;
+    padding: 0.72rem 0.9rem;
+    border-radius: 0.9rem;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.agentMessage {
+    border: 1px solid #dce5f3;
+    border-bottom-left-radius: 0.25rem;
+    background: #fff;
+    color: #2f405d;
+}
+
+.userMessage {
+    margin-left: auto;
+    border-bottom-right-radius: 0.25rem;
+    background: #465fe0;
+    color: #fff;
+}
+
+.confirmation {
+    margin-top: 0.9rem;
+    padding: 1rem;
+    border: 1px solid #e6c469;
+    border-radius: 0.9rem;
+    background: #fff9e8;
+    color: #59430b;
+
+    p {
+        margin: 0.35rem 0 0;
+        font-size: 0.88rem;
+        line-height: 1.45;
+    }
+}
+
+.confirmationActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    margin-top: 0.9rem;
+
+    button {
+        padding: 0.55rem 0.8rem;
+        border: 1px solid #b6c4da;
+        border-radius: 0.65rem;
+        background: #fff;
+        color: #34445d;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .allowButton {
+        border-color: #465fe0;
+        background: #465fe0;
+        color: #fff;
+    }
+}
+
+.agentStatus {
+    margin-top: 0.5rem;
+    color: #60708e;
+    font-size: 0.85rem;
+}
+
+.workflowInput {
+    margin-top: auto;
+    overflow: hidden;
+    border: 1px solid #cbd8ec;
+    border-radius: 1rem;
+    background: #fff;
+
+    textarea {
+        display: block;
+        width: 100%;
+        min-height: 5.5rem;
+        padding: 0.9rem 1rem 0.25rem;
+        resize: none;
+        border: 0;
+        outline: 0;
+        color: #243451;
+        font: inherit;
+
+        &::placeholder {
+            color: #94a4bf;
+        }
+
+        &:disabled {
+            background: #f7f9fc;
+            cursor: not-allowed;
+        }
+    }
+}
+
+.inputFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.55rem 0.7rem 0.7rem 1rem;
+
+    span {
+        color: #8796af;
+        font-size: 0.72rem;
+    }
+
+    button {
+        min-width: 5rem;
+        padding: 0.6rem 1rem;
+        border: 0;
+        border-radius: 0.7rem;
+        background: #465fe0;
+        color: #fff;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 600;
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.45;
+        }
+    }
+}
+
+.quickPrompts button:focus-visible,
+.confirmationActions button:focus-visible,
+.workflowInput button:focus-visible,
+.workflowInput textarea:focus-visible {
+    outline: 3px solid #1d4ed8;
+    outline-offset: 2px;
+}
+
+@media (max-width: 1100px) {
+    .workspaceGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .toolCard {
+        min-height: 42rem;
+    }
+}
+
+@media (max-width: 700px) {
+    .page {
+        min-height: 0;
+        padding: 1.25rem 0.8rem;
+    }
+
+    .pageHeader {
+        margin-bottom: 1.25rem;
+
+        h1 {
+            font-size: 1.8rem;
+        }
+    }
+
+    .workspaceGrid {
+        gap: 1rem;
+    }
+
+    .toolCard {
+        min-height: 38rem;
+        padding: 1rem;
+        border-radius: 1rem;
+    }
+
+    .toolDescription {
+        min-height: 0;
+    }
+
+    .inputFooter span {
+        display: none;
+    }
+
+    .inputFooter {
+        justify-content: flex-end;
+    }
+}

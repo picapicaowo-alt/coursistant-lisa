@@ -37,12 +37,12 @@ export const SIDEBAR_CONFIGS: SidebarConfig[] = [
     },
   },
   {
-    name: "AI Chatbot",
+    name: "AI Workplace",
     path: "/aibot",
     sidebarItem: {
       filledIcon: "/icons/ai_course.png",
       unfilledIcon: "/icons/ai_course.png",
-      translationLabel: "sidebar.aiChatbot",
+      translationLabel: "sidebar.aiWorkplace",
     },
   }
 ];

@@ -15,6 +15,8 @@ export default defineConfig(({mode}) => {
   const apiTarget =
     `${env.VITE_BASE_PROTOCOL}://${env.VITE_BASE_DOMAIN}:${env.VITE_BASE_PORT}`
   const apiPath = env.VITE_BASE_PATH || '/api'
+  const aiAgentPath = env.VITE_AI_AGENT_API_DOMAIN_NAME || '/ai-agent'
+  const aiAgentTarget = env.VITE_AI_AGENT_TARGET || 'https://dev.xlearnedu.com:8083'
 
   return {
     plugins: [react(), tailwindcss()],
@@ -74,6 +76,21 @@ export default defineConfig(({mode}) => {
           // Drop the cookie's Domain attribute so it binds to localhost
           // instead of being rejected as a foreign-domain cookie.
           cookieDomainRewrite: '',
+        },
+        [aiAgentPath]: {
+          target: aiAgentTarget,
+          changeOrigin: true,
+          secure: false,
+          rewrite: path => path.replace(new RegExp(`^${aiAgentPath}`), ''),
+          configure: proxy => {
+            proxy.on('proxyReq', proxyRequest => {
+              // This is a same-origin browser request by the time it reaches
+              // Vite. The API's current duplicate CORS filters reject the
+              // forwarded :8084 Origin on the actual POST, so the dev proxy
+              // must not pass that browser-only header upstream.
+              proxyRequest.removeHeader('origin')
+            })
+          },
         },
       },
     },

@@ -10,7 +10,8 @@
     "dashboard": "Dashboard",
     "myCourse": "My Course",
     "chat": "Chat",
-    "aiChatbot": "AI Chatbot"
+    "aiChatbot": "AI Chatbot",
+    "aiWorkplace": "AI Workplace"
   },
   "actions": {
     "save": "Save",
