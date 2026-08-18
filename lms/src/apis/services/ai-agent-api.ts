@@ -84,7 +84,11 @@ const parseBody = async (response: Response): Promise<unknown> => {
   return text ? {message: text} : {};
 };
 
-const request = async (path: string, body: AiAgentChatRequest | DeadlineDecisionRequest): Promise<AiAgentResponse> => {
+const request = async (
+  path: string,
+  body: AiAgentChatRequest | DeadlineDecisionRequest,
+  accessToken: string,
+): Promise<AiAgentResponse> => {
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
@@ -92,7 +96,7 @@ const request = async (path: string, body: AiAgentChatRequest | DeadlineDecision
     const response = await fetch(`${AGENT_API_BASE}${path}`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${getAccessToken()}`,
+        Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
@@ -124,12 +128,30 @@ const request = async (path: string, body: AiAgentChatRequest | DeadlineDecision
 };
 
 export class AiAgentApiService {
-  chat(body: AiAgentChatRequest): Promise<AiAgentResponse> {
-    return request('/chat', body);
+  private pendingDecisionContext: {actionId: string; accessToken: string} | null = null;
+
+  async chat(body: AiAgentChatRequest): Promise<AiAgentResponse> {
+    const accessToken = getAccessToken();
+    const response = await request('/chat', body, accessToken);
+
+    this.pendingDecisionContext = response.pendingAction
+      ? {actionId: response.pendingAction.actionId, accessToken}
+      : null;
+
+    return response;
   }
 
-  decideDeadlineChange(body: DeadlineDecisionRequest): Promise<AiAgentResponse> {
-    return request('/chat/deadline-change/decision', body);
+  async decideDeadlineChange(body: DeadlineDecisionRequest): Promise<AiAgentResponse> {
+    const accessToken = this.pendingDecisionContext?.actionId === body.actionId
+      ? this.pendingDecisionContext.accessToken
+      : getAccessToken();
+    const response = await request('/chat/deadline-change/decision', body, accessToken);
+
+    if (!response.pendingAction) {
+      this.pendingDecisionContext = null;
+    }
+
+    return response;
   }
 }
 

@@ -216,35 +216,115 @@
     color: #fff;
 }
 
-.confirmation {
-    margin-top: 0.9rem;
-    padding: 1rem;
-    border: 1px solid #e6c469;
-    border-radius: 0.9rem;
-    background: #fff9e8;
-    color: #59430b;
+.modalBackdrop {
+    position: fixed;
+    z-index: 2000;
+    display: grid;
+    padding: 1.25rem;
+    background: rgb(19 30 50 / 0.48);
+    inset: 0;
+    place-items: center;
+}
 
-    p {
-        margin: 0.35rem 0 0;
-        font-size: 0.88rem;
-        line-height: 1.45;
+.deadlineModal {
+    width: min(100%, 34rem);
+    padding: 1.4rem;
+    border: 1px solid #d9e2f1;
+    border-radius: 1.15rem;
+    background: #fff;
+    box-shadow: 0 24px 70px rgb(20 38 70 / 0.24);
+    color: #263650;
+}
+
+.modalHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+
+    h3 {
+        margin: 0.15rem 0 0;
+        color: #192338;
+        font-size: 1.25rem;
+        line-height: 1.25;
     }
 }
 
-.confirmationActions {
+.modalIcon {
+    display: grid;
+    width: 2.65rem;
+    height: 2.65rem;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: #fff1cc;
+    color: #8b5a00;
+    font-size: 1.2rem;
+    font-weight: 800;
+    place-items: center;
+}
+
+.modalEyebrow {
+    color: #7b5a0c;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.modalCopy {
+    max-height: 14rem;
+    margin: 1.15rem 0 0;
+    padding: 0.9rem;
+    overflow-y: auto;
+    border: 1px solid #dbe4f1;
+    border-radius: 0.8rem;
+    background: #f8faff;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.modalWarning {
+    margin: 0.85rem 0 0;
+    padding: 0.75rem 0.85rem;
+    border-left: 3px solid #d69a17;
+    border-radius: 0.3rem 0.65rem 0.65rem 0.3rem;
+    background: #fff9e8;
+    color: #624a12;
+    font-size: 0.86rem;
+    line-height: 1.45;
+}
+
+.modalError {
+    margin: 0.75rem 0 0;
+    padding: 0.7rem 0.8rem;
+    border-radius: 0.65rem;
+    background: #fff0f0;
+    color: #a12c2c;
+    font-size: 0.86rem;
+    line-height: 1.4;
+}
+
+.modalActions {
     display: flex;
     justify-content: flex-end;
-    gap: 0.6rem;
-    margin-top: 0.9rem;
+    gap: 0.65rem;
+    margin-top: 1.1rem;
 
     button {
-        padding: 0.55rem 0.8rem;
+        min-width: 6rem;
+        padding: 0.65rem 1rem;
         border: 1px solid #b6c4da;
         border-radius: 0.65rem;
         background: #fff;
         color: #34445d;
         cursor: pointer;
+        font: inherit;
         font-weight: 600;
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
     }
 
     .allowButton {
@@ -320,7 +400,7 @@
 }
 
 .quickPrompts button:focus-visible,
-.confirmationActions button:focus-visible,
+.modalActions button:focus-visible,
 .workflowInput button:focus-visible,
 .workflowInput textarea:focus-visible {
     outline: 3px solid #1d4ed8;

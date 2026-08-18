@@ -6,6 +6,7 @@ import {
   type AiAgentRole,
   type DeadlineDecision,
 } from '@/apis/services/ai-agent-api';
+import DeadlineDecisionModal from './DeadlineDecisionModal';
 import styles from './index.module.scss';
 
 interface WorkflowMessage {
@@ -36,6 +37,8 @@ const WorkflowPanel = () => {
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [pendingAction, setPendingAction] = useState<AiAgentPendingAction | null>(null);
+  const [pendingConfirmation, setPendingConfirmation] = useState('');
+  const [decisionError, setDecisionError] = useState<string | null>(null);
   const [messages, setMessages] = useState<WorkflowMessage[]>([
     {
       id: 0,
@@ -69,8 +72,13 @@ const WorkflowPanel = () => {
 
     try {
       const response = await aiAgentApiService.chat({message: trimmedMessage, role});
-      addMessage('agent', response.reply);
-      setPendingAction(response.pendingAction);
+      if (response.pendingAction) {
+        setPendingAction(response.pendingAction);
+        setPendingConfirmation(response.reply);
+        setDecisionError(null);
+      } else {
+        addMessage('agent', response.reply);
+      }
     } catch (error) {
       addMessage('agent', getErrorMessage(error));
     } finally {
@@ -92,6 +100,7 @@ const WorkflowPanel = () => {
 
   const handleDecision = async (decision: DeadlineDecision) => {
     if (!pendingAction || isSending) return;
+    setDecisionError(null);
     setIsSending(true);
 
     try {
@@ -106,8 +115,9 @@ const WorkflowPanel = () => {
           : 'The deadline change was rejected.'),
       );
       setPendingAction(response.pendingAction);
+      setPendingConfirmation(response.pendingAction ? response.reply : '');
     } catch (error) {
-      addMessage('agent', getErrorMessage(error));
+      setDecisionError(getErrorMessage(error));
     } finally {
       setIsSending(false);
     }
@@ -152,21 +162,6 @@ const WorkflowPanel = () => {
           </div>
         ))}
 
-        {pendingAction ? (
-          <div className={styles.confirmation} role="alert">
-            <strong>Approval required</strong>
-            <p>The Agent prepared an assignment deadline change. Review the details above before continuing.</p>
-            <div className={styles.confirmationActions}>
-              <button type="button" onClick={() => void handleDecision('REJECT')} disabled={isSending}>
-                Reject
-              </button>
-              <button type="button" className={styles.allowButton} onClick={() => void handleDecision('ALLOW')} disabled={isSending}>
-                Allow change
-              </button>
-            </div>
-          </div>
-        ) : null}
-
         {isSending ? <div className={styles.agentStatus} role="status">AI Agent is working…</div> : null}
         <div ref={conversationEndRef}/>
       </div>
@@ -189,6 +184,15 @@ const WorkflowPanel = () => {
           </button>
         </div>
       </form>
+
+      {pendingAction ? (
+        <DeadlineDecisionModal
+          confirmationText={pendingConfirmation}
+          errorMessage={decisionError}
+          isSubmitting={isSending}
+          onDecision={decision => void handleDecision(decision)}
+        />
+      ) : null}
     </section>
   );
 };

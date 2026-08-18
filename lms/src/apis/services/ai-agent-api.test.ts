@@ -1,5 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {aiAgentApiService} from './ai-agent-api';
+import {AiAgentApiService} from './ai-agent-api';
 
 const jsonResponse = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
   status,
@@ -7,7 +7,10 @@ const jsonResponse = (body: unknown, status = 200) => new Response(JSON.stringif
 });
 
 describe('AiAgentApiService', () => {
+  let aiAgentApiService: AiAgentApiService;
+
   beforeEach(() => {
+    aiAgentApiService = new AiAgentApiService();
     localStorage.clear();
     localStorage.setItem('accToken', 'test-access-token');
     vi.restoreAllMocks();
@@ -48,6 +51,30 @@ describe('AiAgentApiService', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('/ai-agent/chat/deadline-change/decision', expect.objectContaining({
       body: JSON.stringify({actionId: 'action-123', decision: 'REJECT'}),
+    }));
+  });
+
+  it('reuses the token that created a pending deadline action', async () => {
+    localStorage.setItem('accToken', 'pending-action-token');
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(jsonResponse({
+        reply: 'Allow this deadline change?',
+        pendingAction: {actionId: 'action-456', type: 'ASSIGNMENT_DEADLINE_CHANGE'},
+      }))
+      .mockResolvedValueOnce(jsonResponse({
+        reply: 'The deadline change was rejected.',
+        pendingAction: null,
+      }));
+
+    await aiAgentApiService.chat({message: 'Move Assignment A', role: 'INSTRUCTOR'});
+    localStorage.setItem('accToken', 'refreshed-token');
+    await aiAgentApiService.decideDeadlineChange({actionId: 'action-456', decision: 'REJECT'});
+
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/ai-agent/chat/deadline-change/decision', expect.objectContaining({
+      headers: {
+        Authorization: 'Bearer pending-action-token',
+        'Content-Type': 'application/json',
+      },
     }));
   });
 
