@@ -7,9 +7,7 @@ import CourseComponent from "../components/CourseComponent.js";
 import LearningScheduleComponent from "@/sections/learning_schedule/LearningScheduleComponent";
 import PostComponent from "@/sections/posts/PostComponent";
 import AverageScoreComponent from '../components/AverageScoreComponent';
-import InstructorWorkComponent from '../components/InstructorWorkComponent';
 import {GridLayoutItem, ScreenSizeInfo, WidgetConfig} from "@/pages/LmsHomePage/types";
-import {useRequiredAuth} from '@/contexts/RequiredAuthContext';
 
 interface UseWidgetLayoutResult {
   containerRef: React.RefObject<HTMLDivElement>;
@@ -22,14 +20,12 @@ interface UseWidgetLayoutResult {
 }
 
 export const useWidgetLayout = (): UseWidgetLayoutResult => {
-  const {user} = useRequiredAuth();
   const chatRef = useRef<HTMLDivElement>(null);
   const assignmentsRef = useRef<HTMLDivElement>(null);
   const courseRef = useRef<HTMLDivElement>(null);
   const learningScheduleRef = useRef<HTMLDivElement>(null);
   const postsRef = useRef<HTMLDivElement>(null);
   const averageScoreRef = useRef<HTMLDivElement>(null);
-  const instructorWorkRef = useRef<HTMLDivElement>(null);
   
   const widgetComponents = useMemo(() => ({
     chat: <ChatComponent/>,
@@ -38,7 +34,6 @@ export const useWidgetLayout = (): UseWidgetLayoutResult => {
     'learning-schedule': <LearningScheduleComponent/>,
     posts: <PostComponent/>,
     'average-score': <AverageScoreComponent/>,
-    'instructor-work': <InstructorWorkComponent/>,
   }), []);
   
   const widgetRefs = useMemo(() => ({
@@ -48,7 +43,6 @@ export const useWidgetLayout = (): UseWidgetLayoutResult => {
     'learning-schedule': learningScheduleRef,
     posts: postsRef,
     'average-score': averageScoreRef,
-    'instructor-work': instructorWorkRef,
   }), []);
   
   const widgetConfigs = useMemo<WidgetConfig[]>(() => {
@@ -59,14 +53,13 @@ export const useWidgetLayout = (): UseWidgetLayoutResult => {
       {key: 'learning-schedule', component: widgetComponents['learning-schedule']},
       {key: 'posts', component: widgetComponents.posts},
       {key: 'average-score', component: widgetComponents['average-score']},
-      ...(user.level === 'INSTRUCTOR' ? [{key: 'instructor-work', component: widgetComponents['instructor-work']}] : []),
     ];
     
     return baseWidgets.map(widget => ({
       ...widget,
       ref: widgetRefs[widget.key as keyof typeof widgetRefs],
     }));
-  }, [user.level, widgetComponents, widgetRefs]);
+  }, [widgetComponents, widgetRefs]);
   
   const {width, containerRef, mounted} = useContainerWidth();
   
