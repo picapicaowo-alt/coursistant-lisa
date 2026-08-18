@@ -3,7 +3,7 @@ import {Link, useNavigate, useParams} from 'react-router-dom';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {ArrowLeft, CalendarClock, Download, Eye, FileText, RotateCcw, Trash2, Upload, UsersRound} from 'lucide-react';
 import {assignmentApiService} from '@/apis/services/assignment-api';
-import type {AssignmentAttachment} from '@/apis';
+import type {ApiError, AssignmentAttachment} from '@/apis';
 import {unwrapData} from '@/apis';
 import {useAuth} from '@/contexts/AuthContext';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
@@ -21,6 +21,41 @@ import styles from './index.module.scss';
 const parseId = (value?: string) => {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+};
+
+const apiErrorCode = (error: unknown) => {
+  const details = (error as ApiError | undefined)?.details;
+  return details && typeof details === 'object' && typeof details.code === 'string'
+    ? details.code
+    : undefined;
+};
+
+export const uploadRubricWithReplaceConfirmation = async (
+  courseId: number,
+  assignmentId: number,
+  file: File,
+  alreadyConfirmed: boolean,
+) => {
+  try {
+    return await assignmentApiService.uploadRubric(
+      courseId, assignmentId, file, alreadyConfirmed,
+    );
+  } catch (error) {
+    // The rubric summary only reports grades tied to an older version. A
+    // grade can therefore be created after the summary was fetched (or be
+    // tied to the current version) and the server becomes the authoritative
+    // source for whether replacing the rubric needs explicit confirmation.
+    if (
+      !alreadyConfirmed
+      && apiErrorCode(error) === 'RUBRIC_REPLACE_CONFIRM_REQUIRED'
+      && window.confirm('At least one grade already references this rubric. Replace the rubric anyway? Existing grades will be preserved.')
+    ) {
+      return assignmentApiService.uploadRubric(
+        courseId, assignmentId, file, true,
+      );
+    }
+    throw error;
+  }
 };
 
 export const InstructorAttachmentRow = ({courseId, assignmentId, attachment}: {
@@ -172,7 +207,7 @@ const AssignmentDetailPage = () => {
   });
 
   const uploadRubric = useMutation({
-    mutationFn: (file: File) => assignmentApiService.uploadRubric(
+    mutationFn: (file: File) => uploadRubricWithReplaceConfirmation(
       courseId!, assignmentId!, file,
       Boolean(rubricQuery.data?.gradedAgainstPreviousRubricCount),
     ),
