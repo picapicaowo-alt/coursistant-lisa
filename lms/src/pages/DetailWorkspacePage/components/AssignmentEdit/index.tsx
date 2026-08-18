@@ -8,8 +8,16 @@ import {PropertyRow} from "@/components/PropertyRow";
 import {PropertyForm} from "@/components/PropertyForm";
 import {RichTextEditor} from "@/components/RichTextEditor";
 import {IntegerInput} from "@/components/IntegerInput";
+import {EnglishDateTimeInput} from '@/components/EnglishDateInput';
 
 const DOCUMENT_CATEGORIES = ["Homework", "Lab", "Project", "Others"];
+
+const toLocalDateTimeValue = (value: Date | string) => {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return localDate.toISOString().slice(0, 16);
+};
 
 export const AssignmentEdit: React.FC = () => {
   const {t} = useTranslation("detailWorkspace");
@@ -40,14 +48,12 @@ export const AssignmentEdit: React.FC = () => {
       
       <PropertyForm title={t("assignment.basics")}>
         <PropertyRow title={t("assignmentModal.dueTimeLabel")}>
-          <input
-            type="datetime-local"
-            value={assignment.dueTime.toString()}
-            onChange={(e) => {
-              update("assignments", assignment.id, {dueTime: new Date(e.target.value)});
+          <EnglishDateTimeInput
+            value={toLocalDateTimeValue(assignment.dueTime)}
+            onChangeValue={(value) => {
+              if (value) update("assignments", assignment.id, {dueTime: new Date(value)});
             }}
             className={styles.datetimeInput}
-            min={new Date().toISOString().slice(0, 16)}
             required
           />
         </PropertyRow>

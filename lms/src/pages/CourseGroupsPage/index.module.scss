@@ -1,0 +1,33 @@
+.page { min-height: 100%; padding: 2rem clamp(1rem, 4vw, 3.75rem) 4rem; background: t.$page-bg; color: t.$text; }
+.header, .card, .page > .error { max-width: 1050px; margin-inline: auto; }
+.header { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.25rem; }
+.headerText { min-width: 0; flex: 1; }
+.header h1 { margin: .25rem 0 0; font-size: clamp(1.8rem, 4vw, t.$fs-h1); }
+.eyebrow { margin: 0; color: t.$brand; font-size: t.$fs-caption; font-weight: t.$fw-semibold; text-transform: uppercase; letter-spacing: .08em; }
+.backLink { display: inline-grid; place-items: center; flex: 0 0 t.$control-size; width: t.$control-size; height: t.$control-size; border-radius: t.$radius-control; background: t.$neutral-fill; color: t.$text; }
+.primaryButton, .iconButton { display: inline-flex; min-height: 2.5rem; align-items: center; justify-content: center; gap: .4rem; padding: 0 .9rem; border-radius: t.$radius-control-sm; font-weight: t.$fw-semibold; cursor: pointer; }
+.primaryButton { border: 1px solid t.$brand; background: t.$brand; color: #fff; }
+.iconButton { min-width: 2.5rem; padding: 0; border: 1px solid t.$border; background: t.$card-bg; color: t.$text; }
+.primaryButton:disabled { cursor: not-allowed; opacity: .55; }
+.card { margin-bottom: 1.25rem; padding: 1.5rem; border: 1px solid t.$border; border-radius: t.$radius-card-lg; background: t.$card-bg; box-shadow: t.$shadow-card; }
+.cardHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
+.cardHeader h2, .cardHeader p { margin: 0; }
+.cardHeader p, .muted { margin-top: .25rem; color: t.$text-muted; }
+.formGrid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 1rem; }
+.formGrid label:not(.checkbox) { display: grid; gap: .4rem; color: t.$text-muted; font-size: t.$fs-caption; font-weight: t.$fw-semibold; }
+.formGrid input:not([type='checkbox']) { width: 100%; min-height: 2.6rem; padding: 0 .75rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; color: t.$text; }
+.full { grid-column: 1 / -1; }
+.checkbox { display: flex; align-items: center; gap: .5rem; align-self: end; min-height: 2.6rem; }
+.footer { display: flex; justify-content: flex-end; margin-top: 1rem; }
+.groupSetList { display: grid; margin: 0; padding: 0; list-style: none; }
+.groupSetList li { border-top: 1px solid t.$border; }
+.groupSetList a { display: flex; align-items: center; gap: .85rem; padding: .85rem 0; color: t.$text; text-decoration: none; }
+.groupIcon { display: inline-grid; place-items: center; flex: 0 0 2.6rem; height: 2.6rem; border-radius: 50%; background: t.$brand-subtle; color: t.$brand; }
+.groupText { display: grid; min-width: 0; flex: 1; gap: .2rem; }
+.groupText small { color: t.$text-muted; }
+.groupState { display: inline-flex; align-items: center; gap: .35rem; color: t.$text-muted; font-size: t.$fs-caption; }
+.inlineError { display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: t.$danger; }
+.inlineError button { min-height: 2.5rem; padding: 0 .8rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; cursor: pointer; }
+.error { color: t.$danger; }
+.backLink:focus-visible, button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid t.$brand-subtle; outline-offset: 2px; }
+@media (max-width: 700px) { .page { padding-top: 1rem; } .header { flex-wrap: wrap; } .header .primaryButton { width: 100%; } .card { padding: 1rem; } .formGrid { grid-template-columns: 1fr; } .full { grid-column: auto; } .footer .primaryButton { width: 100%; } .groupSetList a { flex-wrap: wrap; } .groupState { width: calc(100% - 3.45rem); margin-left: 3.45rem; } }

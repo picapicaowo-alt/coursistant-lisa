@@ -36,8 +36,16 @@ export const resolveNotificationPath = (
 
   const deepLink = notification.deepLink?.trim();
   if (deepLink?.startsWith('/') && !deepLink.startsWith('//')) {
+    const pluralSubmission = deepLink.match(
+      /^\/courses\/(\d+)\/assignments\/(\d+)\/submissions\/(\d+)\/?$/,
+    );
+    if (pluralSubmission) {
+      const [, courseId, assignmentId, submissionId] = pluralSubmission;
+      return `/course/${courseId}/assignments/${assignmentId}/submissions/${submissionId}`;
+    }
+
     const pluralSubject = deepLink.match(
-      /^\/courses\/(\d+)\/(assignments|quizzes|announcements|events|weeks|groups|group-sets)\/(\d+)\/?$/,
+      /^\/courses\/(\d+)\/(assignments|quizzes|announcements|events|weeks|groups|group-sets)\/(\d+)(?:\/my-grade)?\/?$/,
     );
     if (pluralSubject) {
       const [, courseId, rawKind, subjectId] = pluralSubject;
@@ -45,9 +53,15 @@ export const resolveNotificationPath = (
       return `/course/${courseId}/${kind}/${subjectId}`;
     }
 
-    if (/^\/course\/\d+(?:\/(?:assignments|quizzes|announcements|events|weeks|group-sets)\/\d+)?\/?$/.test(deepLink)) {
-      return deepLink.replace(/\/$/, '');
-    }
+    const singularSubmission = deepLink.match(
+      /^(\/course\/\d+\/assignments\/\d+\/submissions\/\d+)\/?$/,
+    );
+    if (singularSubmission) return singularSubmission[1];
+
+    const singularSubject = deepLink.match(
+      /^(\/course\/\d+(?:\/(?:assignments|quizzes|announcements|events|weeks|group-sets)\/\d+)?)(?:\/my-grade)?\/?$/,
+    );
+    if (singularSubject) return singularSubject[1];
 
     const pluralCourse = deepLink.match(/^\/courses\/(\d+)(?:\/.*)?$/);
     if (pluralCourse) return `/course/${pluralCourse[1]}`;
@@ -59,7 +73,7 @@ export const resolveNotificationPath = (
 export const formatNotificationTime = (value: string): string => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
     hour: 'numeric',

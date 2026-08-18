@@ -9,12 +9,16 @@
   AssignmentSummary,
   CreateAssignmentPayload,
   CreateSubmissionReviewRequest,
+  DueDateChangePreview,
   EditAssignmentRequest,
   GradeRecord,
   GradeSelectionPayload,
   GradingRoster,
+  MyGradeItem,
   PatchAssignmentPayload,
+  RubricState,
   StagingFile,
+  SubmissionVersion,
   SubmissionState,
   SubmitAssignmentPayload,
   UpdateSubmissionReviewRequest,
@@ -92,6 +96,98 @@ export class AssignmentApiService {
     );
   }
 
+  async deleteAssignment(courseId: number, assignmentId: number): Promise<ApiResponse<void>> {
+    return this.apiClient.delete(`/v2/courses/${courseId}/assignments/${assignmentId}`);
+  }
+
+  async previewDueDateChange(
+    courseId: number,
+    assignmentId: number,
+    request: {dueAt: string; lateUntil?: string; clearLateUntil?: boolean},
+  ): Promise<ApiResponse<DueDateChangePreview>> {
+    return this.apiClient.post(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/due-date-change-preview`,
+      request,
+    );
+  }
+
+  async getRubric(courseId: number, assignmentId: number): Promise<ApiResponse<RubricState>> {
+    return this.apiClient.get(`/v2/courses/${courseId}/assignments/${assignmentId}/rubric`);
+  }
+
+  async uploadRubric(courseId: number, assignmentId: number, file: File, confirmReplaceAfterGrading = false): Promise<ApiResponse<RubricState>> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.apiClient.post(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/rubric`,
+      formData,
+      {params: {confirmReplaceAfterGrading}},
+    );
+  }
+
+  private async getRubricBlob(courseId: number, assignmentId: number, action: 'preview' | 'download'): Promise<Blob> {
+    const response = await this.apiClient.getClient().get<Blob>(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/rubric/${action}`,
+      {responseType: 'blob'},
+    );
+    return response.data;
+  }
+
+  downloadRubric(courseId: number, assignmentId: number): Promise<Blob> {
+    return this.getRubricBlob(courseId, assignmentId, 'download');
+  }
+
+  previewRubric(courseId: number, assignmentId: number): Promise<Blob> {
+    return this.getRubricBlob(courseId, assignmentId, 'preview');
+  }
+
+  async restorePreviousRubric(courseId: number, assignmentId: number, confirmReplaceAfterGrading = false): Promise<ApiResponse<RubricState>> {
+    return this.apiClient.post(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/rubric/restore-previous`,
+      undefined,
+      {params: {confirmReplaceAfterGrading}},
+    );
+  }
+
+  private async uploadAnnotatedFile(
+    courseId: number,
+    assignmentId: number,
+    target: 'students' | 'groups',
+    targetId: number,
+    file: File,
+  ): Promise<ApiResponse<GradeRecord>> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.apiClient.post(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/${target}/${targetId}/grade/annotated-file`,
+      formData,
+    );
+  }
+
+  uploadStudentAnnotatedFile(courseId: number, assignmentId: number, studentUserId: number, file: File) {
+    return this.uploadAnnotatedFile(courseId, assignmentId, 'students', studentUserId, file);
+  }
+
+  uploadGroupAnnotatedFile(courseId: number, assignmentId: number, groupId: number, file: File) {
+    return this.uploadAnnotatedFile(courseId, assignmentId, 'groups', groupId, file);
+  }
+
+  private async downloadAnnotatedFile(courseId: number, assignmentId: number, target: 'students' | 'groups', targetId: number): Promise<Blob> {
+    const response = await this.apiClient.getClient().get<Blob>(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/${target}/${targetId}/grade/annotated-file`,
+      {responseType: 'blob'},
+    );
+    return response.data;
+  }
+
+  downloadStudentAnnotatedFile(courseId: number, assignmentId: number, studentUserId: number) {
+    return this.downloadAnnotatedFile(courseId, assignmentId, 'students', studentUserId);
+  }
+
+  downloadGroupAnnotatedFile(courseId: number, assignmentId: number, groupId: number) {
+    return this.downloadAnnotatedFile(courseId, assignmentId, 'groups', groupId);
+  }
+
   async getGradingRoster(
     courseId: number,
     assignmentId: number
@@ -99,6 +195,10 @@ export class AssignmentApiService {
     return this.apiClient.get<GradingRoster>(
       `/v2/courses/${courseId}/assignments/${assignmentId}/grading-roster`
     );
+  }
+
+  async listMyGrades(courseId: number): Promise<ApiResponse<MyGradeItem[]>> {
+    return this.apiClient.get<MyGradeItem[]>(`/v2/courses/${courseId}/my-grades`);
   }
 
   async upsertStudentGrade(
@@ -180,6 +280,27 @@ export class AssignmentApiService {
     );
   }
 
+  private async getAttachmentBlob(
+    courseId: number,
+    assignmentId: number,
+    attachmentId: number,
+    action: 'preview' | 'download',
+  ): Promise<Blob> {
+    const response = await this.apiClient.getClient().get<Blob>(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/attachments/${attachmentId}/${action}`,
+      {responseType: 'blob'},
+    );
+    return response.data;
+  }
+
+  downloadAttachment(courseId: number, assignmentId: number, attachmentId: number): Promise<Blob> {
+    return this.getAttachmentBlob(courseId, assignmentId, attachmentId, 'download');
+  }
+
+  previewAttachment(courseId: number, assignmentId: number, attachmentId: number): Promise<Blob> {
+    return this.getAttachmentBlob(courseId, assignmentId, attachmentId, 'preview');
+  }
+
   async getMySubmission(
     courseId: number,
     assignmentId: number
@@ -187,6 +308,48 @@ export class AssignmentApiService {
     return this.apiClient.get<SubmissionState>(
       `/v2/courses/${courseId}/assignments/${assignmentId}/submission`
     );
+  }
+
+  async listSubmissionVersions(
+    courseId: number,
+    assignmentId: number,
+    submissionId: number,
+  ): Promise<ApiResponse<SubmissionVersion[]>> {
+    return this.apiClient.get(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/submissions/${submissionId}/versions`,
+    );
+  }
+
+  private async getSubmissionFileBlob(
+    courseId: number,
+    assignmentId: number,
+    submissionId: number,
+    fileId: number,
+    action: 'download' | 'preview',
+  ): Promise<Blob> {
+    const response = await this.apiClient.getClient().get<Blob>(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/submissions/${submissionId}/files/${fileId}/${action}`,
+      {responseType: 'blob'},
+    );
+    return response.data;
+  }
+
+  downloadSubmissionFile(
+    courseId: number,
+    assignmentId: number,
+    submissionId: number,
+    fileId: number,
+  ): Promise<Blob> {
+    return this.getSubmissionFileBlob(courseId, assignmentId, submissionId, fileId, 'download');
+  }
+
+  previewSubmissionFile(
+    courseId: number,
+    assignmentId: number,
+    submissionId: number,
+    fileId: number,
+  ): Promise<Blob> {
+    return this.getSubmissionFileBlob(courseId, assignmentId, submissionId, fileId, 'preview');
   }
 
   /** Active, not-yet-submitted files owned by the current student. */

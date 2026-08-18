@@ -84,7 +84,7 @@ const AssignmentsList: React.FC<AssignmentsListProps> = ({
         <div className={styles.assignmentsList}>
           {assignments.map((assignment, index) => (
             <AssignmentItem key={assignment.id}
-                            assignment={{...assignment, dueTime: assignment.dueTime.toLocaleString(), index}}
+                            assignment={{...assignment, dueTime: assignment.dueTime.toLocaleString('en-US'), index}}
                             activeUnitId={activeUnitId}/>
           ))}
         </div>

@@ -7,9 +7,17 @@ import {ContentCard} from "./ContentCard";
 import {AssignmentsCard} from "./AssignmentsCard";
 import {ScheduleCard} from "./ScheduleCard";
 import {QuizzesCard} from './QuizzesCard';
+import {EventsCard} from './EventsCard';
+import {GroupsCard} from './GroupsCard';
+import {SyllabusCard} from '../SyllabusCard';
+import {RosterCard} from './RosterCard';
+import {AnnouncementsCard} from './AnnouncementsCard';
 
 interface CourseDetailViewProps {
   canCreateAssignments?: boolean;
+  canManageEvents?: boolean;
+  canManageGroups?: boolean;
+  canPostAnnouncements?: boolean;
 }
 
 /**
@@ -21,10 +29,10 @@ interface CourseDetailViewProps {
  * per-item scores and no course total — and no endpoint stores a weight, so
  * the card would be decoration over nothing (open-decisions.md B-3).
  */
-export const CourseDetailView: React.FC<CourseDetailViewProps> = ({canCreateAssignments = false}) => {
+export const CourseDetailView: React.FC<CourseDetailViewProps> = ({canCreateAssignments = false, canManageEvents = false, canManageGroups = false, canPostAnnouncements = false}) => {
   const {
-    course, weeks, sessions, assignments, quizzes,
-    isLoading, isError, sessionsFailed, assignmentsFailed, quizzesFailed, refetch,
+    course, weeks, sessions, assignments, quizzes, events, groupSets,
+    isLoading, isError, sessionsFailed, assignmentsFailed, quizzesFailed, eventsFailed, groupSetsFailed, refetch,
   } = useCourseWorkspaceData();
 
   const [activeWeekId, setActiveWeekId] = useState<number | null>(null);
@@ -68,6 +76,8 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({canCreateAssi
 
       <div className={styles.cards}>
         <ContentCard week={activeWeek}/>
+        <SyllabusCard courseId={course.id} canManage={canCreateAssignments}/>
+        <AnnouncementsCard courseId={course.id} canManage={canPostAnnouncements}/>
         <AssignmentsCard
           courseId={course.id}
           assignments={assignments}
@@ -80,7 +90,10 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({canCreateAssi
           failed={quizzesFailed}
           canCreate={canCreateAssignments}
         />
-        <ScheduleCard sessions={sessions} failed={sessionsFailed}/>
+        <EventsCard courseId={course.id} events={events} failed={eventsFailed} canManage={canManageEvents}/>
+        <GroupsCard courseId={course.id} groupSets={groupSets} failed={groupSetsFailed} canManage={canManageGroups}/>
+        {canCreateAssignments ? <RosterCard courseId={course.id}/> : null}
+        <ScheduleCard sessions={sessions} failed={sessionsFailed} courseId={course.id} canManage={canManageEvents}/>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import {Download, ExternalLink, Eye} from 'lucide-react';
 import styles from "./index.module.scss";
 import {CourseMaterial, CourseWeek} from "@/apis";
 import {courseApiService} from '@/apis/services/course-api';
+import {openPreviewWindow, saveBlob, showBlobInPreviewWindow} from '@/utils/downloadBlob';
 
 const formatSize = (bytes: number | null): string => {
   if (bytes === null) return '';
@@ -33,14 +34,7 @@ const ContentCardBody: React.FC<{week: CourseWeek | null}> = ({week}) => {
 
     try {
       const blob = await courseApiService.downloadMaterial(week.courseId, week.id, material.id);
-      const objectUrl = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = objectUrl;
-      anchor.download = material.originalFilename || material.displayName;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+      saveBlob(blob, material.originalFilename || material.displayName);
     } catch {
       setError(`Could not download ${material.displayName}.`);
     } finally {
@@ -50,21 +44,17 @@ const ContentCardBody: React.FC<{week: CourseWeek | null}> = ({week}) => {
 
   const preview = async (material: CourseMaterial) => {
     if (!week) return;
-    const previewWindow = window.open('', '_blank');
+    const previewWindow = openPreviewWindow();
     if (!previewWindow) {
       setError('Allow pop-ups to preview this file.');
       return;
     }
-    previewWindow.opener = null;
-    previewWindow.document.title = 'Loading preview…';
     setActiveAction(`preview-${material.id}`);
     setError(null);
 
     try {
       const blob = await courseApiService.previewMaterial(week.courseId, week.id, material.id);
-      const objectUrl = URL.createObjectURL(blob);
-      previewWindow.location.replace(objectUrl);
-      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+      showBlobInPreviewWindow(previewWindow, blob);
     } catch {
       previewWindow.close();
       setError(`Could not preview ${material.displayName}.`);
@@ -92,7 +82,7 @@ const ContentCardBody: React.FC<{week: CourseWeek | null}> = ({week}) => {
                   <span className={styles.materialIcon} aria-hidden="true">
                     {material.materialType === 'LINK' ? 'LINK' : (material.extension ?? 'file').toUpperCase()}
                   </span>
-                  <span className={styles.materialName}>{material.displayName}</span>
+                  <span className={styles.materialName} title={material.displayName}>{material.displayName}</span>
                   {material.materialType === 'FILE' && material.sizeBytes !== null ? (
                     <span className={styles.materialMeta}>{formatSize(material.sizeBytes)}</span>
                   ) : null}

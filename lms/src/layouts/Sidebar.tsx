@@ -11,6 +11,7 @@ const Sidebar: React.FC = () => {
   const {pathname} = useLocation();
   const selectedSidebarIndex = getSidebarIndex(pathname);
   const isUserAccount = user.role === 'USER';
+  const canUseAdminConsole = user.role === 'SYSTEM_ADMIN' || user.role === 'TENANT_ADMIN';
   const homePath = isUserAccount ? '/' : '/course';
   const sidebarItems = SIDEBAR_CONFIGS
     .map((item, originalIndex) => ({item, originalIndex}))
@@ -29,21 +30,30 @@ const Sidebar: React.FC = () => {
         <ul>
           {
             sidebarItems.map(({item, originalIndex}) => (
-              <Link
-                key={item.path}
-                to={item.path}
-              >
-                <div className={`${styles.itemContent} ${selectedSidebarIndex === originalIndex ? styles.active : ''}`}>
-                  <img
-                    src={selectedSidebarIndex === originalIndex ? item.sidebarItem.filledIcon : item.sidebarItem.unfilledIcon}
-                    alt={item.name}
-                    className={styles.responsiveImage}
-                  />
-                  <span>{!isUserAccount && item.path === '/course' ? 'Courses' : t(item.sidebarItem.translationLabel)}</span>
-                </div>
-              </Link>
+              <li key={item.path}>
+                <Link to={item.path}>
+                  <div className={`${styles.itemContent} ${selectedSidebarIndex === originalIndex ? styles.active : ''}`}>
+                    <img
+                      src={selectedSidebarIndex === originalIndex ? item.sidebarItem.filledIcon : item.sidebarItem.unfilledIcon}
+                      alt={item.name}
+                      className={styles.responsiveImage}
+                    />
+                    <span>{!isUserAccount && item.path === '/course' ? 'Courses' : t(item.sidebarItem.translationLabel)}</span>
+                  </div>
+                </Link>
+              </li>
             ))
           }
+          {canUseAdminConsole ? (
+            <li>
+              <Link to="/admin">
+                <div className={`${styles.itemContent} ${pathname === '/admin' || pathname.startsWith('/admin/') ? styles.active : ''}`}>
+                  <img src="/icons/profile-menu/setting.png" alt="Admin Console" className={styles.responsiveImage}/>
+                  <span>Admin Console</span>
+                </div>
+              </Link>
+            </li>
+          ) : null}
         </ul>
       </nav>
     </div>

@@ -2,16 +2,32 @@
   ApiResponse,
   CourseBrowseParams,
   CourseAnnouncement,
+  CourseAnnouncementPayload,
+  CourseAnnouncementSummary,
   CourseEvent,
+  CourseEventPayload,
+  CourseGroup,
+  CourseGroupMembership,
   CourseGroupSet,
+  BatchStudentEnrollResponse,
+  CourseMember,
+  CourseMemberPage,
   CourseMaterial,
   CoursePageResponse,
   CourseResponse,
   CourseSession,
+  CourseSessionPayload,
   CourseSummary,
+  CreateCourseRequest,
   CourseWeek,
+  CreateGroupSetPayload,
   idempotent,
+  MemberQueryParams,
+  SyllabusState,
+  TaPermissions,
   UpdateCourseRequest,
+  PatchGroupSetPayload,
+  UngroupedStudent,
   V2ApiClient
 } from '@/apis';
 
@@ -48,6 +64,18 @@ export class CourseApiService {
       console.error(`Failed to get sessions for courseId: ${courseId}`, error);
       throw error;
     }
+  }
+
+  async createCourseSession(courseId: number, request: CourseSessionPayload): Promise<ApiResponse<CourseSession>> {
+    return this.apiClient.post(`/v2/courses/${courseId}/sessions`, request, idempotent());
+  }
+
+  async updateCourseSession(courseId: number, sessionId: number, request: CourseSessionPayload): Promise<ApiResponse<CourseSession>> {
+    return this.apiClient.put(`/v2/courses/${courseId}/sessions/${sessionId}`, request, idempotent());
+  }
+
+  async deleteCourseSession(courseId: number, sessionId: number): Promise<ApiResponse<void>> {
+    return this.apiClient.delete(`/v2/courses/${courseId}/sessions/${sessionId}`);
   }
 
   /**
@@ -104,6 +132,11 @@ export class CourseApiService {
     }
   }
 
+  /** Creates an Active course using the current v2 contract. */
+  async createCourse(request: CreateCourseRequest): Promise<ApiResponse<CourseResponse>> {
+    return this.apiClient.post<CourseResponse>('/v2/courses', request, idempotent());
+  }
+
   /**
    * The course outline. Materials come embedded in each week.
    * Students receive only Published weeks; staff see drafts too.
@@ -126,11 +159,59 @@ export class CourseApiService {
     );
   }
 
+  async listAnnouncements(courseId: number): Promise<ApiResponse<CourseAnnouncementSummary[]>> {
+    return this.apiClient.get(`/v2/courses/${courseId}/announcements`);
+  }
+
+  async createAnnouncement(courseId: number, request: CourseAnnouncementPayload): Promise<ApiResponse<CourseAnnouncement>> {
+    return this.apiClient.post(`/v2/courses/${courseId}/announcements`, request, idempotent());
+  }
+
+  async updateAnnouncement(courseId: number, announcementId: number, request: CourseAnnouncementPayload): Promise<ApiResponse<CourseAnnouncement>> {
+    return this.apiClient.patch(`/v2/courses/${courseId}/announcements/${announcementId}`, request, idempotent());
+  }
+
+  async deleteAnnouncement(courseId: number, announcementId: number): Promise<void> {
+    await this.apiClient.getClient().delete(`/v2/courses/${courseId}/announcements/${announcementId}`, {params: {confirm: true}});
+  }
+
   async getCourseEvent(
     courseId: number,
     eventId: number
   ): Promise<ApiResponse<CourseEvent>> {
     return this.apiClient.get<CourseEvent>(`/v2/courses/${courseId}/events/${eventId}`);
+  }
+
+  async listCourseEvents(courseId: number): Promise<ApiResponse<CourseEvent[]>> {
+    return this.apiClient.get<CourseEvent[]>(`/v2/courses/${courseId}/events`);
+  }
+
+  async createCourseEvent(
+    courseId: number,
+    request: CourseEventPayload,
+    idempotencyKey: string = crypto.randomUUID(),
+  ): Promise<ApiResponse<CourseEvent>> {
+    return this.apiClient.post<CourseEvent>(
+      `/v2/courses/${courseId}/events`,
+      request,
+      idempotent(idempotencyKey),
+    );
+  }
+
+  async updateCourseEvent(
+    courseId: number,
+    eventId: number,
+    request: CourseEventPayload,
+  ): Promise<ApiResponse<CourseEvent>> {
+    return this.apiClient.put<CourseEvent>(
+      `/v2/courses/${courseId}/events/${eventId}`,
+      request,
+      idempotent(),
+    );
+  }
+
+  async deleteCourseEvent(courseId: number, eventId: number): Promise<ApiResponse<void>> {
+    return this.apiClient.delete<void>(`/v2/courses/${courseId}/events/${eventId}`);
   }
 
   async getGroupSet(
@@ -140,6 +221,241 @@ export class CourseApiService {
     return this.apiClient.get<CourseGroupSet>(
       `/v2/courses/${courseId}/group-sets/${groupSetId}`
     );
+  }
+
+  async listGroupSets(courseId: number): Promise<ApiResponse<CourseGroupSet[]>> {
+    return this.apiClient.get<CourseGroupSet[]>(`/v2/courses/${courseId}/group-sets`);
+  }
+
+  async createGroupSet(
+    courseId: number,
+    request: CreateGroupSetPayload,
+  ): Promise<ApiResponse<CourseGroupSet>> {
+    return this.apiClient.post<CourseGroupSet>(`/v2/courses/${courseId}/group-sets`, request);
+  }
+
+  async patchGroupSet(
+    courseId: number,
+    groupSetId: number,
+    request: PatchGroupSetPayload,
+  ): Promise<ApiResponse<CourseGroupSet>> {
+    return this.apiClient.patch<CourseGroupSet>(
+      `/v2/courses/${courseId}/group-sets/${groupSetId}`,
+      request,
+    );
+  }
+
+  async deleteGroupSet(courseId: number, groupSetId: number): Promise<ApiResponse<void>> {
+    return this.apiClient.delete<void>(`/v2/courses/${courseId}/group-sets/${groupSetId}`);
+  }
+
+  async createGroup(
+    courseId: number,
+    groupSetId: number,
+    request: {name: string; capacityOverride?: number | null},
+  ): Promise<ApiResponse<CourseGroup>> {
+    return this.apiClient.post<CourseGroup>(
+      `/v2/courses/${courseId}/group-sets/${groupSetId}/groups`,
+      request,
+    );
+  }
+
+  async batchCreateGroups(
+    courseId: number,
+    groupSetId: number,
+    request: {count: number; namePrefix: string},
+  ): Promise<ApiResponse<CourseGroup[]>> {
+    return this.apiClient.post<CourseGroup[]>(
+      `/v2/courses/${courseId}/group-sets/${groupSetId}/groups/batch`,
+      request,
+    );
+  }
+
+  async patchGroup(
+    courseId: number,
+    groupSetId: number,
+    groupId: number,
+    request: {
+      name?: string;
+      capacityOverride?: number | null;
+      clearCapacityOverride?: boolean;
+      confirmCapacityShorten?: boolean;
+    },
+  ): Promise<ApiResponse<CourseGroup>> {
+    return this.apiClient.patch<CourseGroup>(
+      `/v2/courses/${courseId}/group-sets/${groupSetId}/groups/${groupId}`,
+      request,
+    );
+  }
+
+  async deleteGroup(courseId: number, groupSetId: number, groupId: number): Promise<ApiResponse<void>> {
+    return this.apiClient.delete<void>(
+      `/v2/courses/${courseId}/group-sets/${groupSetId}/groups/${groupId}`,
+    );
+  }
+
+  async joinGroup(
+    courseId: number,
+    groupSetId: number,
+    groupId: number,
+  ): Promise<ApiResponse<{membership: CourseGroupMembership; group: CourseGroup}>> {
+    return this.apiClient.post(
+      `/v2/courses/${courseId}/group-sets/${groupSetId}/groups/${groupId}/join`,
+    );
+  }
+
+  async leaveGroup(
+    courseId: number,
+    groupSetId: number,
+    groupId: number,
+  ): Promise<ApiResponse<{membership: CourseGroupMembership; group: CourseGroup}>> {
+    return this.apiClient.post(
+      `/v2/courses/${courseId}/group-sets/${groupSetId}/groups/${groupId}/leave`,
+    );
+  }
+
+  async switchGroup(
+    courseId: number,
+    groupSetId: number,
+    targetGroupId: number,
+  ): Promise<ApiResponse<{membership: CourseGroupMembership; group: CourseGroup}>> {
+    return this.apiClient.post(
+      `/v2/courses/${courseId}/group-sets/${groupSetId}/switch`,
+      {targetGroupId},
+    );
+  }
+
+  async listUngroupedStudents(
+    courseId: number,
+    groupSetId: number,
+  ): Promise<ApiResponse<UngroupedStudent[]>> {
+    return this.apiClient.get(
+      `/v2/courses/${courseId}/group-sets/${groupSetId}/ungrouped-students`,
+    );
+  }
+
+  async assignGroupMember(
+    courseId: number,
+    groupSetId: number,
+    groupId: number,
+    userId: number,
+    confirmations: {confirmCapacityOverfill?: boolean; confirmAcademicImpact?: boolean} = {},
+  ): Promise<ApiResponse<void>> {
+    return this.apiClient.post(
+      `/v2/courses/${courseId}/group-sets/${groupSetId}/groups/${groupId}/members`,
+      {userId, ...confirmations},
+    );
+  }
+
+  async moveGroupMember(
+    courseId: number,
+    groupSetId: number,
+    userId: number,
+    targetGroupId: number,
+    confirmations: {confirmCapacityOverfill?: boolean; confirmAcademicImpact?: boolean} = {},
+  ): Promise<ApiResponse<void>> {
+    return this.apiClient.post(
+      `/v2/courses/${courseId}/group-sets/${groupSetId}/members/${userId}/move`,
+      {targetGroupId, ...confirmations},
+    );
+  }
+
+  async removeGroupMember(
+    courseId: number,
+    groupSetId: number,
+    groupId: number,
+    userId: number,
+    confirmAcademicImpact = false,
+  ): Promise<ApiResponse<void>> {
+    return this.apiClient.delete(
+      `/v2/courses/${courseId}/group-sets/${groupSetId}/groups/${groupId}/members/${userId}`,
+      {params: {confirmAcademicImpact}},
+    );
+  }
+
+  async distributeGroupsRandomly(
+    courseId: number,
+    groupSetId: number,
+  ): Promise<ApiResponse<CourseGroupMembership[]>> {
+    return this.apiClient.post(
+      `/v2/courses/${courseId}/group-sets/${groupSetId}/distribute-random`,
+    );
+  }
+
+  async listCourseMembers(
+    courseId: number,
+    params?: MemberQueryParams,
+  ): Promise<ApiResponse<CourseMemberPage>> {
+    return this.apiClient.get(`/v2/courses/${courseId}/members`, {params});
+  }
+
+  async enrolStudents(
+    courseId: number,
+    identifiers: {userIds?: number[]; emails?: string[]},
+  ): Promise<ApiResponse<BatchStudentEnrollResponse>> {
+    return this.apiClient.post(
+      `/v2/courses/${courseId}/students/batch`,
+      identifiers,
+      idempotent(),
+    );
+  }
+
+  async withdrawStudent(courseId: number, userId: number): Promise<ApiResponse<CourseMember>> {
+    return this.apiClient.delete(`/v2/courses/${courseId}/students/${userId}`);
+  }
+
+  async promoteToTa(courseId: number, userId: number): Promise<ApiResponse<CourseMember>> {
+    return this.apiClient.post(`/v2/courses/${courseId}/tas`, {userId}, idempotent());
+  }
+
+  async demoteTa(courseId: number, userId: number): Promise<ApiResponse<CourseMember>> {
+    return this.apiClient.delete(`/v2/courses/${courseId}/tas/${userId}`);
+  }
+
+  async updateTaPermissions(
+    courseId: number,
+    userId: number,
+    permissions: TaPermissions,
+  ): Promise<ApiResponse<CourseMember>> {
+    return this.apiClient.patch(
+      `/v2/courses/${courseId}/tas/${userId}/permissions`,
+      permissions,
+      idempotent(),
+    );
+  }
+
+  async getSyllabus(courseId: number): Promise<ApiResponse<SyllabusState>> {
+    return this.apiClient.get(`/v2/courses/${courseId}/syllabus`);
+  }
+
+  async uploadSyllabus(courseId: number, file: File): Promise<ApiResponse<SyllabusState>> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.apiClient.post(
+      `/v2/courses/${courseId}/syllabus`,
+      formData,
+      idempotent(),
+    );
+  }
+
+  async restoreSyllabus(courseId: number): Promise<ApiResponse<SyllabusState>> {
+    return this.apiClient.post(
+      `/v2/courses/${courseId}/syllabus/restore`,
+      undefined,
+      idempotent(),
+    );
+  }
+
+  async clearSyllabus(courseId: number): Promise<ApiResponse<SyllabusState>> {
+    return this.apiClient.delete(`/v2/courses/${courseId}/syllabus`);
+  }
+
+  async downloadSyllabus(courseId: number, inline = false): Promise<Blob> {
+    const response = await this.apiClient.getClient().get<Blob>(
+      `/v2/courses/${courseId}/syllabus/${inline ? 'preview' : 'download'}`,
+      {responseType: 'blob'},
+    );
+    return response.data;
   }
 
   /**

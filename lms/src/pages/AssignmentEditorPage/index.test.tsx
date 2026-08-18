@@ -11,8 +11,10 @@ const api = vi.hoisted(() => ({
   uploadAttachments: vi.fn(),
   publishAssignment: vi.fn(),
 }));
+const courseApi = vi.hoisted(() => ({listGroupSets: vi.fn()}));
 
 vi.mock('@/apis/services/assignment-api', () => ({assignmentApiService: api}));
+vi.mock('@/apis/services/course-api', () => ({courseApiService: courseApi}));
 
 import {AssignmentEditorForm} from './index';
 
@@ -63,6 +65,21 @@ describe('AssignmentEditorForm recovery workflow', () => {
     api.createAssignment.mockResolvedValue(response(draft));
     api.patchAssignment.mockResolvedValue(response(draft));
     api.publishAssignment.mockResolvedValue(response({...draft, state: 'Published'}));
+    courseApi.listGroupSets.mockResolvedValue(response([
+      {
+        id: 9,
+        courseId: 31,
+        name: 'Project teams',
+        defaultCapacity: 4,
+        joinOpensAtLocal: null,
+        joinClosesAtLocal: null,
+        timezone: 'America/Los_Angeles',
+        locked: false,
+        openForSelfService: true,
+        myGroup: null,
+        groups: [{id: 91}, {id: 92}],
+      },
+    ]));
   });
 
   it('retries attachment failure against the already-created draft', async () => {
@@ -111,5 +128,22 @@ describe('AssignmentEditorForm recovery workflow', () => {
     expect(api.uploadAttachments).toHaveBeenCalledTimes(1);
     expect(api.createAssignment).toHaveBeenCalledTimes(1);
     expect(api.patchAssignment).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses a named group-set selector for group assignments', async () => {
+    renderEditor();
+    const user = await fillRequiredFields();
+
+    await user.selectOptions(screen.getByLabelText('Submission type'), 'Group');
+    await screen.findByRole('option', {name: 'Project teams (2 groups)'});
+    await user.selectOptions(screen.getByLabelText('Group set'), '9');
+    await user.click(screen.getByRole('button', {name: 'Publish'}));
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+    await waitFor(() => expect(api.createAssignment).toHaveBeenCalledWith(31, expect.objectContaining({
+      submissionType: 'Group',
+      groupSetId: 9,
+    })));
   });
 });

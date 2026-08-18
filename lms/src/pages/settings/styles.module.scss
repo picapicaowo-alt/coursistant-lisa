@@ -231,3 +231,27 @@
   height: 18px;
   margin-top: 2px;
 }
+
+.primaryButton {
+  align-self: flex-start;
+  border: 0;
+  border-radius: var(--border-radius);
+  background: var(--color-primary);
+  color: #fff;
+  padding: 0.7rem 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled { cursor: not-allowed; opacity: 0.55; }
+}
+
+.successMessage,
+.errorMessage {
+  width: 100%;
+  border-radius: var(--border-radius);
+  padding: 0.75rem 1rem;
+  margin: 0 0 0.5rem;
+}
+
+.successMessage { color: #166534; background: #f0fdf4; }
+.errorMessage { color: #b91c1c; background: #fef2f2; }

@@ -8,6 +8,7 @@ interface AuthContextValue {
   user: LoginResponse | null;
   login: (userData: LoginResponse) => void;
   logout: () => Promise<void>;
+  updateProfile: (profile: {name?: string; avatar?: string | null}) => void;
   loading: boolean;
 }
 
@@ -129,9 +130,22 @@ export const AuthProvider = ({children}: AuthProviderProps) => {
       window.location.assign('/login');
     }
   };
+
+  const updateProfile = (profile: {name?: string; avatar?: string | null}) => {
+    setUser(current => {
+      if (!current) return current;
+      const updated = normalizeUser({
+        ...current,
+        name: profile.name ?? current.name,
+        avatar: profile.avatar === undefined ? current.avatar : profile.avatar,
+      });
+      localStorage.setItem('user', JSON.stringify(updated));
+      return updated;
+    });
+  };
   
   return (
-    <AuthContext.Provider value={{user, login, logout, loading}}>
+    <AuthContext.Provider value={{user, login, logout, updateProfile, loading}}>
       {children}
     </AuthContext.Provider>
   );

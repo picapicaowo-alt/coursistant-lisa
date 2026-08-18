@@ -14,6 +14,7 @@
 .summaryGrid strong { font-size: 1.65rem; }
 .summaryGrid span { color: t.$text-muted; font-size: t.$fs-caption; }
 .card { padding: 1.5rem; border: 1px solid t.$border; border-radius: t.$radius-card-lg; background: t.$card-bg; box-shadow: t.$shadow-card; }
+.card + .card { margin-top: 1.25rem; }
 .cardHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
 .cardHeader h2, .cardHeader p { margin: 0; }
 .cardHeader p { margin-top: .25rem; color: t.$text-muted; }
@@ -31,4 +32,21 @@
 .gradeControls { display: grid; grid-template-columns: 130px minmax(180px, 1fr) auto; align-items: end; gap: .75rem; }
 .gradeControls label { display: grid; gap: .35rem; color: t.$text-muted; font-size: t.$fs-caption; }
 .error { color: t.$danger !important; }
-@media (max-width: 850px) { .header { flex-wrap: wrap; } .headerActions { width: 100%; margin-left: 0; padding-left: calc(t.$control-size + 1rem); } .summaryGrid { grid-template-columns: repeat(2, 1fr); } .gradeControls { grid-template-columns: 1fr; } .cardHeader { flex-direction: column; } }
+.selectionActions, .rosterToolbar, .studentList li, .studentList label, .searchBox, .selectAll, .selectedCount { display: flex; align-items: center; gap: .55rem; }
+.selectionActions { flex-wrap: wrap; justify-content: flex-end; }
+.rosterToolbar { flex-wrap: wrap; margin-bottom: 1rem; }
+.searchBox { flex: 1; min-width: 14rem; padding: 0 .75rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; }
+.searchBox input { width: 100%; min-height: 2.5rem; border: 0; outline: 0; background: transparent; color: t.$text; }
+.selectAll { color: t.$text-muted; font-size: t.$fs-caption; }
+.selectedCount { margin-left: auto; color: t.$brand; font-size: t.$fs-caption; font-weight: t.$fw-semibold; }
+.studentList { display: grid; margin: 0; padding: 0; list-style: none; }
+.studentList li { justify-content: space-between; min-height: 3.5rem; padding: .65rem 0; border-top: 1px solid t.$border; }
+.studentList label { min-width: 0; cursor: pointer; }
+.studentList label > span { display: grid; gap: .15rem; }
+.studentList small, .attemptStatus { color: t.$text-muted; font-size: t.$fs-caption; }
+.attemptStatus { flex: 0 0 auto; }
+.inlineError { display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: t.$danger; }
+.inlineError button { min-height: 2.5rem; padding: 0 .85rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; cursor: pointer; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+.primaryButton:focus-visible, .secondaryButton:focus-visible, .backLink:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid t.$brand-subtle; outline-offset: 2px; }
+@media (max-width: 850px) { .page { padding-top: 1rem; } .header { flex-wrap: wrap; } .headerActions { width: 100%; margin-left: 0; padding-left: 0; } .summaryGrid { grid-template-columns: repeat(2, 1fr); } .gradeControls { grid-template-columns: 1fr; } .cardHeader { flex-direction: column; } .card { padding: 1rem; } .selectionActions { width: 100%; } .selectionActions button { flex: 1; } .studentList li { align-items: flex-start; flex-direction: column; } .attemptStatus { padding-left: 1.55rem; } }

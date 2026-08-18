@@ -1,9 +1,10 @@
-import {useEffect, useState} from 'react';
-import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import {ArrowLeft, CheckCircle2, RotateCcw, Send} from 'lucide-react';
+import {useEffect, useMemo, useState} from 'react';
+import {useMutation, useQueries, useQuery, useQueryClient} from '@tanstack/react-query';
+import {ArrowLeft, CheckCircle2, RotateCcw, Search, Send, Users} from 'lucide-react';
 import {Link, useParams} from 'react-router-dom';
 import {unwrapData} from '@/apis';
 import {quizApiService} from '@/apis/services/quiz-api';
+import {courseApiService} from '@/apis/services/course-api';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
 import styles from './index.module.scss';
 
@@ -11,6 +12,21 @@ interface GradeDraft {
   score: string;
   feedback: string;
 }
+
+const loadCourseStudents = async (courseId: number) => {
+  const size = 100;
+  const first = unwrapData(
+    await courseApiService.listCourseMembers(courseId, {courseRole: 'Student', active: true, page: 0, size}),
+    'listCourseMembers page 0',
+  );
+  const pageCount = Math.ceil(first.total / size);
+  if (pageCount <= 1) return first.items;
+  const rest = await Promise.all(Array.from({length: pageCount - 1}, async (_, index) => unwrapData(
+    await courseApiService.listCourseMembers(courseId, {courseRole: 'Student', active: true, page: index + 1, size}),
+    `listCourseMembers page ${index + 1}`,
+  )));
+  return [first.items, ...rest.map(page => page.items)].flat();
+};
 
 const QuizGradingPage = () => {
   const {courseId: courseIdParam, quizId: quizIdParam} = useParams();
@@ -21,6 +37,8 @@ const QuizGradingPage = () => {
   const queryClient = useQueryClient();
   const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null);
   const [drafts, setDrafts] = useState<Record<number, GradeDraft>>({});
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set());
+  const [studentSearch, setStudentSearch] = useState('');
   const [message, setMessage] = useState<string | null>(null);
 
   const quizQuery = useQuery({
@@ -38,11 +56,32 @@ const QuizGradingPage = () => {
     queryFn: async () => unwrapData(await quizApiService.listQuestions(courseId, quizId), 'listQuestions'),
     enabled: valid && access.canGrade,
   });
-  const shortQuestions = (questionsQuery.data ?? []).filter(question => question.type === 'ShortAnswer');
+  const studentsQuery = useQuery({
+    queryKey: ['course-students', courseId],
+    queryFn: () => loadCourseStudents(courseId),
+    enabled: valid && access.canReleaseGrades,
+  });
+  const students = studentsQuery.data ?? [];
+  const studentAttemptQueries = useQueries({
+    queries: students.map(student => ({
+      queryKey: ['quiz-attempts', courseId, quizId, 'student', student.userId],
+      queryFn: async () => unwrapData(
+        await quizApiService.listAttempts(courseId, quizId, {userId: student.userId, page: 1, pageSize: 50}),
+        `listAttempts user ${student.userId}`,
+      ),
+      enabled: access.canReleaseGrades,
+      staleTime: 30_000,
+    })),
+  });
+  const shortQuestions = useMemo(
+    () => (questionsQuery.data ?? []).filter(question => question.type === 'ShortAnswer'),
+    [questionsQuery.data],
+  );
+  const firstShortQuestionId = shortQuestions[0]?.id ?? null;
 
   useEffect(() => {
-    if (selectedQuestionId === null && shortQuestions.length) setSelectedQuestionId(shortQuestions[0].id);
-  }, [selectedQuestionId, shortQuestions.map(question => question.id).join(',')]);
+    if (selectedQuestionId === null && firstShortQuestionId !== null) setSelectedQuestionId(firstShortQuestionId);
+  }, [firstShortQuestionId, selectedQuestionId]);
 
   const answersQuery = useQuery({
     queryKey: ['quiz-short-answers', courseId, quizId, selectedQuestionId],
@@ -76,11 +115,14 @@ const QuizGradingPage = () => {
   });
 
   const updateRelease = useMutation({
-    mutationFn: (action: 'release' | 'retract') => action === 'release'
-      ? quizApiService.releaseGrades(courseId, quizId)
-      : quizApiService.retractGrades(courseId, quizId),
-    onSuccess: async (_, action) => {
-      setMessage(action === 'release' ? 'Eligible grades released.' : 'Released grades retracted.');
+    mutationFn: ({action, userIds}: {action: 'release' | 'retract'; userIds?: number[]}) => action === 'release'
+      ? quizApiService.releaseGrades(courseId, quizId, userIds)
+      : quizApiService.retractGrades(courseId, quizId, userIds),
+    onSuccess: async (_, {action, userIds}) => {
+      setMessage(action === 'release'
+        ? `${userIds?.length ?? 'Eligible'} grade${userIds?.length === 1 ? '' : 's'} released.`
+        : `${userIds?.length ?? 'Released'} grade${userIds?.length === 1 ? '' : 's'} retracted.`);
+      setSelectedUserIds(new Set());
       await queryClient.invalidateQueries({queryKey: ['quiz-grading-summary', courseId, quizId]});
     },
     onError: () => setMessage('The grade release state could not be changed.'),
@@ -91,6 +133,34 @@ const QuizGradingPage = () => {
   }
 
   const selectedQuestion = shortQuestions.find(question => question.id === selectedQuestionId);
+  const studentRows = students.map((student, index) => {
+    const attempts = studentAttemptQueries[index]?.data ?? [];
+    const finalizedAttempts = attempts.filter(attempt => attempt.status !== 'InProgress');
+    return {
+      student,
+      attempts,
+      finalizedAttempts,
+      latest: attempts[0],
+      isLoading: studentAttemptQueries[index]?.isPending ?? false,
+      isError: studentAttemptQueries[index]?.isError ?? false,
+    };
+  });
+  const normalizedSearch = studentSearch.trim().toLowerCase();
+  const visibleStudentRows = normalizedSearch
+    ? studentRows.filter(({student}) => `${student.userName ?? ''} ${student.userEmail ?? ''} ${student.userId}`.toLowerCase().includes(normalizedSearch))
+    : studentRows;
+  const selectableUserIds = visibleStudentRows
+    .filter(row => row.finalizedAttempts.length > 0)
+    .map(row => row.student.userId);
+  const allVisibleSelected = selectableUserIds.length > 0
+    && selectableUserIds.every(userId => selectedUserIds.has(userId));
+
+  const toggleStudent = (userId: number) => setSelectedUserIds(current => {
+    const next = new Set(current);
+    if (next.has(userId)) next.delete(userId);
+    else next.add(userId);
+    return next;
+  });
 
   return (
     <main className={styles.page}>
@@ -98,8 +168,8 @@ const QuizGradingPage = () => {
         <Link to={`/course/${courseId}/quizzes/${quizId}`} className={styles.backLink} aria-label="Back to quiz"><ArrowLeft size={22}/></Link>
         <div><p className={styles.eyebrow}>Quiz grading</p><h1>{quizQuery.data?.title || 'Loading quiz…'}</h1></div>
         <div className={styles.headerActions}>
-          <button type="button" className={styles.secondaryButton} onClick={() => updateRelease.mutate('retract')} disabled={updateRelease.isPending}><RotateCcw size={16}/> Retract</button>
-          <button type="button" className={styles.primaryButton} onClick={() => updateRelease.mutate('release')} disabled={updateRelease.isPending || Boolean(summaryQuery.data?.manualIncompleteAttemptCount)}><Send size={16}/> Release eligible grades</button>
+          {access.canReleaseGrades ? <><button type="button" className={styles.secondaryButton} onClick={() => updateRelease.mutate({action: 'retract'})} disabled={updateRelease.isPending}><RotateCcw size={16}/> Retract all</button>
+          <button type="button" className={styles.primaryButton} onClick={() => updateRelease.mutate({action: 'release'})} disabled={updateRelease.isPending || Boolean(summaryQuery.data?.manualIncompleteAttemptCount)}><Send size={16}/> Release all eligible</button></> : null}
         </div>
       </div>
 
@@ -111,6 +181,34 @@ const QuizGradingPage = () => {
       </section>
 
       {message ? <p className={message.includes('could not') ? styles.error : styles.success} role="status">{message}</p> : null}
+
+      {access.canReleaseGrades ? (
+        <section className={styles.card} aria-labelledby="student-release-title">
+          <div className={styles.cardHeader}>
+            <div><h2 id="student-release-title">Grade release by student</h2><p>Select learners with a finalized attempt, then release or retract only those grades.</p></div>
+            <div className={styles.selectionActions}>
+              <button type="button" className={styles.secondaryButton} onClick={() => updateRelease.mutate({action: 'retract', userIds: [...selectedUserIds]})} disabled={updateRelease.isPending || selectedUserIds.size === 0}><RotateCcw size={16}/> Retract selected</button>
+              <button type="button" className={styles.primaryButton} onClick={() => updateRelease.mutate({action: 'release', userIds: [...selectedUserIds]})} disabled={updateRelease.isPending || selectedUserIds.size === 0}><Send size={16}/> Release selected</button>
+            </div>
+          </div>
+          <div className={styles.rosterToolbar}>
+            <label className={styles.searchBox}><Search size={17}/><span className={styles.srOnly}>Search students</span><input value={studentSearch} onChange={event => setStudentSearch(event.target.value)} placeholder="Search students"/></label>
+            <label className={styles.selectAll}><input type="checkbox" checked={allVisibleSelected} disabled={!selectableUserIds.length} onChange={() => setSelectedUserIds(current => { const next = new Set(current); selectableUserIds.forEach(userId => allVisibleSelected ? next.delete(userId) : next.add(userId)); return next; })}/><span>Select visible submissions</span></label>
+            <span className={styles.selectedCount}><Users size={16}/> {selectedUserIds.size} selected</span>
+          </div>
+          {studentsQuery.isPending ? <p className={styles.empty}>Loading course students…</p> : studentsQuery.isError ? <div className={styles.inlineError} role="alert"><p>Students could not be loaded.</p><button type="button" onClick={() => void studentsQuery.refetch()}>Try again</button></div> : visibleStudentRows.length === 0 ? <p className={styles.empty}>No matching active students.</p> : (
+            <ul className={styles.studentList}>
+              {visibleStudentRows.map(row => {
+                const selectable = row.finalizedAttempts.length > 0;
+                return <li key={row.student.userId}>
+                  <label><input type="checkbox" checked={selectedUserIds.has(row.student.userId)} disabled={!selectable || row.isLoading || row.isError} onChange={() => toggleStudent(row.student.userId)}/><span><strong>{row.student.userName || `User ${row.student.userId}`}</strong><small>{row.student.userEmail || `User ID ${row.student.userId}`}</small></span></label>
+                  <span className={styles.attemptStatus}>{row.isLoading ? 'Loading attempts…' : row.isError ? 'Attempts unavailable' : row.latest ? `${row.finalizedAttempts.length} finalized · latest ${row.latest.status}` : 'No attempts'}</span>
+                </li>;
+              })}
+            </ul>
+          )}
+        </section>
+      ) : null}
 
       <section className={styles.card}>
         <div className={styles.cardHeader}>

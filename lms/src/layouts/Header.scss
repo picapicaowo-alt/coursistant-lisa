@@ -7,6 +7,7 @@ $secondary-color: #718096;
     gap: 10px;
     margin-top: 2.5rem;
     margin-right: 2.5rem;
+    padding-bottom: 1rem;
     
     .lms-home-search {
         display: flex;
@@ -73,8 +74,27 @@ $secondary-color: #718096;
         }
         
         .profile-arrow-container {
-            .profile-arrow {
+            position: relative;
+
+            .profile-arrow-button {
+                display: grid;
+                width: 2.75rem;
+                height: 2.75rem;
+                padding: 0;
+                border: 0;
+                border-radius: 999px;
+                background: transparent;
+                place-items: center;
                 cursor: pointer;
+
+                &:focus-visible {
+                    outline: 3px solid #1d4ed8;
+                    outline-offset: 2px;
+                }
+            }
+
+            .profile-arrow {
+                pointer-events: none;
             }
             
             .profile-menu {
@@ -89,6 +109,10 @@ $secondary-color: #718096;
                 z-index: 1000;
                 
                 .dropdown-item {
+                    width: 100%;
+                    border: 0;
+                    background: transparent;
+                    text-align: left;
                     padding: 10px 20px;
                     cursor: pointer;
                     color: #718096;
@@ -110,8 +134,57 @@ $secondary-color: #718096;
                 .dropdown-item:hover {
                     background-color: #e2e8f0;
                 }
+
+                .dropdown-item:focus-visible {
+                    outline: 3px solid #1d4ed8;
+                    outline-offset: -3px;
+                }
             }
         }
         
+    }
+}
+
+@media (max-width: 700px) {
+    .lms-home-header {
+        min-width: 0;
+        margin: 0;
+        padding: 0.75rem 1rem 1rem;
+        border-bottom: 1px solid #e2e8f0;
+        background: #fff;
+
+        .spacer {
+            display: none;
+        }
+
+        .profile {
+            min-width: 0;
+            margin-left: auto;
+
+            .profile-avatar {
+                margin-left: 0;
+            }
+
+            .profile-info {
+                min-width: 0;
+                margin: 0;
+
+                p {
+                    max-width: 8.5rem;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+
+                .profile-email {
+                    display: none;
+                }
+            }
+
+            .profile-arrow-container .profile-menu {
+                top: 3.2rem;
+                right: 0;
+            }
+        }
     }
 }

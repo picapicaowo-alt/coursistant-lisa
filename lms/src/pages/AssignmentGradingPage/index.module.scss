@@ -81,6 +81,8 @@
     }
 }
 
+.rowButtons { display: flex; align-items: center; gap: .4rem; }
+
 .primaryButton {
     border: 1px solid t.$brand;
     background: t.$brand;
@@ -401,6 +403,19 @@ table {
         padding: 0.75rem;
         resize: vertical;
     }
+}
+
+.annotatedField {
+    display: grid;
+    gap: .45rem;
+    margin-top: 1rem;
+    color: t.$text-muted;
+    font-size: t.$fs-caption;
+    font-weight: t.$fw-semibold;
+
+    > span { display: flex; align-items: center; gap: .35rem; }
+    input { padding: .65rem; border: 1px dashed t.$border; border-radius: t.$radius-control-sm; }
+    small { font-weight: t.$fw-regular; }
 }
 
 .scoreField > div {

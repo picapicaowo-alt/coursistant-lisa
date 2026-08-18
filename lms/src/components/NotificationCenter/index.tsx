@@ -53,7 +53,6 @@ const NotificationRow = ({
   const target = resolveNotificationPath(notification);
   const unread = !notification.readAt;
   const unavailable = notification.availability === 'NO_LONGER_AVAILABLE';
-  const disabled = unavailable && !unread;
 
   return (
     <li className={styles.notificationRow} data-unread={unread || undefined}>
@@ -61,8 +60,8 @@ const NotificationRow = ({
         type="button"
         className={styles.notificationButton}
         onClick={() => onOpen(notification)}
-        disabled={disabled}
-        aria-label={target ? `Open notification: ${notification.message}` : unread ? `Mark notification as read: ${notification.message}` : undefined}
+        disabled={!target}
+        aria-label={target ? `Open notification: ${notification.message}` : `Notification unavailable: ${notification.message}`}
       >
         <span className={styles.typeIcon} aria-hidden="true"><Icon size={18}/></span>
         <span className={styles.notificationCopy}>

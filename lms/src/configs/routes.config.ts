@@ -28,15 +28,6 @@ export const SIDEBAR_CONFIGS: SidebarConfig[] = [
     },
   },
   {
-    name: "Chat",
-    path: "/chat",
-    sidebarItem: {
-      filledIcon: "/icons/post_fill.png",
-      unfilledIcon: "/icons/chat_unfill.svg",
-      translationLabel: "sidebar.chat",
-    },
-  },
-  {
     name: "AI Workplace",
     path: "/aibot",
     sidebarItem: {
@@ -55,4 +46,4 @@ export const getSidebarIndex = (pathname: string): number =>
   );
 
 export const shouldShowAppShell = (pathname: string): boolean =>
-  getSidebarIndex(pathname) >= 0;
+  getSidebarIndex(pathname) >= 0 || pathname === '/admin' || pathname.startsWith('/admin/');

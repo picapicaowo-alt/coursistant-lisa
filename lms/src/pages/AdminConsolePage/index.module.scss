@@ -1,0 +1,44 @@
+.page { min-height: 100%; padding: 2rem clamp(1rem, 4vw, 3.5rem) 4rem; overflow-y: auto; background: t.$page-bg; color: t.$text; }
+.pageHeader { max-width: 82rem; margin: 0 auto 1.25rem; }
+.pageHeader h1 { margin: .2rem 0; font-size: clamp(2rem, 4vw, t.$fs-h1); font-weight: t.$fw-extrabold; }
+.pageHeader > div > p:last-child { color: t.$text-muted; }
+.eyebrow { color: t.$brand; font-size: t.$fs-caption; font-weight: t.$fw-semibold; letter-spacing: .08em; text-transform: uppercase; }
+.tabs { display: flex; max-width: 82rem; margin: 0 auto 1rem; gap: .35rem; padding: .35rem; border: 1px solid t.$border; border-radius: t.$radius-control; background: t.$card-bg; }
+.tabs button { min-height: 2.5rem; padding: 0 1rem; border-radius: t.$radius-control-sm; color: t.$text-muted; font-weight: t.$fw-semibold; cursor: pointer; }
+.tabs .activeTab { background: t.$brand; color: #fff; }
+.contentGrid { display: grid; max-width: 82rem; margin: 0 auto; grid-template-columns: minmax(18rem, 25rem) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+.card { padding: 1.35rem; border: 1px solid t.$border; border-radius: t.$radius-card-lg; background: t.$card-bg; box-shadow: t.$shadow-card; }
+.card h2 { font-size: t.$fs-card-title; font-weight: t.$fw-bold; }
+.cardHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.cardHeader p { margin-top: .2rem; color: t.$text-muted; font-size: t.$fs-caption; }
+.cardHeader > span { min-width: 2rem; padding: .2rem .45rem; border-radius: t.$radius-pill; background: t.$brand-subtle; color: t.$brand; text-align: center; font-weight: t.$fw-bold; }
+.form { display: grid; gap: .8rem; margin-top: 1rem; }
+.form label, .inlineForm label, .search { display: grid; gap: .35rem; color: t.$text-muted; font-size: t.$fs-caption; font-weight: t.$fw-semibold; }
+.form input, .form select, .inlineForm input, .inlineForm select, .search input { width: 100%; min-height: 2.65rem; padding: .55rem .7rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; color: t.$text; }
+.form input:focus-visible, .form select:focus-visible, .inlineForm input:focus-visible, .inlineForm select:focus-visible, .search input:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid t.$brand-subtle; outline-offset: 2px; }
+.primaryButton, .secondaryButton, .dangerButton { min-height: 2.5rem; padding: 0 .9rem; border-radius: t.$radius-control-sm; font-weight: t.$fw-semibold; cursor: pointer; }
+.primaryButton { border: 1px solid t.$brand; background: t.$brand; color: #fff; }
+.secondaryButton { border: 1px solid t.$border; background: t.$card-bg; color: t.$text; }
+.dangerButton { border: 1px solid t.$danger; background: t.$danger; color: #fff; }
+.primaryButton:disabled, .secondaryButton:disabled, .dangerButton:disabled, .dangerLink:disabled { cursor: not-allowed; opacity: .5; }
+.dangerLink { justify-self: start; color: t.$danger; font-size: t.$fs-caption; cursor: pointer; }
+.hint { margin-top: .85rem; color: t.$text-muted; font-size: t.$fs-caption; line-height: 1.5; }
+.listCard { min-height: 18rem; }
+.search { margin: 1rem 0; }
+.list { display: grid; gap: .65rem; margin-top: 1rem; }
+.listRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: .85rem; border: 1px solid t.$border; border-radius: t.$radius-control; }
+.rowIdentity { display: grid; min-width: 0; gap: .15rem; }
+.rowIdentity strong, .rowIdentity span, .rowIdentity small { overflow-wrap: anywhere; }
+.rowIdentity span, .rowIdentity small { color: t.$text-muted; font-size: t.$fs-caption; }
+.details { flex: 0 0 auto; }
+.details summary { color: t.$brand; font-size: t.$fs-caption; font-weight: t.$fw-semibold; cursor: pointer; }
+.details[open] { flex: 1 1 18rem; }
+.details[open] + * { display: none; }
+.inlineForm { display: grid; gap: .55rem; margin-top: .65rem; }
+.status { padding: 2rem 1rem; color: t.$text-muted; text-align: center; }
+.message, .errorMessage { max-width: 82rem; margin: 0 auto 1rem; padding: .75rem 1rem; border-radius: t.$radius-control; background: rgba(t.$success, .1); color: t.$success; }
+.errorMessage { background: rgba(t.$danger, .1); color: t.$danger; }
+.confirmRow { display: flex; gap: .6rem; }
+
+@media (max-width: 900px) { .contentGrid { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .page { padding-top: 1rem; } .listRow { flex-direction: column; } .details, .details[open] { width: 100%; } .tabs button { flex: 1; } }

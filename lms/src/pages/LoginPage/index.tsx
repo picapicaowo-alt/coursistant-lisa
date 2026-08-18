@@ -39,8 +39,6 @@ const LoginPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const getFieldError = (field: string) => fieldErrors[field] || '';
-  const [rememberMe, setRememberMe] = useState(false);
-  const API_DOMAIN = import.meta.env.VITE_SIGNUP_API_DOMAIN_NAME;
   const {login, user} = useAuth();
   
   const navigate = useNavigate();
@@ -64,39 +62,6 @@ const LoginPage: React.FC = () => {
       navigate(user.role === 'USER' ? '/' : '/course', {replace: true});
     }
   }, [navigate, user]);
-  
-  const handleMicrosoftLogin = async () => {
-    try {
-      window.location.href = `${API_DOMAIN}/thirdParty/microsoft`;
-    } catch (e) {
-      console.error("Error getting Microsoft login URL:", e);
-    }
-  };
-  
-  const handleLinkedInLogin = async () => {
-    try {
-      window.location.href = `${API_DOMAIN}/thirdParty/linkedin`;
-    } catch (e) {
-      console.error("Error getting LinkedIn login URL:", e);
-    }
-  };
-  
-  const handleGoogleLogin = async () => {
-    try {
-      window.location.href = `${API_DOMAIN}/thirdParty/google`;
-    } catch (e) {
-      console.error("Error getting Google login URL:", e);
-    }
-  };
-  
-  const handleFacebookLogin = async () => {
-    try {
-      window.location.href = `${API_DOMAIN}/thirdParty/facebook`;
-    } catch (e) {
-      console.error("Error getting Facebook login URL:", e);
-    }
-  };
-  
   
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
@@ -170,51 +135,22 @@ const LoginPage: React.FC = () => {
   
   
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-white text-gray-900 px-4 overflow-auto">
-      <div className="w-full max-w-[1500px] grid grid-cols-1 lg:grid-cols-[55%_45%] gap-10 rounded-xl">
+    <main className="min-h-screen overflow-y-auto bg-white px-4 py-6 text-gray-900 sm:px-8 lg:flex lg:items-center">
+      <div className="mx-auto grid w-full max-w-[1500px] grid-cols-1 items-stretch gap-8 lg:grid-cols-[55%_45%] lg:gap-10">
         {/* Left side image */}
-        <div className="sp-2 flex flex-col items-center justify-center">
-          <img src="/icons/login/login-img.png" alt="Coursistant UI"
-               className="w-full h-[95%] object-cover rounded-2xl"/>
+        <div className="hidden items-center justify-center lg:flex" aria-hidden="true">
+          <img src="/icons/login/login-img.png" alt=""
+               className="max-h-[calc(100vh-48px)] w-full rounded-2xl object-cover"/>
         </div>
         
         {/* Right side form */}
-        <div className="mx-auto flex flex-col justify-center min-h-[600px] w-[512px]">
+        <section className="mx-auto flex min-h-[calc(100vh-48px)] w-full max-w-[512px] flex-col justify-center py-6">
           <h2 className="text-3xl sm:text-4xl mb-6 text-gray-800">
             {t("login.title")}
           </h2>
           <p className="text-sm text-[#718096] mb-12">
             {t("login.subtitle")}
           </p>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-            <button onClick={handleGoogleLogin}
-                    className="flex items-center justify-center gap-2 bg-[#F3F4F8] text-black py-3 rounded-lg text-sm font-normal cursor-pointer">
-              <Icon icon="flat-color-icons:google" className="w-5 h-5"/>
-              {t("login.socialGoogle")}
-            </button>
-            <button onClick={handleMicrosoftLogin}
-                    className="flex items-center justify-center gap-2 bg-[#F3F4F8] text-black py-3 rounded-lg text-sm font-normal cursor-pointer">
-              <Icon icon="logos:microsoft-icon" className="w-5 h-5"/>
-              {t("login.socialMicrosoft")}
-            </button>
-            <button onClick={handleLinkedInLogin}
-                    className="flex items-center justify-center gap-2 bg-[#F3F4F8] text-black py-3 rounded-lg text-sm font-normal cursor-pointer">
-              <Icon icon="logos:linkedin-icon" className="w-5 h-5"/>
-              {t("login.socialLinkedIn")}
-            </button>
-            <button onClick={handleFacebookLogin}
-                    className="flex items-center justify-center gap-2 bg-[#F3F4F8] text-black py-3 rounded-lg text-sm font-normal cursor-pointer">
-              <Icon icon="logos:facebook" className="w-5 h-5"/>
-              {t("login.socialFacebook")}
-            </button>
-          </div>
-          
-          <div className="flex items-center gap-2 my-4">
-            <div className="flex-1 border-t border-[#E2E8F0]"></div>
-            <p className="text-xs text-[#2D3748]">{t("login.dividerText")}</p>
-            <div className="flex-1 border-t border-[#E2E8F0]"></div>
-          </div>
           
           <form className="space-y-4 mt-6" onSubmit={handleSubmit}>
             <div>
@@ -233,7 +169,7 @@ const LoginPage: React.FC = () => {
                 required
               />
               {getFieldError('email') && (
-                <p className="text-red-400 text-[12px] text-right mt-1">{getFieldError('email')}</p>
+                <p role="alert" className="text-red-400 text-[12px] text-right mt-1">{getFieldError('email')}</p>
               )}
             </div>
             <div>
@@ -264,20 +200,11 @@ const LoginPage: React.FC = () => {
                 </div>
               </div>
               {getFieldError('password') && (
-                <p className="text-red-400 text-[12px] text-right mt-1">{getFieldError('password')}</p>
+                <p role="alert" className="text-red-400 text-[12px] text-right mt-1">{getFieldError('password')}</p>
               )}
             </div>
             
-            <div className="flex flex-wrap items-center justify-between text-sm gap-2">
-              <label className="flex items-center text-[#A0AEC0]">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="mr-2 border-[#A0AEC0] rounded accent-[#566FE8] cursor-pointer"
-                />
-                {t("login.rememberForDays")}
-              </label>
+            <div className="flex justify-end text-sm">
               <a href="/forgotpassword" className=" text-[14px] text-[#566FE8] text-sm hover:underline">
                 {t("login.forgotPassword")}
               </a>
@@ -300,9 +227,9 @@ const LoginPage: React.FC = () => {
                  navigate('/signup');
                }}>{t("login.signUp")}</a>
           </p>
-        </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
 

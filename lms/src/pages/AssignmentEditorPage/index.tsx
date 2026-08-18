@@ -1,11 +1,16 @@
 import {ChangeEvent, FormEvent, useRef, useState} from 'react';
 import {useQuery, useQueryClient} from '@tanstack/react-query';
-import {ArrowLeft, CalendarClock, CheckCircle2, FileText, Upload, UsersRound, X} from 'lucide-react';
+import {ArrowLeft, CalendarClock, CheckCircle2, Eye, FileText, Trash2, Upload, UsersRound, X} from 'lucide-react';
 import {Link, useNavigate, useParams} from 'react-router-dom';
 import type {AssignmentDetail, AssignmentSubmissionType, CreateAssignmentPayload} from '@/apis';
 import {unwrapData} from '@/apis';
 import {assignmentApiService} from '@/apis/services/assignment-api';
+import {courseApiService} from '@/apis/services/course-api';
+import {EnglishDateTimeInput} from '@/components/EnglishDateInput';
+import {RichTextEditor} from '@/components/RichTextEditor';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
+import {isPreviewableFile, openPreviewWindow, saveBlob, showBlobInPreviewWindow} from '@/utils/downloadBlob';
+import {FileTypeMultiSelect} from './FileTypeMultiSelect';
 import styles from './index.module.scss';
 
 const parseId = (value?: string) => {
@@ -41,8 +46,8 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
   const [groupSetId, setGroupSetId] = useState(
     assignment?.groupSetId === undefined ? '' : String(assignment.groupSetId)
   );
-  const [allowedFileTypes, setAllowedFileTypes] = useState(
-    assignment?.allowedFileTypes?.join(', ') ?? 'pdf, docx'
+  const [allowedFileTypes, setAllowedFileTypes] = useState<string[]>(
+    assignment?.allowedFileTypes ?? ['pdf', 'docx']
   );
   const [maxFileCount, setMaxFileCount] = useState(String(assignment?.maxFileCount ?? 3));
   const [maxFileSizeMb, setMaxFileSizeMb] = useState(
@@ -55,7 +60,23 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
   const [checkpointAssignment, setCheckpointAssignment] = useState<AssignmentDetail | null>(assignment ?? null);
   const [isSaving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
+  const [downloadingAttachmentId, setDownloadingAttachmentId] = useState<number | null>(null);
+  const [previewingAttachmentId, setPreviewingAttachmentId] = useState<number | null>(null);
+  const [deletingAttachmentId, setDeletingAttachmentId] = useState<number | null>(null);
   const savingRef = useRef(false);
+
+  const groupSetsQuery = useQuery({
+    queryKey: ['course-group-sets', courseId],
+    enabled: submissionType === 'Group',
+    queryFn: async () => unwrapData(
+      await courseApiService.listGroupSets(courseId),
+      'listGroupSets',
+    ),
+  });
+
+  const groupSets = groupSetsQuery.data ?? [];
+  const hasCurrentGroupSet = groupSetId !== '' && groupSets.some(groupSet => String(groupSet.id) === groupSetId);
 
   const hasRecoveredDraft = !assignment && checkpointAssignment !== null;
   const exitPath = checkpointAssignment
@@ -66,10 +87,67 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
     setPendingFiles(files => files.filter((_, fileIndex) => fileIndex !== index));
   };
 
+  const downloadExistingAttachment = async (attachmentId: number, filename: string) => {
+    const savedAssignment = checkpointAssignment;
+    if (!savedAssignment) return;
+    setDownloadingAttachmentId(attachmentId);
+    setAttachmentError(null);
+    try {
+      const blob = await assignmentApiService.downloadAttachment(courseId, savedAssignment.id, attachmentId);
+      saveBlob(blob, filename);
+    } catch {
+      setAttachmentError(`Could not download ${filename}.`);
+    } finally {
+      setDownloadingAttachmentId(null);
+    }
+  };
+
+  const previewExistingAttachment = async (attachmentId: number, filename: string) => {
+    const savedAssignment = checkpointAssignment;
+    if (!savedAssignment) return;
+    const previewWindow = openPreviewWindow();
+    if (!previewWindow) {
+      setAttachmentError('Allow pop-ups to preview this file.');
+      return;
+    }
+    setPreviewingAttachmentId(attachmentId);
+    setAttachmentError(null);
+    try {
+      showBlobInPreviewWindow(
+        previewWindow,
+        await assignmentApiService.previewAttachment(courseId, savedAssignment.id, attachmentId),
+      );
+    } catch {
+      previewWindow.close();
+      setAttachmentError(`Could not preview ${filename}.`);
+    } finally {
+      setPreviewingAttachmentId(null);
+    }
+  };
+
   const onChooseFiles = (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
     setPendingFiles(current => [...current, ...files]);
     event.target.value = '';
+  };
+
+  const deleteExistingAttachment = async (attachmentId: number, filename: string) => {
+    const savedAssignment = checkpointAssignment;
+    if (!savedAssignment || !window.confirm(`Delete ${filename} from this assignment?`)) return;
+    setDeletingAttachmentId(attachmentId);
+    setAttachmentError(null);
+    try {
+      await assignmentApiService.deleteAttachment(courseId, savedAssignment.id, attachmentId);
+      setCheckpointAssignment(current => current ? {
+        ...current,
+        attachments: current.attachments.filter(file => file.id !== attachmentId),
+      } : current);
+      await queryClient.invalidateQueries({queryKey: ['assignment', courseId, savedAssignment.id]});
+    } catch {
+      setAttachmentError(`Could not delete ${filename}.`);
+    } finally {
+      setDeletingAttachmentId(null);
+    }
   };
 
   const buildPayload = (): CreateAssignmentPayload | null => {
@@ -89,8 +167,13 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
       return null;
     }
 
+    if (allowedFileTypes.length === 0) {
+      setError('Select at least one allowed file type.');
+      return null;
+    }
+
     if (submissionType === 'Group' && (!Number.isInteger(parsedGroupSetId) || parsedGroupSetId <= 0)) {
-      setError('A group set ID is required for group assignments.');
+      setError('Select a group set for group assignments.');
       return null;
     }
 
@@ -100,10 +183,7 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
       pointsPossible: points,
       dueAt: toApiDateTime(dueAt),
       ...(lateUntil ? {lateUntil: toApiDateTime(lateUntil)} : {}),
-      allowedFileTypes: allowedFileTypes
-        .split(',')
-        .map(value => value.trim().replace(/^\./, ''))
-        .filter(Boolean),
+      allowedFileTypes,
       maxFileCount: fileCount,
       maxFileSizeBytes: Math.round(sizeMb * 1024 * 1024),
       submissionType,
@@ -124,10 +204,34 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
     let stage: 'record' | 'attachments' | 'publish' = 'record';
 
     try {
+      let confirmShortenDueDate = false;
+      if (saved) {
+        const nextDueAt = toApiDateTime(dueAt);
+        const nextLateUntil = lateUntil ? toApiDateTime(lateUntil) : undefined;
+        const dueChanged = toDateTimeInput(saved.dueAtLocal) !== dueAt;
+        const lateChanged = toDateTimeInput(saved.lateUntilLocal) !== lateUntil;
+        if (dueChanged || lateChanged) {
+          const preview = unwrapData(await assignmentApiService.previewDueDateChange(courseId, saved.id, {
+            dueAt: nextDueAt,
+            ...(nextLateUntil ? {lateUntil: nextLateUntil} : {}),
+            ...(!nextLateUntil && saved.lateUntilLocal ? {clearLateUntil: true} : {}),
+          }), 'previewDueDateChange');
+          if (preview.confirmationRequired) {
+            const accepted = window.confirm(
+              `This earlier deadline affects ${preview.activeStudentCount} active students. ` +
+              `${preview.submittedCount} have submitted and ${preview.submissionsBecomingLateCount} submission(s) would become late. Continue?`
+            );
+            if (!accepted) return;
+            confirmShortenDueDate = true;
+          }
+        }
+      }
+
       const response = saved
         ? await assignmentApiService.patchAssignment(courseId, saved.id, {
           ...payload,
           ...(checkpointAssignment?.lateUntilLocal && !lateUntil ? {clearLateUntil: true} : {}),
+          ...(confirmShortenDueDate ? {confirmShortenDueDate: true} : {}),
         })
         : await assignmentApiService.createAssignment(courseId, payload);
       saved = unwrapData(response, checkpointAssignment ? 'patchAssignment' : 'createAssignment');
@@ -225,12 +329,12 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
 
           <label className={styles.field}>
             <span><CalendarClock size={16}/> Due time</span>
-            <input type="datetime-local" value={dueAt} onChange={event => setDueAt(event.target.value)}/>
+            <EnglishDateTimeInput value={dueAt} onChangeValue={setDueAt}/>
           </label>
 
           <label className={styles.field}>
             <span><CalendarClock size={16}/> Accept late work until</span>
-            <input type="datetime-local" value={lateUntil} onChange={event => setLateUntil(event.target.value)}/>
+            <EnglishDateTimeInput value={lateUntil} onChangeValue={setLateUntil}/>
           </label>
 
           <label className={styles.field}>
@@ -245,16 +349,34 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
           </label>
 
           {submissionType === 'Group' ? (
-            <label className={styles.field}>
-              <span><UsersRound size={16}/> Group set ID</span>
-              <input
-                type="number"
-                min="1"
+            <div className={styles.field}>
+              <span><UsersRound size={16}/> Group set</span>
+              <select
+                aria-label="Group set"
                 value={groupSetId}
                 onChange={event => setGroupSetId(event.target.value)}
-                placeholder="Required"
-              />
-            </label>
+                disabled={groupSetsQuery.isPending}
+              >
+                <option value="">
+                  {groupSetsQuery.isPending
+                    ? 'Loading group sets…'
+                    : groupSets.length === 0
+                      ? 'No group sets available'
+                      : 'Select a group set'}
+                </option>
+                {!hasCurrentGroupSet && groupSetId ? <option value={groupSetId}>Current group set #{groupSetId}</option> : null}
+                {groupSets.map(groupSet => (
+                  <option key={groupSet.id} value={groupSet.id}>
+                    {groupSet.name} ({groupSet.groups.length} {groupSet.groups.length === 1 ? 'group' : 'groups'})
+                  </option>
+                ))}
+              </select>
+              <span className={styles.fieldHelp}>
+                {groupSetsQuery.isError ? 'Group sets could not be loaded. ' : 'Students submit once with the group they belong to. '}
+                {groupSetsQuery.isError ? <button type="button" onClick={() => void groupSetsQuery.refetch()}>Try again</button> : null}
+                <Link to={`/course/${courseId}/groups`}>Manage group sets</Link>
+              </span>
+            </div>
           ) : null}
 
           <label className={styles.field}>
@@ -262,20 +384,17 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
             <input type="number" min="0" step="0.01" value={pointsPossible} onChange={event => setPointsPossible(event.target.value)}/>
           </label>
 
-          <label className={`${styles.field} ${styles.fullWidth}`}>
-            <span>Instructions</span>
-            <textarea
-              value={description}
-              onChange={event => setDescription(event.target.value)}
+          <div className={`${styles.field} ${styles.fullWidth}`}>
+            <span id="assignment-instructions-label">Instructions</span>
+            <RichTextEditor
+              content={description}
+              onChange={setDescription}
               placeholder="Write instructions for students…"
-              rows={6}
+              ariaLabel="Assignment instructions"
             />
-          </label>
+          </div>
 
-          <label className={styles.field}>
-            <span>Allowed file types</span>
-            <input value={allowedFileTypes} onChange={event => setAllowedFileTypes(event.target.value)} placeholder="pdf, docx"/>
-          </label>
+          <FileTypeMultiSelect value={allowedFileTypes} onChange={setAllowedFileTypes}/>
 
           <label className={styles.field}>
             <span>Maximum files</span>
@@ -302,13 +421,40 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
               {checkpointAssignment.attachments.map(file => (
                 <li key={file.id}>
                   <FileText size={18} aria-hidden="true"/>
-                  <a href={file.downloadUrl} target="_blank" rel="noreferrer">{file.originalName}</a>
+                  <button
+                    type="button"
+                    title={file.originalName}
+                    onClick={() => void downloadExistingAttachment(file.id, file.originalName)}
+                    disabled={downloadingAttachmentId !== null}
+                  >
+                    {downloadingAttachmentId === file.id ? 'Downloading…' : file.originalName}
+                  </button>
                   <span>{formatFileSize(file.sizeBytes)}</span>
+                  {(file.previewAvailable ?? isPreviewableFile(file.originalName, file.contentType)) ? (
+                    <button
+                      type="button"
+                      aria-label={`Preview ${file.originalName}`}
+                      onClick={() => void previewExistingAttachment(file.id, file.originalName)}
+                      disabled={previewingAttachmentId !== null || downloadingAttachmentId !== null}
+                    >
+                      <Eye size={16}/>{previewingAttachmentId === file.id ? 'Opening…' : 'Preview'}
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className={styles.deleteAttachmentButton}
+                    aria-label={`Delete ${file.originalName}`}
+                    onClick={() => void deleteExistingAttachment(file.id, file.originalName)}
+                    disabled={deletingAttachmentId !== null}
+                  >
+                    <Trash2 size={16}/>{deletingAttachmentId === file.id ? 'Deleting…' : 'Delete'}
+                  </button>
                 </li>
               ))}
             </ul>
           </section>
         ) : null}
+        {attachmentError ? <p className={styles.error} role="alert">{attachmentError}</p> : null}
 
         {pendingFiles.length > 0 ? (
           <ul className={styles.pendingFiles} aria-label="Files ready to upload">

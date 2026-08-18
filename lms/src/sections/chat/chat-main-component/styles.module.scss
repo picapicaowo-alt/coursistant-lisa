@@ -7,12 +7,21 @@
     padding: 0.2rem 0.5rem;
 
     .chatMenu {
-        width: 32px;
-        height: 32px;
+        display: grid;
+        width: 2.75rem;
+        height: 2.75rem;
         border: 1px solid #A0AEC0;
         border-radius: 20%;
+        background: transparent;
         cursor: pointer;
         margin-left: 10px;
+        padding: 0;
+        place-items: center;
+
+        img {
+            width: 32px;
+            height: 32px;
+        }
     }
 
     .chatTitle {
@@ -34,7 +43,7 @@
         backdrop-filter: blur(6px);
         -webkit-backdrop-filter: blur(6px);
 
-        color: rgba(113, 128, 150, 1);
+        color: #526276;
         font-weight: 500;
         font-size: 1.2rem;
 
@@ -120,9 +129,22 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        .chatFooterIcon {
+
+        .chatFooterIconButton {
+            display: grid;
+            width: 2.75rem;
+            height: 2.75rem;
+            padding: 0;
+            border: 0;
+            border-radius: 0.5rem;
+            background: transparent;
+            place-items: center;
             cursor: pointer;
-            margin-right: 5px;
+        }
+
+        .chatFooterIcon {
+            max-width: 1.5rem;
+            max-height: 1.5rem;
         }
 
         .spacer {
@@ -131,7 +153,8 @@
 
         .chatFooterSend {
             cursor: pointer;
-            background-color: #566FE8;
+            border: 0;
+            background-color: #3f54c5;
             color: white;
             padding: 0.5rem 1rem;
             border-radius: 0.5rem;
@@ -146,8 +169,20 @@
             }
 
             &:hover {
-                background-color: #4983FF;
+                background-color: #3447ad;
             }
         }
+
+        .chatFooterIconButton:focus-visible,
+        .chatFooterSend:focus-visible {
+            outline: 3px solid #1d4ed8;
+            outline-offset: 2px;
+        }
     }
+}
+
+.chatMenu:focus-visible,
+.glassButton:focus-visible {
+    outline: 3px solid #1d4ed8;
+    outline-offset: 2px;
 }

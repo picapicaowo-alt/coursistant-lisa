@@ -4,6 +4,27 @@
     width: 100%;
 }
 
+.mobileDashboard {
+    display: grid;
+    gap: 1rem;
+    width: 100%;
+    padding: 1rem;
+}
+
+.mobileWidget {
+    min-width: 0;
+    min-height: 18rem;
+    height: auto;
+
+    > div {
+        height: auto;
+        min-height: inherit;
+        overflow: visible;
+    }
+}
+
+.mobileWidget.chat { min-height: 30rem; }
+
 .chat {
     width: 100%;
     position: relative;
@@ -26,4 +47,9 @@
     background-color: #FFFFFF;
     border-radius: 1rem;
     padding: 1rem;
+}
+
+@media (max-width: 540px) {
+    .mobileDashboard { padding: .75rem; }
+    .chat, .assignments { padding: .85rem; border-radius: .85rem; }
 }

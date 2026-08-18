@@ -27,10 +27,10 @@ export const SCREEN_BREAKPOINTS = {
  * them tall and the chat rail is three, which is what makes the calendar the
  * long element on the right rather than something that starts halfway down.
  *
- * Two slots do not match the design yet. The bottom middle card is
+ * One slot does not match the design yet. The bottom middle card is
  * Announcements, which the API has and Figma does not; Figma puts Group Chat
- * there. The bottom right card is the Skill Graph, where Figma has Monthly
- * average score — that widget is blocked on B-1 and has no API behind it.
+ * there. The bottom right now uses released assignment grades for the
+ * selected course's five-month average for both students and teaching staff.
  */
 const CARD_H = 9;
 const STACK_H = CARD_H * 3;
@@ -87,14 +87,23 @@ export const WIDGET_CONFIGS: Record<WidgetId, WidgetLayoutConfig> = {
     defaultPosition: {x: 9, y: 0},
   },
   // Right rail, bottom. Monthly average score's slot in the design.
-  'skill-graph': {
-    id: 'skill-graph',
+  'average-score': {
+    id: 'average-score',
     constraints: {minW: 3, maxW: 4, minH: 4, maxH: 12},
     default: {w: 3, h: CARD_H},
     small: {w: 4, h: 4},
     medium: {w: 4, h: CARD_H},
     large: {w: 3, h: CARD_H},
     defaultPosition: {x: 9, y: CARD_H * 2},
+  },
+  'instructor-work': {
+    id: 'instructor-work',
+    constraints: {minW: 5, maxW: 8, minH: 6, maxH: 12},
+    default: {w: 8, h: CARD_H},
+    small: {w: 4, h: 10},
+    medium: {w: 8, h: CARD_H},
+    large: {w: 8, h: CARD_H},
+    defaultPosition: {x: 4, y: STACK_H},
   },
 } as const;
 
@@ -110,5 +119,6 @@ export const WIDGET_ORDER: WidgetId[] = [
   'assignments',
   'learning-schedule',
   'posts',
-  'skill-graph',
+  'average-score',
+  'instructor-work',
 ];

@@ -1,10 +1,13 @@
 import React from "react";
 import styles from "./index.module.scss";
 import {CourseSession, SessionDayOfWeek} from "@/apis";
+import {Link} from 'react-router-dom';
 
 interface ScheduleCardProps {
   sessions: CourseSession[];
   failed: boolean;
+  courseId: number;
+  canManage: boolean;
 }
 
 /** Monday to Friday, as the design's grid shows. */
@@ -41,7 +44,7 @@ const TYPE_TONE: Record<CourseSession['type'], string> = {
  * badge and a room ("I-A" + "Room #200") but nothing defines how a building
  * name becomes that abbreviation (open-decisions.md Q-13).
  */
-export const ScheduleCard: React.FC<ScheduleCardProps> = ({sessions, failed}) => {
+export const ScheduleCard: React.FC<ScheduleCardProps> = ({sessions, failed, courseId, canManage}) => {
   const at = (day: SessionDayOfWeek, hour: number) =>
     sessions.find((s) => s.dayOfWeek === day && hourOf(s.startTime) === hour);
 
@@ -49,6 +52,7 @@ export const ScheduleCard: React.FC<ScheduleCardProps> = ({sessions, failed}) =>
     <section className={styles.card}>
       <div className={styles.cardHeader}>
         <h2 className={styles.cardTitle}>Schedule</h2>
+        <Link to={`/course/${courseId}/schedule`} className={styles.addButton}>{canManage ? 'Manage schedule' : 'View all'}</Link>
       </div>
 
       {failed ? (

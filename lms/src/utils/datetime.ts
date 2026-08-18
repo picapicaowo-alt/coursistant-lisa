@@ -40,7 +40,7 @@ export const formatDeadline = (atLocal: string, tenantZone: string): string => {
  * when the runtime cannot produce an abbreviation.
  */
 const localZoneLabel = (): string => {
-  const parts = new Intl.DateTimeFormat(undefined, {timeZoneName: 'short'})
+  const parts = new Intl.DateTimeFormat('en-US', {timeZoneName: 'short'})
     .formatToParts(new Date());
   return parts.find((part) => part.type === 'timeZoneName')?.value
     ?? dayjs.tz.guess();

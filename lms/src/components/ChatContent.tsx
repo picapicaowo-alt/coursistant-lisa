@@ -621,12 +621,14 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
           <>
             <div className={styles.chatHeader}>
               {/* menu icon with drawer toggle */}
-              <img
-                className={`${styles.chatMenu} cursor-pointer`}
-                src="/icons/chat/menu.png"
-                alt="chat-menu"
+              <button
+                type="button"
+                className={styles.chatMenu}
                 onClick={toggleDrawer}
-              />
+                aria-label="Open chat history"
+              >
+                <img src="/icons/chat/menu.png" alt=""/>
+              </button>
               <div className={styles.chatTitle}>
                 <h1 className="text-[1.5rem] font-medium">New Chat</h1>
               </div>
@@ -882,19 +884,21 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
             {/* footer */}
             <div className={styles.chatFooter}>
               {chatIcons.map((icon, idx) => (
-                <img
+                <button
+                  type="button"
                   key={idx}
-                  className={styles.chatFooterIcon}
-                  src={icon.src}
-                  alt={icon.alt}
+                  className={styles.chatFooterIconButton}
                   onClick={() => handleIconClick(icon)}
-                />
+                  aria-label={icon.alt}
+                >
+                  <img className={styles.chatFooterIcon} src={icon.src} alt=""/>
+                </button>
               ))}
               <div className={styles.spacer}/>
-              <div className={styles.chatFooterSend} onClick={handleSendClick}>
+              <button type="button" className={styles.chatFooterSend} onClick={handleSendClick}>
                 Send
                 <img src="/icons/chat/send-star.png" alt="send-star"/>
-              </div>
+              </button>
             </div>
           </div>
         </div>
@@ -903,4 +907,3 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
   });
 
 export default ChatContent;
-

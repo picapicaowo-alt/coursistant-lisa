@@ -1,4 +1,7 @@
-﻿/**
+﻿import type {CourseRole} from './dashboard';
+import type {UserLevel} from './login';
+
+/**
  * An entry from `GET /v2/courses` — see docs/api/course_module-api_en.md 5.1.
  *
  * This is the browse listing for admins and instructors, not a personal one:
@@ -118,6 +121,23 @@ export interface CourseAnnouncement {
   read: boolean;
 }
 
+export interface CourseAnnouncementSummary {
+  id: number;
+  courseId: number;
+  courseCode: string;
+  title: string;
+  authorUserId: number;
+  authorName: string;
+  postedAt: string;
+  editedAt: string | null;
+  read: boolean;
+}
+
+export interface CourseAnnouncementPayload {
+  title: string;
+  body: string;
+}
+
 export interface CourseEvent {
   id: number;
   courseId: number;
@@ -132,6 +152,34 @@ export interface CourseEvent {
   updatedAt: string;
 }
 
+export interface CourseEventPayload {
+  name: string;
+  date: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  location?: string | null;
+  description?: string | null;
+}
+
+export interface CourseGroupMembership {
+  groupId: number;
+  userId: number;
+  displayName: string | null;
+  joinedAt: string;
+  addedByType: string;
+  addedByUserId: number | null;
+}
+
+export interface CourseGroup {
+  id: number;
+  groupSetId: number;
+  name: string;
+  capacity: number | null;
+  capacityOverride: number | null;
+  memberCount: number;
+  members: CourseGroupMembership[];
+}
+
 export interface CourseGroupSet {
   id: number;
   courseId: number;
@@ -142,9 +190,99 @@ export interface CourseGroupSet {
   timezone: string;
   locked: boolean;
   openForSelfService: boolean;
-  warnings?: string[];
-  myGroup?: {id: number; name: string} | null;
-  groups?: Array<{id: number; name: string}>;
+  capacityShortenWarning?: boolean;
+  windowShortenWarning?: boolean;
+  myGroup: CourseGroupMembership | null;
+  groups: CourseGroup[];
+}
+
+export interface CreateGroupSetPayload {
+  name: string;
+  defaultCapacity?: number | null;
+  joinOpensAt?: string | null;
+  joinClosesAt?: string | null;
+  locked?: boolean;
+}
+
+export interface PatchGroupSetPayload extends Partial<CreateGroupSetPayload> {
+  clearJoinOpensAt?: boolean;
+  clearJoinClosesAt?: boolean;
+  confirmCapacityShorten?: boolean;
+  confirmWindowShorten?: boolean;
+}
+
+export interface CourseMember {
+  id: number;
+  courseId: number;
+  userId: number;
+  userName: string | null;
+  userEmail: string | null;
+  courseRole: CourseRole;
+  canGrade?: boolean;
+  canPostAnnouncements?: boolean;
+  canManageGroups?: boolean;
+  canManageCourseEvents?: boolean;
+  active: boolean;
+  assignmentSubmitFrozen?: boolean;
+  level?: UserLevel;
+  enrolledAt?: string;
+  joinedAt?: string | null;
+  withdrawnAt?: string | null;
+}
+
+export interface CourseMemberPage {
+  items: CourseMember[];
+  page: number;
+  size: number;
+  total: number;
+}
+
+export interface MemberQueryParams {
+  courseRole?: CourseRole;
+  active?: boolean;
+  q?: string;
+  page?: number;
+  size?: number;
+}
+
+export interface TaPermissions {
+  canGrade?: boolean;
+  canPostAnnouncements?: boolean;
+  canManageGroups?: boolean;
+  canManageCourseEvents?: boolean;
+}
+
+export interface BatchEnrollItem {
+  userId: number | null;
+  status: 'SUCCESS' | 'ERROR';
+  errorType: string | null;
+  message: string | null;
+  member: CourseMember | null;
+}
+
+export interface BatchStudentEnrollResponse {
+  requestedCount: number;
+  successCount: number;
+  failureCount: number;
+  items: BatchEnrollItem[];
+}
+
+export type SyllabusState =
+  | {posted: false}
+  | {
+      posted: true;
+      versionId: number;
+      originalFilename: string;
+      contentType: string;
+      sizeBytes: number;
+      uploadedBy: number;
+      uploadedAt: string;
+      canRestorePrevious?: boolean;
+    };
+
+export interface UngroupedStudent {
+  userId: number;
+  displayName: string | null;
 }
 
 /** Day codes used by sessions. */
@@ -169,6 +307,14 @@ export interface CourseSession {
   endTime: string;
   location: string | null;
   timezone: string;
+}
+
+export interface CourseSessionPayload {
+  type: SessionType;
+  dayOfWeek: SessionDayOfWeek;
+  startTime: string;
+  endTime: string;
+  location?: string | null;
 }
 
 export interface CourseBrowseParams {
@@ -235,10 +381,13 @@ export interface CourseDetailDTO {
 
 export interface CreateCourseRequest {
   courseCode: string;
-  name: string;
-  description: string;
-  school: string;
-  semester: string;
+  title: string;
+  termStartDate: string;
+  termEndDate: string;
+  description?: string;
+  location?: string;
+  primaryInstructorUserId?: number;
+  tenantId?: number;
 }
 
 export interface CreateCourseUnitRequest {

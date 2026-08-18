@@ -18,6 +18,29 @@ export interface LoginRequest {
   role: LoginAccountType;
 }
 
+/** Public self-registration payload for `POST /v1/auth/register`. */
+export interface RegisterRequest {
+  email: string;
+  verificationCode: string;
+  password: string;
+  name: string;
+  /** Optional. The backend derives it from the email when omitted. */
+  username?: string;
+  /** Public registration currently joins the platform tenant. */
+  tenantId: 1;
+}
+
+export interface PasswordResetRequest {
+  email: string;
+  verificationCode: string;
+  newPassword: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 /**
  * `data` of a successful `POST /v1/auth/login` (and of `register`).
  *
@@ -59,4 +82,11 @@ export const AUTH_ERROR_CODES = {
   serviceUnavailable: 'AUTH_SERVICE_TEMPORARILY_UNAVAILABLE',
   paramMissing: 'PARAM_MISSING',
   tokenCreationFailed: 'TOKEN_CREATION_FAILED',
+  invalidPasswordFormat: 'INVALID_PASSWORD_FORMAT',
+  invalidVerificationCode: 'INVALID_VERIFICATION_CODE',
+  verificationCodeExpired: 'VERIFICATION_CODE_EXPIRED',
+  verificationAttemptsExceeded: 'VERIFICATION_ATTEMPTS_EXCEEDED',
+  verificationResendCooldown: 'VERIFICATION_RESEND_COOLDOWN',
+  verificationHourlyLimit: 'VERIFICATION_HOURLY_LIMIT',
+  emailSendFailed: 'EMAIL_SEND_FAILED',
 } as const;

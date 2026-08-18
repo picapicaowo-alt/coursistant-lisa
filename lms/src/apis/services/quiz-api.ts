@@ -6,6 +6,7 @@ import {
   PatchQuizQuestionRequest,
   PatchQuizRequest,
   QuizAttempt,
+  QuizAttemptSummary,
   QuizAutosaveResponse,
   QuizGradingSummary,
   QuizQuestion,
@@ -106,6 +107,22 @@ export class QuizApiService {
 
   getCurrentAttempt(courseId: number, quizId: number): Promise<ApiResponse<QuizAttempt>> {
     return this.apiClient.get(`/v2/courses/${courseId}/quizzes/${quizId}/attempts/current`);
+  }
+
+  listAttempts(
+    courseId: number,
+    quizId: number,
+    options?: {userId?: number; page?: number; pageSize?: number},
+  ): Promise<ApiResponse<QuizAttemptSummary[]>> {
+    return this.apiClient.get(`/v2/courses/${courseId}/quizzes/${quizId}/attempts`, {
+      params: options,
+    });
+  }
+
+  getAttemptResult(courseId: number, quizId: number, attemptId: number): Promise<ApiResponse<QuizResult>> {
+    return this.apiClient.get(
+      `/v2/courses/${courseId}/quizzes/${quizId}/attempts/${attemptId}/result`,
+    );
   }
 
   autosaveAnswer(

@@ -41,7 +41,7 @@ const loadSubject = async (
       description: item.body,
       metadata: [
         {icon: 'users', label: item.authorName},
-        {icon: 'calendar', label: new Date(item.postedAt).toLocaleString()},
+        {icon: 'calendar', label: new Date(item.postedAt).toLocaleString('en-US')},
       ],
     };
   }
@@ -69,16 +69,19 @@ const loadSubject = async (
       await courseApiService.getGroupSet(courseId, subjectId),
       'getGroupSet',
     );
+    const myGroup = item.myGroup
+      ? item.groups.find(group => group.id === item.myGroup?.groupId)
+      : null;
     return {
       label: 'Course group',
       title: item.name,
-      description: item.myGroup
-        ? `You are in ${item.myGroup.name}.`
+      description: myGroup
+        ? `You are in ${myGroup.name}.`
         : item.openForSelfService
           ? 'You can select a group for this activity.'
           : 'Your instructor manages membership for this activity.',
       metadata: [
-        {icon: 'users', label: item.myGroup?.name || `${item.groups?.length ?? 0} groups`},
+        {icon: 'users', label: myGroup?.name || `${item.groups.length} groups`},
         {icon: 'clock', label: item.locked ? 'Membership locked' : 'Membership open'},
       ],
     };

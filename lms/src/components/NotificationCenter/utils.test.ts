@@ -18,6 +18,22 @@ describe('resolveNotificationPath', () => {
     })).toBe('/course/7/quizzes/3');
   });
 
+  it('opens the exact assignment submission destination', () => {
+    expect(resolveNotificationPath({
+      availability: 'AVAILABLE',
+      courseId: 7,
+      deepLink: '/courses/7/assignments/12/submissions/44',
+    })).toBe('/course/7/assignments/12/submissions/44');
+  });
+
+  it('normalizes grade links onto the subject page that renders the grade', () => {
+    expect(resolveNotificationPath({
+      availability: 'AVAILABLE',
+      courseId: 7,
+      deepLink: '/courses/7/quizzes/3/my-grade',
+    })).toBe('/course/7/quizzes/3');
+  });
+
   it.each([
     ['announcements', 'announcements'],
     ['events', 'events'],
@@ -45,5 +61,18 @@ describe('resolveNotificationPath', () => {
       courseId: 7,
       deepLink: '/courses/7/assignments/12',
     })).toBeNull();
+  });
+
+  it('keeps an available notification navigable after it is marked read', () => {
+    const unread = {
+      availability: 'AVAILABLE' as const,
+      courseId: 7,
+      deepLink: '/courses/7/assignments/12',
+      readAt: null,
+    };
+    const read = {...unread, readAt: '2026-08-18T12:00:00Z'};
+
+    expect(resolveNotificationPath(unread)).toBe('/course/7/assignments/12');
+    expect(resolveNotificationPath(read)).toBe('/course/7/assignments/12');
   });
 });

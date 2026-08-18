@@ -24,17 +24,31 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                                       containerRef,
                                                     }) => {
   if (!mounted) return null;
+
+  if (columns <= 4) {
+    return (
+      <section className={styles.mobileDashboard} ref={containerRef} aria-label="Dashboard widgets">
+        {widgetConfigs.map(({key, ref, component}) => (
+          <div key={key} className={`${styles.mobileWidget} ${key === 'chat' ? styles.chat : styles.assignments}`} ref={ref}>
+            <WidgetWrapper>{component}</WidgetWrapper>
+          </div>
+        ))}
+      </section>
+    );
+  }
   
   return (
-    <div className={styles['grid-layout-container']} ref={containerRef}>
+    <section className={styles['grid-layout-container']} ref={containerRef} aria-label="Dashboard widgets">
       <ReactGridLayout
         layout={layout}
         width={width}
         gridConfig={{cols: columns, rowHeight: 30}}
         compactor={verticalCompactor}
+        dragConfig={{enabled: false}}
+        resizeConfig={{enabled: false}}
+        autoSize
         style={{
           width: '100%',
-          height: '100%',
           minHeight: '100%',
         }}
       >
@@ -46,6 +60,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         ))}
       </ReactGridLayout>
-    </div>
+    </section>
   );
 };

@@ -13,6 +13,7 @@ import {useRequiredAuth} from '@/contexts/RequiredAuthContext';
 interface CourseEditViewProps {
   canEditStructure: boolean;
   canUploadMaterials: boolean;
+  canManageEvents: boolean;
 }
 
 /**
@@ -36,6 +37,7 @@ interface CourseEditViewProps {
 export const CourseEditView: React.FC<CourseEditViewProps> = ({
   canEditStructure,
   canUploadMaterials,
+  canManageEvents,
 }) => {
   const {courseId, course, weeks, sessions, isLoading, isError, sessionsFailed, refetch} =
     useCourseWorkspaceData();
@@ -150,7 +152,7 @@ export const CourseEditView: React.FC<CourseEditViewProps> = ({
           canUploadMaterials={canUploadMaterials}
           onChanged={invalidate}
         />
-        <ScheduleCard sessions={sessions} failed={sessionsFailed}/>
+        <ScheduleCard sessions={sessions} failed={sessionsFailed} courseId={course.id} canManage={canManageEvents}/>
       </div>
     </div>
   );

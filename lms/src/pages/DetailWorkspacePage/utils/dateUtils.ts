@@ -10,7 +10,7 @@ export function convertToISODateString(dateValue: Date | string): string {
 }
 
 export function formatDateForDisplay(dateValue: Date | string): string {
-  return convertToDate(dateValue).toLocaleString();
+  return convertToDate(dateValue).toLocaleString('en-US');
 }
 
 export function isValidDate(dateValue: unknown): dateValue is Date | string {

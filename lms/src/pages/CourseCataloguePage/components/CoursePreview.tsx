@@ -4,13 +4,14 @@ import {useNavigate} from "react-router-dom";
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {useTranslation} from "react-i18next";
 import {courseApiService} from "@/apis/services/course-api";
-import {CourseSession} from "@/apis";
+import {CourseSession, CourseState} from "@/apis";
 import {formatCourseName} from "@/utils/course";
 
 interface CoursePreviewProps {
   id: number;
   courseCode: string;
   title: string;
+  state: CourseState;
   /** Null when the payload carried only a userId for the instructor. */
   instructorName: string | null;
   /** Course Managers get the archive action; everyone else does not. */
@@ -44,6 +45,7 @@ export const CoursePreview: React.FC<CoursePreviewProps> = ({
                                                               id,
                                                               courseCode,
                                                               title,
+                                                              state,
                                                               instructorName,
                                                               canManage,
                                                               avatarUrl = '/icons/default_avatar.jpg'
@@ -52,6 +54,7 @@ export const CoursePreview: React.FC<CoursePreviewProps> = ({
   const {t} = useTranslation("course");
   const queryClient = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const {data: sessions} = useQuery({
@@ -61,11 +64,37 @@ export const CoursePreview: React.FC<CoursePreviewProps> = ({
     gcTime: 5 * 60 * 1000,
     // A missing schedule must not turn into a retry storm across every card.
     retry: 1,
+    enabled: state === 'Active',
   });
 
   const archive = useMutation({
     mutationFn: () => courseApiService.archiveCourse(id),
-    onSuccess: () => queryClient.invalidateQueries({queryKey: ['my-courses']}),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({queryKey: ['my-courses']}),
+        queryClient.invalidateQueries({queryKey: ['admin-courses']}),
+      ]);
+    },
+  });
+
+  const unarchive = useMutation({
+    mutationFn: () => courseApiService.unarchiveCourse(id),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({queryKey: ['my-courses']}),
+        queryClient.invalidateQueries({queryKey: ['admin-courses']}),
+      ]);
+    },
+  });
+
+  const remove = useMutation({
+    mutationFn: () => courseApiService.deleteCourse(id),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({queryKey: ['my-courses']}),
+        queryClient.invalidateQueries({queryKey: ['admin-courses']}),
+      ]);
+    },
   });
 
   useEffect(() => {
@@ -148,26 +177,32 @@ export const CoursePreview: React.FC<CoursePreviewProps> = ({
 
             {menuOpen && (
               <div className={styles.menu} role="menu">
-                <button
-                  type="button"
-                  role="menuitem"
-                  className={styles.menuItem}
-                  disabled={archive.isPending}
-                  onClick={() => {
-                    setMenuOpen(false);
-                    archive.mutate();
-                  }}
-                >
-                  {archive.isPending ? t("card.archiving") : t("card.archive")}
-                </button>
+                {state === 'Active' ? (
+                  <button type="button" role="menuitem" className={styles.menuItem} disabled={archive.isPending} onClick={() => { setMenuOpen(false); archive.mutate(); }}>
+                    {archive.isPending ? t("card.archiving") : t("card.archive")}
+                  </button>
+                ) : (
+                  <>
+                    <button type="button" role="menuitem" className={styles.menuItem} disabled={unarchive.isPending} onClick={() => { setMenuOpen(false); unarchive.mutate(); }}>
+                      {unarchive.isPending ? 'Restoring…' : 'Restore course'}
+                    </button>
+                    {confirmDelete ? (
+                      <div className={styles.confirmDelete}>
+                        <p>Delete permanently?</p>
+                        <button type="button" disabled={remove.isPending} onClick={() => remove.mutate()}>{remove.isPending ? 'Deleting…' : 'Confirm'}</button>
+                        <button type="button" onClick={() => setConfirmDelete(false)}>Cancel</button>
+                      </div>
+                    ) : <button type="button" role="menuitem" className={`${styles.menuItem} ${styles.dangerItem}`} onClick={() => setConfirmDelete(true)}>Delete permanently</button>}
+                  </>
+                )}
               </div>
             )}
           </div>
         )}
       </div>
 
-      {archive.isError && (
-        <p className={styles.error} role="alert">{t("card.archiveFailed")}</p>
+      {(archive.isError || unarchive.isError || remove.isError) && (
+        <p className={styles.error} role="alert">{remove.isError ? 'This course could not be deleted. Courses with enrolments or coursework must be retained.' : archive.isError ? t("card.archiveFailed") : 'The course could not be restored.'}</p>
       )}
     </div>
   );

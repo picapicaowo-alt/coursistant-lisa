@@ -13,7 +13,7 @@ const formatWindow = (quiz: QuizResponse) => {
   const close = new Date(quiz.closesAtUtc);
   return Number.isNaN(close.getTime())
     ? quiz.closesAtLocal
-    : new Intl.DateTimeFormat(undefined, {month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'}).format(close);
+    : new Intl.DateTimeFormat('en-US', {month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'}).format(close);
 };
 
 export const QuizzesCard = ({courseId, quizzes, failed, canCreate = false}: Props) => (

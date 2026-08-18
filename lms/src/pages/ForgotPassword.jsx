@@ -1,10 +1,10 @@
-import axios from 'axios';
 import {useRef, useState, useEffect} from 'react';
 import ProgressBar from './ProgressBar';
 import {useNavigate} from 'react-router-dom';
 import {useLocation} from 'react-router-dom';
 import {Icon} from '@iconify/react';
 import {useTranslation} from 'react-i18next';  //Used for multi-language
+import {authApiService} from '@/apis/services/auth-api';
 
 
 export default function ForgotPassword() {
@@ -26,14 +26,12 @@ export default function ForgotPassword() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const API_DOMAIN = import.meta.env.VITE_API_DOMAIN_NAME;
   
   const [showOtpScreen, setShowOtpScreen] = useState(false);
   const [showNewPasswordScreen, setNewPasswordScreen] = useState(false);
   const [showSuccessPasswordScreen, setSuccessPasswordScreen] = useState(false);
   const inputRefs = useRef([]);
   
-  const [resetToken, setResetToken] = useState(null);
   const [otpError, setOtpError] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
@@ -116,36 +114,11 @@ export default function ForgotPassword() {
     setError('');
     setSuccess('');
     
-    try {
-      // Prepare the JSON payload
-      const payload = {
-        email: emailid,
-        code: verificationCode,
-      };
-      
-      const response = await axios.post(`${API_DOMAIN}/resetPasswordValidation`, payload);
-      console.log(response)
-      // Check the response. Only if it is "Success" do we move on
-      if (response.data.msg === 'Success') {
-        // Switch the UI from the OTP screen to the new password screen
-        const tokenFromServer = response.data.data;
-        if (tokenFromServer) {
-          setResetToken(tokenFromServer); // Store it in state
-        }
-        setNewPasswordScreen(true);
-        setShowOtpScreen(false);
-      } else if (response.data.msg === "Incorrect Verification Code") {
-        alert(t("forgotPasswordErrors.incorrectCode"))
-      } else {
-        // If we have an error message from the server, set it
-        setError(response.data.msg || t("forgotPasswordErrors.invalidCode"));
-      }
-    } catch (err) {
-      console.error(err);
-      setError(t("forgotPasswordErrors.generic"));
-    } finally {
-      setLoading(false);
-    }
+    // The current API consumes and validates the code atomically when the
+    // password is reset. Keep it locally until the user enters a new password.
+    setNewPasswordScreen(true);
+    setShowOtpScreen(false);
+    setLoading(false);
   };
   
   const handleSuccessScreen = async (e) => {
@@ -178,44 +151,18 @@ export default function ForgotPassword() {
       return;
     }
     
-    // Check if the verification token exists
-    if (!resetToken) {
-      console.log("session no")
-      setError(t("forgotPasswordErrors.sessionExpired"));
-      return;
-    }
-    
     setLoading(true);
     setError('');
     setSuccess('');
     
     try {
-      // Build the payload.
-      // Adjust the key names if your backend expects different ones.
-      const payload = {
+      await authApiService.resetPassword({
         email: emailid,
+        verificationCode,
         newPassword: passwordfield,
-        role: 'USER',
-        type: 'reset',
-      };
-      
-      // Make the PUT request with the token in the headers.
-      const response = await axios.put(`${API_DOMAIN}/updatePassword`, payload, {
-        headers: {
-          token: resetToken,
-        },
       });
-      console.log("res", response)
-      
-      // Evaluate response and update UI
-      if (response.data.msg === 'Success') {
-        console.log("hi, ")
-        setNewPasswordScreen(false);
-        setSuccessPasswordScreen(true);
-        
-      } else {
-        setError(response.data.msg || t("forgotPasswordErrors.updateFailed"));
-      }
+      setNewPasswordScreen(false);
+      setSuccessPasswordScreen(true);
     } catch (err) {
       console.error(err);
       setError(t("forgotPasswordErrors.updateError"));
@@ -240,23 +187,8 @@ export default function ForgotPassword() {
     setSuccess('');
     
     try {
-      // Prepare the form data if your API expects multipart/form-data
-      const formData = new FormData();
-      formData.append('email', emailid);
-      
-      // Make the POST request to your verification endpoint
-      const response = await axios.post(`${API_DOMAIN}/sendResetEmailVerification`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      console.log(response)
-      // Check the response. Only if it is successful, then show the OTP screen.
-      if (response.data.msg === 'Success') {
-        setShowOtpScreen(true);
-      } else {
-        setError(response.data.msg);
-      }
+      await authApiService.sendPasswordResetVerification(emailid.trim());
+      setShowOtpScreen(true);
     } catch (err) {
       console.error(err);
       setError(t("forgotPasswordErrors.sendVerificationFailed"));

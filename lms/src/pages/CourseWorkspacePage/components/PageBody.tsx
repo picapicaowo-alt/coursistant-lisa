@@ -15,12 +15,18 @@ interface PageBodyProps {
   canEditCourse?: boolean;
   canCreateAssignments?: boolean;
   canManageMaterials?: boolean;
+  canManageEvents?: boolean;
+  canManageGroups?: boolean;
+  canPostAnnouncements?: boolean;
 }
 
 export const PageBody: React.FC<PageBodyProps> = ({
   canEditCourse = false,
   canCreateAssignments = false,
   canManageMaterials = false,
+  canManageEvents = false,
+  canManageGroups = false,
+  canPostAnnouncements = false,
 }) => {
   const {courseId} = useParams();
   const {workspaceMode, closeDetailWorkspace, detailWorkspaceProps} = useCourseWorkspaceStore();
@@ -43,7 +49,7 @@ export const PageBody: React.FC<PageBodyProps> = ({
   if (isCourseRoute && (workspaceMode === "view" || (workspaceMode === "edit" && !canOpenEditor))) {
     return (
       <div className={styles.contentArea}>
-        <CourseDetailView canCreateAssignments={canCreateAssignments}/>
+        <CourseDetailView canCreateAssignments={canCreateAssignments} canManageEvents={canManageEvents} canManageGroups={canManageGroups} canPostAnnouncements={canPostAnnouncements}/>
       </div>
     );
   }
@@ -54,6 +60,7 @@ export const PageBody: React.FC<PageBodyProps> = ({
         <CourseEditView
           canEditStructure={canEditCourse}
           canUploadMaterials={canManageMaterials}
+          canManageEvents={canManageEvents}
         />
       </div>
     );

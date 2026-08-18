@@ -4,6 +4,7 @@ import {assignmentApiService} from '@/apis/services/assignment-api';
 import {unwrapData} from '@/apis';
 import type {AssignmentDetail, SubmissionState} from '@/apis';
 import type {FileView} from '@/types';
+import {isPreviewableFile, openPreviewWindow, saveBlob, showBlobInPreviewWindow} from '@/utils/downloadBlob';
 import styles from './SubmitAssignmentDialog.module.scss';
 
 interface SubmitAssignmentDialogProps {
@@ -29,6 +30,7 @@ export const SubmitAssignmentDialog = ({
   onSubmitted,
 }: SubmitAssignmentDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [attachmentAction, setAttachmentAction] = useState<'preview' | 'download' | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const idempotencyKeyRef = useRef(crypto.randomUUID());
 
@@ -46,6 +48,10 @@ export const SubmitAssignmentDialog = ({
 
   const accept = toAcceptValue(assignment.allowedFileTypes);
   const instructorAttachment = assignment.attachments?.[0];
+  const attachmentPreviewable = instructorAttachment
+    ? (instructorAttachment.previewAvailable
+      ?? isPreviewableFile(instructorAttachment.originalName, instructorAttachment.contentType))
+    : false;
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -69,6 +75,46 @@ export const SubmitAssignmentDialog = ({
 
     if (!staged) throw new Error('The API did not return the staged file.');
     return String(staged.id);
+  };
+
+  const downloadInstructorAttachment = async () => {
+    if (!instructorAttachment) return;
+    setAttachmentAction('download');
+    setSubmitError(null);
+    try {
+      const blob = await assignmentApiService.downloadAttachment(
+        courseId,
+        assignment.id,
+        instructorAttachment.id,
+      );
+      saveBlob(blob, instructorAttachment.originalName);
+    } catch {
+      setSubmitError(`Could not download ${instructorAttachment.originalName}.`);
+    } finally {
+      setAttachmentAction(null);
+    }
+  };
+
+  const previewInstructorAttachment = async () => {
+    if (!instructorAttachment) return;
+    const previewWindow = openPreviewWindow();
+    if (!previewWindow) {
+      setSubmitError('Allow pop-ups to preview this file.');
+      return;
+    }
+    setAttachmentAction('preview');
+    setSubmitError(null);
+    try {
+      showBlobInPreviewWindow(
+        previewWindow,
+        await assignmentApiService.previewAttachment(courseId, assignment.id, instructorAttachment.id),
+      );
+    } catch {
+      previewWindow.close();
+      setSubmitError(`Could not preview ${instructorAttachment.originalName}.`);
+    } finally {
+      setAttachmentAction(null);
+    }
   };
 
   const submit = async () => {
@@ -116,15 +162,30 @@ export const SubmitAssignmentDialog = ({
         {instructorAttachment && (
           <div className={styles.instructorFile}>
             <p>Your instructor provided a file to help you complete this assignment.</p>
-            <a href={instructorAttachment.downloadUrl} className={styles.downloadLink}>
+            {attachmentPreviewable ? <button
+              type="button"
+              className={styles.downloadLink}
+              onClick={() => void previewInstructorAttachment()}
+              disabled={attachmentAction !== null}
+              title={`Preview ${instructorAttachment.originalName}`}
+            >
+              <span>{attachmentAction === 'preview' ? 'Opening…' : `Preview ${instructorAttachment.originalName}`}</span>
+            </button> : null}
+            <button
+              type="button"
+              className={styles.downloadLink}
+              onClick={() => void downloadInstructorAttachment()}
+              disabled={attachmentAction !== null}
+              title={instructorAttachment.originalName}
+            >
               <img
                 src="/icons/assignments/document-download.svg"
                 alt=""
                 width={24}
                 height={24}
               />
-              <span>Download {instructorAttachment.originalName}</span>
-            </a>
+              <span>{attachmentAction === 'download' ? 'Downloading…' : `Download ${instructorAttachment.originalName}`}</span>
+            </button>
           </div>
         )}
 

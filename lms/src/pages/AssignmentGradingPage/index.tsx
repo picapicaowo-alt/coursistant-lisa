@@ -1,11 +1,12 @@
 import {FormEvent, useMemo, useState} from 'react';
 import {useQuery, useQueryClient} from '@tanstack/react-query';
-import {ArrowLeft, CheckCircle2, MessageSquare, Search, X} from 'lucide-react';
+import {ArrowLeft, CheckCircle2, Download, MessageSquare, Search, Upload, X} from 'lucide-react';
 import {Link, useParams} from 'react-router-dom';
 import type {GradingRosterItem, UpsertGradePayload} from '@/apis';
 import {unwrapData} from '@/apis';
 import {assignmentApiService} from '@/apis/services/assignment-api';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
+import {saveBlob} from '@/utils/downloadBlob';
 import styles from './index.module.scss';
 
 type RosterFilter = 'All' | 'Ungraded' | 'Graded';
@@ -31,7 +32,7 @@ const formatSubmissionTime = (value?: string) => {
   if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -62,12 +63,13 @@ interface GradeDialogProps {
   isSaving: boolean;
   error: string | null;
   onClose: () => void;
-  onSave: (payload: UpsertGradePayload) => void;
+  onSave: (payload: UpsertGradePayload, annotatedFile?: File) => void;
 }
 
 const GradeDialog = ({row, pointsPossible, isSaving, error, onClose, onSave}: GradeDialogProps) => {
   const [score, setScore] = useState(row.score === undefined ? '' : String(row.score));
   const [feedback, setFeedback] = useState('');
+  const [annotatedFile, setAnnotatedFile] = useState<File | undefined>();
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -78,7 +80,7 @@ const GradeDialog = ({row, pointsPossible, isSaving, error, onClose, onSave}: Gr
       feedbackHtml: feedback.trim() ? `<p>${escapeHtml(feedback.trim())}</p>` : undefined,
       submissionVersionId: row.submissionVersionId,
       aiAssisted: false,
-    });
+    }, annotatedFile);
   };
 
   return (
@@ -121,6 +123,12 @@ const GradeDialog = ({row, pointsPossible, isSaving, error, onClose, onSave}: Gr
             onChange={event => setFeedback(event.target.value)}
             placeholder="Add clear, actionable feedback…"
           />
+        </label>
+
+        <label className={styles.annotatedField}>
+          <span><Upload size={16}/> Annotated feedback file</span>
+          <input type="file" onChange={event => setAnnotatedFile(event.target.files?.[0])}/>
+          <small>{annotatedFile ? annotatedFile.name : row.hasAnnotatedFile ? 'Uploading a new file replaces the current annotated file.' : 'Optional. Add a marked-up copy for the learner.'}</small>
         </label>
 
         <p className={styles.dialogNote}>
@@ -174,7 +182,7 @@ const AssignmentGradingPage = () => {
     });
   }, [filter, rosterQuery.data?.items, search]);
 
-  const saveGrade = async (payload: UpsertGradePayload) => {
+  const saveGrade = async (payload: UpsertGradePayload, annotatedFile?: File) => {
     if (!selectedRow || courseId === null || assignmentId === null) return;
     setSaving(true);
     setActionError(null);
@@ -182,8 +190,10 @@ const AssignmentGradingPage = () => {
     try {
       if (selectedRow.groupId !== undefined) {
         await assignmentApiService.upsertGroupGrade(courseId, assignmentId, selectedRow.groupId, payload);
+        if (annotatedFile) await assignmentApiService.uploadGroupAnnotatedFile(courseId, assignmentId, selectedRow.groupId, annotatedFile);
       } else if (selectedRow.studentUserId !== undefined) {
         await assignmentApiService.upsertStudentGrade(courseId, assignmentId, selectedRow.studentUserId, payload);
+        if (annotatedFile) await assignmentApiService.uploadStudentAnnotatedFile(courseId, assignmentId, selectedRow.studentUserId, annotatedFile);
       } else {
         throw new Error('Roster row has no grading target.');
       }
@@ -194,6 +204,19 @@ const AssignmentGradingPage = () => {
       setActionError('The grade could not be saved. Your score and feedback are still here.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const downloadAnnotated = async (row: GradingRosterItem) => {
+    if (courseId === null || assignmentId === null) return;
+    setActionError(null);
+    try {
+      const blob = row.groupId !== undefined
+        ? await assignmentApiService.downloadGroupAnnotatedFile(courseId, assignmentId, row.groupId)
+        : await assignmentApiService.downloadStudentAnnotatedFile(courseId, assignmentId, row.studentUserId!);
+      saveBlob(blob, `${getDisplayName(row).replace(/[^a-z0-9_-]+/gi, '-')}-annotated-feedback`);
+    } catch {
+      setActionError('The annotated feedback file could not be downloaded.');
     }
   };
 
@@ -339,7 +362,7 @@ const AssignmentGradingPage = () => {
                     <td className={styles.score}>{row.score ?? '—'} / {roster.pointsPossible ?? '—'}</td>
                     <td><span className={styles.gradeBadge} data-status={row.gradeStatus}>{row.gradeStatus}</span></td>
                     <td>
-                      <button
+                      <div className={styles.rowButtons}>{row.hasAnnotatedFile ? <button type="button" className={styles.gradeButton} onClick={() => void downloadAnnotated(row)} aria-label={`Download annotated feedback for ${name}`}><Download size={17}/><span>File</span></button> : null}<button
                         type="button"
                         className={styles.gradeButton}
                         onClick={() => {
@@ -351,7 +374,7 @@ const AssignmentGradingPage = () => {
                       >
                         <MessageSquare size={18}/>
                         <span>{row.gradeStatus === 'Ungraded' ? 'Grade' : 'Edit'}</span>
-                      </button>
+                      </button></div>
                     </td>
                   </tr>
                 );
@@ -375,7 +398,7 @@ const AssignmentGradingPage = () => {
           onClose={() => {
             if (!isSaving) setSelectedRow(null);
           }}
-          onSave={payload => void saveGrade(payload)}
+          onSave={(payload, annotatedFile) => void saveGrade(payload, annotatedFile)}
         />
       ) : null}
     </div>

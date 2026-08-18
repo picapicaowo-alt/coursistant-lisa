@@ -41,7 +41,7 @@ export const SubmissionForm: React.FC = () => {
       result[t("assignment.allowLateSubmission")] = assignment.settings.allowLateSubmission ? t("common.yes") : t("common.no");
       result[t("assignment.allowedResubmissionCount")] = assignment.settings.allowedResubmissionCount.toFixed();
     } else {
-      result[t("assignmentSubmit.submittedAt")] = submission.updatedAt.toLocaleString();
+      result[t("assignmentSubmit.submittedAt")] = submission.updatedAt.toLocaleString('en-US');
       result[t("assignment.remainingResubmissions")] = Math.max(0, assignment.settings.allowedResubmissionCount - (submission.submissionCount)).toFixed();
     }
     return result;

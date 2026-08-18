@@ -65,7 +65,47 @@
     border: 1px solid t.$border;
     background: t.$card-bg;
     color: t.$text;
+    gap: .35rem;
+    cursor: pointer;
 }
+
+.errorBanner,
+.successBanner {
+    max-width: 1180px;
+    margin: -0.75rem auto 1rem;
+    padding: .75rem 1rem;
+    border-radius: t.$radius-control-sm;
+    font-size: t.$fs-caption;
+}
+
+.errorBanner { background: rgba(t.$danger, .08); color: t.$danger; }
+.successBanner { background: t.$type-green-subtle; color: t.$type-green; }
+
+.hiddenInput { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+.rubricRow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .65rem;
+    margin-top: 1rem;
+    color: t.$text-muted;
+
+    > button:first-of-type {
+        min-width: 0;
+        max-width: 320px;
+        overflow: hidden;
+        color: t.$brand;
+        font-weight: t.$fw-semibold;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+}
+
+.dangerZone { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid t.$border; }
+.dangerButton { display: inline-flex; align-items: center; gap: .35rem; padding: .55rem .75rem; border: 1px solid t.$danger; border-radius: t.$radius-control-sm; color: t.$danger; cursor: pointer; }
+.dangerButton:disabled { opacity: .55; cursor: wait; }
 
 .eyebrow {
     display: flex;
@@ -118,7 +158,6 @@
     color: t.$text-muted;
     font-size: t.$fs-label;
     line-height: 1.65;
-    white-space: pre-wrap;
 }
 
 .attachments {
@@ -131,21 +170,77 @@
         font-size: t.$fs-label;
         font-weight: t.$fw-semibold;
     }
+
+    ul {
+        display: grid;
+        gap: 0.55rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
 }
 
-.attachmentLink {
-    display: flex;
+.attachmentRow {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
-    gap: 0.5rem;
-    width: fit-content;
+    gap: 0.65rem;
+    min-width: 0;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-control-sm;
+    background: t.$subcard-bg;
     color: t.$brand;
+
+    > svg { flex: 0 0 auto; }
+}
+
+.attachmentName {
+    min-width: 0;
+    overflow: hidden;
+    color: t.$brand;
+    font: inherit;
     font-size: t.$fs-label;
     font-weight: t.$fw-semibold;
-    text-decoration: none;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
 
-    &:hover {
-        text-decoration: underline;
+    &:hover:not(:disabled) { text-decoration: underline; }
+    &:disabled { cursor: wait; opacity: 0.65; }
+}
+
+.attachmentActions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+
+    button {
+        display: inline-flex;
+        min-height: 2rem;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        padding: 0 0.55rem;
+        border: 1px solid t.$border;
+        border-radius: t.$radius-control-sm;
+        background: t.$card-bg;
+        color: t.$brand;
+        font-size: 0.72rem;
+        font-weight: t.$fw-semibold;
+        cursor: pointer;
+
+        &:hover:not(:disabled) { border-color: t.$brand; background: t.$brand-subtle; }
+        &:disabled { cursor: wait; opacity: 0.55; }
     }
+}
+
+.attachmentError {
+    grid-column: 2 / -1;
+    margin: 0;
+    color: t.$danger;
+    font-size: t.$fs-caption;
 }
 
 .cardHeader {
@@ -289,5 +384,18 @@
     .headerActions {
         width: 100%;
         margin-left: calc(t.$control-size + 1rem);
+    }
+
+    .attachmentRow {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .attachmentActions {
+        grid-column: 2;
+        flex-wrap: wrap;
+    }
+
+    .attachmentError {
+        grid-column: 2;
     }
 }

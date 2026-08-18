@@ -27,7 +27,7 @@ export const Header: React.FC = () => {
         <div className={styles.metaInfo}>
           <span className={styles.typeBadge}>{assignment.type}</span>
           <span className={styles.dueTime}>
-            {t("assignment.dueTime")}: {new Date(assignment.dueTime).toLocaleString()}
+            {t("assignment.dueTime")}: {new Date(assignment.dueTime).toLocaleString('en-US')}
           </span>
           {submission && (
             <span className={styles.submissionCount}>

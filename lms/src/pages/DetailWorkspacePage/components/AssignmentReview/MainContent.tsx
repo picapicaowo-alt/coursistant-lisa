@@ -47,7 +47,7 @@ export const MainContent: React.FC<MainContentProps> = ({
       <Header title={assignment.title}>
         <span className={styles.typeBadge}>{assignment.type}</span>
         <span className={styles.dueTime}>
-            {t('assignment.dueTime')}: {new Date(assignment.dueTime).toLocaleString()}
+            {t('assignment.dueTime')}: {new Date(assignment.dueTime).toLocaleString('en-US')}
           </span>
       </Header>
       

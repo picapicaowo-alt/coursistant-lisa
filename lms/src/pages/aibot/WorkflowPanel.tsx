@@ -153,10 +153,10 @@ const WorkflowPanel = () => {
 
       <div className={styles.workflowConversation} aria-live="polite" aria-busy={isSending}>
         <div className={styles.rolePill}>{roleLabel}</div>
-        {messages.map(message => (
+        {messages.map((message, index) => (
           <div
             key={message.id}
-            className={`${styles.message} ${message.sender === 'user' ? styles.userMessage : styles.agentMessage}`}
+            className={`${styles.message} ${message.sender === 'user' ? styles.userMessage : styles.agentMessage} ${index === messages.length - 1 ? styles.lastMessage : ''}`}
           >
             {message.text}
           </div>

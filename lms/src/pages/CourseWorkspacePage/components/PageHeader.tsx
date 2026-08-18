@@ -20,28 +20,12 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   const renderActionButtons = useMemo(() => {
     if (workspaceMode === "view") {
       return canEditCourse || canManageMaterials ? (
-        <React.Fragment>
-          <button
-            className={styles.secondaryButton}
-            onClick={() => setWorkspaceMode("edit")}
-          >
-            {canEditCourse ? t("detail.editCourse") : t("detail.manageContent")}
-          </button>
-          {/* Publishing happens per week — POST .../weeks/{id}/publish — and
-              there is no course-level publish to call. Whether a course, a
-              week or an item is the unit of publication is still open (S-6),
-              so the button keeps its place in the design but does nothing
-              rather than guessing which of those it means. */}
-          {canEditCourse ? (
-            <button
-              className={styles.publishButton}
-              disabled
-              title={t("detail.publishUnavailable")}
-            >
-              {t("addContent.publishButton")}
-            </button>
-          ) : null}
-        </React.Fragment>
+        <button
+          className={styles.secondaryButton}
+          onClick={() => setWorkspaceMode("edit")}
+        >
+          {canEditCourse ? t("detail.editCourse") : t("detail.manageContent")}
+        </button>
       ) : null;
     }
     

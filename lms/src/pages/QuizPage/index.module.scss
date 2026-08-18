@@ -235,6 +235,65 @@
   font-weight: t.$fw-extrabold;
 }
 
+.retakeRow,
+.historyHeader,
+.historyList > li,
+.historyResult {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.retakeRow {
+  justify-content: space-between;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid t.$border;
+
+  p { margin: 0; color: t.$text-muted; }
+}
+
+.historyList {
+  display: grid;
+  gap: .65rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historyList > li {
+  padding: .75rem 0;
+  border-top: 1px solid t.$border;
+
+  > div { display: grid; flex: 1; gap: .2rem; }
+  span { color: t.$text-muted; font-size: t.$fs-caption; }
+}
+
+.statusBadge {
+  padding: .25rem .6rem;
+  border-radius: t.$radius-pill;
+  background: t.$neutral-fill;
+  color: t.$text !important;
+  font-weight: t.$fw-semibold;
+}
+
+.historyResult {
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: t.$radius-control-sm;
+  background: t.$subcard-bg;
+}
+
+.primaryButton:focus-visible,
+.secondaryButton:focus-visible,
+.backLink:focus-visible,
+.options input:focus-visible,
+.questionCard textarea:focus-visible {
+  outline: 3px solid t.$brand-subtle;
+  outline-offset: 2px;
+}
+
 .error {
   max-width: 1050px;
   margin: 1rem auto;
@@ -251,4 +310,10 @@
     padding-left: calc(t.$control-size + 1rem);
     flex-wrap: wrap;
   }
+
+  .page { padding-top: 1rem; }
+  .summaryCard, .card, .questionCard { padding: 1rem; }
+  .headerActions { padding-left: 0; }
+  .retakeRow, .historyList > li, .historyResult { align-items: stretch; flex-direction: column; }
+  .retakeRow .primaryButton, .historyList .secondaryButton { width: 100%; }
 }

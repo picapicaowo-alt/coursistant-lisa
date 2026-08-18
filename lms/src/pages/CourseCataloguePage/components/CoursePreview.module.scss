@@ -185,6 +185,36 @@
     }
 }
 
+.dangerItem { color: t.$danger; }
+
+.confirmDelete {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.3rem;
+    padding: 0.45rem 0.55rem;
+    border-top: 1px solid t.$border;
+}
+
+.confirmDelete p {
+    grid-column: 1 / -1;
+    color: t.$danger;
+    font-size: t.$fs-caption;
+    font-weight: t.$fw-semibold;
+}
+
+.confirmDelete button {
+    padding: 0.35rem;
+    border-radius: t.$radius-control-sm;
+    color: t.$text;
+    font-size: 0.72rem;
+    cursor: pointer;
+}
+
+.confirmDelete button:first-of-type {
+    background: t.$danger;
+    color: #fff;
+}
+
 .error {
     margin-top: 0.6rem;
     font-size: t.$fs-caption;

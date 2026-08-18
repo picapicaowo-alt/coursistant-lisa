@@ -1,7 +1,7 @@
 function AnnouncementCard({ ann }) {
     /* format dates */
     const created = new Date(ann.createdAt);
-    const createdTs = created.toLocaleString(undefined, {
+    const createdTs = created.toLocaleString('en-US', {
         month: 'short', day: 'numeric', year: 'numeric',
         hour: '2-digit', minute: '2-digit',
     });

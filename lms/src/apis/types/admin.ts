@@ -1,0 +1,42 @@
+import type {LoginAccountType, UserLevel} from './login';
+
+export interface AdminTenant {
+  id: number;
+  name: string;
+  timezone: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminTenantPayload {
+  name: string;
+  timezone: string;
+}
+
+export interface ManagedUser {
+  id: number;
+  tenantId: number;
+  username: string;
+  name: string;
+  avatar: string | null;
+  role: LoginAccountType;
+  level: UserLevel;
+  email: string;
+  mustChangePassword: boolean;
+  emailNotifications: boolean;
+  status: 'ACTIVE' | 'DISABLED';
+  authVersion: number;
+}
+
+export interface CreateManagedUserRequest {
+  email: string;
+  name: string;
+  role: 'USER' | 'TENANT_ADMIN';
+  level?: UserLevel;
+  tenantId?: number;
+}
+
+export interface ChangeManagedUserRoleRequest {
+  role: 'USER' | 'TENANT_ADMIN';
+  level?: UserLevel;
+}

@@ -108,6 +108,16 @@ export interface QuizAttempt {
   answers: QuizAttemptAnswer[];
 }
 
+export interface QuizAttemptSummary {
+  id: number;
+  attemptNumber: number;
+  status: QuizAttemptStatus;
+  closeReason: string | null;
+  startedAt: string;
+  submittedAt: string | null;
+  receiptId: string | null;
+}
+
 export interface QuizAutosaveResponse {
   attemptId: number;
   questionId: number;

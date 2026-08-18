@@ -1,7 +1,6 @@
-import React, {useState} from "react";
+import React from "react";
 import {Navigate} from "react-router-dom";
 import styles from "./index.module.scss"
-import AnnouncementManager from "../../sections/Notification/index.jsx";
 import {useWidgetLayout} from "@/pages/LmsHomePage/hooks/useWidgetLayout";
 import {Dashboard} from "@/pages/LmsHomePage/components/Dashboard";
 import {useRequiredAuth} from "@/contexts/RequiredAuthContext";
@@ -17,8 +16,6 @@ const LMSHome: React.FC = () => {
 };
 
 const UserDashboard: React.FC = () => {
-  const [selectedChatSection, setSelectedChatSection] = useState('ai');
-  
   const {
     containerRef,
     width,
@@ -29,7 +26,8 @@ const UserDashboard: React.FC = () => {
   } = useWidgetLayout();
   
   return (
-    <div className={styles['lms-home-container']}>
+    <main className={styles['lms-home-container']} aria-labelledby="dashboard-title">
+      <h1 id="dashboard-title" className={styles.srOnly}>Dashboard</h1>
       <Dashboard
         layout={layout}
         width={width}
@@ -39,11 +37,7 @@ const UserDashboard: React.FC = () => {
         containerRef={containerRef}
       />
       
-      <AnnouncementManager
-        selectedChatSection={selectedChatSection}
-        setSelectedChatSection={setSelectedChatSection}
-      />
-    </div>
+    </main>
   );
 };
 

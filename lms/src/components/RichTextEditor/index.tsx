@@ -1,24 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import {useEditor, EditorContent} from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Placeholder from '@tiptap/extension-placeholder';
-import Heading from '@tiptap/extension-heading';
-import Bold from '@tiptap/extension-bold';
-import Italic from '@tiptap/extension-italic';
-import Underline from '@tiptap/extension-underline';
-import Strike from '@tiptap/extension-strike';
-import BulletList from '@tiptap/extension-bullet-list';
-import OrderedList from '@tiptap/extension-ordered-list';
-import ListItem from '@tiptap/extension-list-item';
-import Link from '@tiptap/extension-link';
-import Blockquote from '@tiptap/extension-blockquote';
-import Code from '@tiptap/extension-code';
-import CodeBlock from '@tiptap/extension-code-block';
-import HorizontalRule from '@tiptap/extension-horizontal-rule';
 import Toolbar from './Toolbar';
 import styles from './index.module.scss';
-import {Markdown} from "tiptap-markdown";
-import {BlankNode} from './extensions/BlankNode';
+import {createEditorExtensions} from './extensions';
+import {normalizeSafeUrl} from './url';
 
 interface TextBlockProps {
   content?: string;
@@ -31,6 +16,8 @@ interface TextBlockProps {
   adjustHeight?: (index: number) => void;
   showToolbar?: boolean;
   defaultToolbarVisible?: boolean;
+  displayOnly?: boolean;
+  ariaLabel?: string;
 }
 
 export const RichTextEditor: React.FC<TextBlockProps> = (props) => {
@@ -38,13 +25,10 @@ export const RichTextEditor: React.FC<TextBlockProps> = (props) => {
   const [isInitialized, setIsInitialized] = useState(false);
   
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setShouldRender(true);
-      
-      requestAnimationFrame(() => {
-        setIsInitialized(true);
-      });
-    }
+    if (typeof window === 'undefined') return;
+    setShouldRender(true);
+    const frame = requestAnimationFrame(() => setIsInitialized(true));
+    return () => cancelAnimationFrame(frame);
   }, []);
   
   if (!shouldRender) {
@@ -81,56 +65,18 @@ const RichTextEditorClient: React.FC<TextBlockProps> = ({
                                                           adjustHeight,
                                                           showToolbar = true,
                                                           defaultToolbarVisible = true,
+                                                          displayOnly = false,
+                                                          ariaLabel = 'Rich text editor',
                                                         }) => {
   
   const [toolbarVisible, setToolbarVisible] = React.useState(defaultToolbarVisible);
   
   const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        horizontalRule: false,
-      }),
-      Heading.configure({
-        levels: [1, 2, 3],
-      }),
-      Bold,
-      Italic,
-      Underline,
-      Strike,
-      BulletList,
-      OrderedList,
-      ListItem,
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: styles.link,
-        },
-      }),
-      Blockquote,
-      Code,
-      CodeBlock,
-      HorizontalRule,
-      Placeholder.configure({
-        placeholder,
-        emptyEditorClass: styles.placeholder,
-      }),
-      Markdown.configure({
-        html: false,
-        tightLists: true,
-        tightListClass: 'tight',
-        bulletListMarker: '-',
-        linkify: true,
-        breaks: true,
-      }),
-      BlankNode.configure({
-        mode: disabled ? 'student' : 'teacher',
-      })
-    ],
+    extensions: createEditorExtensions({placeholder, disabled}),
     content,
     editable: !disabled,
     onUpdate: ({editor}) => {
-      const md = editor.getText();
-      onChange?.(md);
+      onChange?.(editor.getHTML());
     },
     onSelectionUpdate: ({editor}) => {
       if (onMouseUp && editor.state.selection.empty === false) {
@@ -142,8 +88,8 @@ const RichTextEditorClient: React.FC<TextBlockProps> = ({
         class: styles.editor,
         'data-testid': 'text-block-editor',
         spellcheck: 'true',
+        'aria-label': ariaLabel,
       },
-      mode: disabled ? 'student' : 'teacher',
     },
   });
   
@@ -203,7 +149,12 @@ const RichTextEditorClient: React.FC<TextBlockProps> = ({
           editor.chain().focus().extendMarkRange('link').unsetLink().run();
           return;
         }
-        editor.chain().focus().extendMarkRange('link').setLink({href: url}).run();
+        const safeUrl = normalizeSafeUrl(url, {allowRelative: true});
+        if (!safeUrl) {
+          window.alert('Enter a valid HTTP, HTTPS, email, or relative link.');
+          return;
+        }
+        editor.chain().focus().extendMarkRange('link').setLink({href: safeUrl}).run();
       }
     };
     
@@ -214,7 +165,7 @@ const RichTextEditorClient: React.FC<TextBlockProps> = ({
   }, [editor]);
   
   return (
-    <div className={`${styles.container} ${disabled ? styles.disabled : ''}`}>
+    <div className={`${styles.container} ${disabled && !displayOnly ? styles.disabled : ''} ${displayOnly ? styles.displayOnly : ''}`}>
       {showToolbar && editor && (
         <Toolbar 
           editor={editor} 

@@ -1,0 +1,53 @@
+.page { min-height: 100%; padding: 2rem clamp(1rem, 4vw, 3.75rem) 5rem; background: t.$page-bg; color: t.$text; }
+.header, .card, .dangerCard, .confirmBar, .page > .error, .page > .success { max-width: 1150px; margin-inline: auto; }
+.header { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.25rem; }
+.headerText { min-width: 0; flex: 1; }
+.header h1 { margin: .25rem 0 0; font-size: clamp(1.8rem, 4vw, t.$fs-h1); }
+.headerText > p:last-child { margin: .3rem 0 0; color: t.$text-muted; }
+.eyebrow { margin: 0; color: t.$brand; font-size: t.$fs-caption; font-weight: t.$fw-semibold; text-transform: uppercase; letter-spacing: .08em; }
+.backLink { display: inline-grid; place-items: center; flex: 0 0 t.$control-size; width: t.$control-size; height: t.$control-size; border-radius: t.$radius-control; background: t.$neutral-fill; color: t.$text; }
+.primaryButton, .secondaryButton, .dangerButton, .iconButton { display: inline-flex; min-height: 2.5rem; align-items: center; justify-content: center; gap: .4rem; padding: 0 .85rem; border-radius: t.$radius-control-sm; font-weight: t.$fw-semibold; cursor: pointer; }
+.primaryButton { border: 1px solid t.$brand; background: t.$brand; color: #fff; }
+.secondaryButton, .iconButton { border: 1px solid t.$border; background: t.$card-bg; color: t.$text; }
+.dangerButton { border: 1px solid t.$danger; background: transparent; color: t.$danger; }
+.iconButton { min-width: 2.5rem; padding: 0; }
+button:disabled { cursor: not-allowed; opacity: .55; }
+.card, .dangerCard { margin-bottom: 1.25rem; padding: 1.5rem; border: 1px solid t.$border; border-radius: t.$radius-card-lg; background: t.$card-bg; box-shadow: t.$shadow-card; }
+.cardHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
+.cardHeader h2, .cardHeader p { margin: 0; }
+.cardHeader p, .muted { margin-top: .25rem; color: t.$text-muted; }
+.formGrid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 1rem; }
+.formGrid label:not(.checkbox), .inlineForm label, .groupEdit label:not(.confirmCheck), .assignForm label:not(.confirmCheck) { display: grid; gap: .35rem; color: t.$text-muted; font-size: t.$fs-caption; font-weight: t.$fw-semibold; }
+.formGrid input:not([type='checkbox']), .inlineForm input, .groupEdit input, .assignForm select, .memberActions select { min-height: 2.5rem; padding: 0 .7rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; color: t.$text; }
+.full { grid-column: 1 / -1; }
+.checkbox, .confirmCheck { display: flex; align-items: center; gap: .5rem; }
+.checkbox { align-self: end; min-height: 2.5rem; }
+.confirmCheck { margin-top: 1rem; color: t.$text-muted; font-size: t.$fs-caption; }
+.footer { display: flex; justify-content: flex-end; margin-top: 1rem; }
+.actionRow, .groupFooter, .memberActions { display: flex; align-items: center; flex-wrap: wrap; gap: .45rem; }
+.inlineForm { display: grid; grid-template-columns: auto repeat(2, minmax(0,1fr)) auto; align-items: end; gap: .75rem; margin-bottom: 1rem; padding: 1rem; border-radius: t.$radius-card; background: t.$subcard-bg; }
+.groupGrid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 1rem; }
+.groupCard { display: flex; min-width: 0; flex-direction: column; padding: 1rem; border: 1px solid t.$border; border-radius: t.$radius-card; background: t.$subcard-bg; }
+.groupHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
+.groupHeader h3, .groupHeader p { margin: 0; }
+.groupHeader p { margin-top: .2rem; color: t.$text-muted; font-size: t.$fs-caption; }
+.myBadge { padding: .2rem .55rem; border-radius: t.$radius-pill; background: t.$brand-subtle; color: t.$brand; font-size: t.$fs-caption; font-weight: t.$fw-semibold; }
+.groupEdit { display: grid; gap: .65rem; margin: 1rem 0; padding: .85rem; border-radius: t.$radius-control-sm; background: t.$card-bg; }
+.memberList { display: grid; flex: 1; margin: 1rem 0; padding: 0; list-style: none; }
+.memberList li { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .5rem 0; border-top: 1px solid t.$border; }
+.memberActions select { max-width: 8.5rem; }
+.memberActions button { display: inline-grid; min-width: 2.3rem; min-height: 2.3rem; place-items: center; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; color: t.$danger; cursor: pointer; }
+.groupFooter { margin-top: auto; padding-top: .75rem; border-top: 1px solid t.$border; }
+.assignForm { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)) auto auto; align-items: end; gap: .75rem; }
+.assignForm .confirmCheck { align-self: center; }
+.confirmBar { position: sticky; z-index: 5; bottom: 1rem; display: flex; align-items: center; gap: .75rem; margin-bottom: 1.25rem; padding: 1rem; border: 1px solid t.$warning; border-radius: t.$radius-card; background: t.$card-bg; box-shadow: t.$shadow-card; }
+.confirmBar > div { flex: 1; }
+.confirmBar p { margin: .25rem 0 0; color: t.$text-muted; }
+.dangerCard { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-color: t.$danger; box-shadow: none; }
+.dangerCard > div { display: flex; align-items: flex-start; gap: .75rem; }
+.dangerCard p { margin: .25rem 0 0; color: t.$text-muted; }
+.error { color: t.$danger; }
+.success { color: t.$success; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+.backLink:focus-visible, button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid t.$brand-subtle; outline-offset: 2px; }
+@media (max-width: 850px) { .page { padding-top: 1rem; } .header { flex-wrap: wrap; } .header .secondaryButton { width: 100%; } .card, .dangerCard { padding: 1rem; } .groupGrid, .formGrid { grid-template-columns: 1fr; } .full { grid-column: auto; } .inlineForm, .assignForm { grid-template-columns: 1fr; } .inlineForm .iconButton { justify-self: end; } .confirmBar, .dangerCard { align-items: stretch; flex-direction: column; } .dangerCard > button, .dangerCard > .actionRow, .confirmBar button { width: 100%; } }

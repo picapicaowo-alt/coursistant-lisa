@@ -136,6 +136,8 @@ export interface AssignmentAttachment {
   sizeBytes: number;
   uploadedBy: number;
   downloadUrl: string;
+  previewUrl?: string;
+  previewAvailable?: boolean;
   createdAt: string;
 }
 
@@ -266,6 +268,37 @@ export type PatchAssignmentPayload = Partial<CreateAssignmentPayload> & {
   confirmShortenDueDate?: boolean;
 };
 
+export interface DueDateChangePreview {
+  currentDueAt: string;
+  currentLateUntil?: string;
+  newDueAt: string;
+  newLateUntil?: string;
+  shortening: boolean;
+  confirmationRequired: boolean;
+  activeStudentCount: number;
+  submittedCount: number;
+  notSubmittedCount: number;
+  submissionsBecomingLateCount: number;
+  gradedCount: number;
+}
+
+export interface RubricState {
+  posted: boolean;
+  assignmentId?: number;
+  versionId?: number;
+  versionNo?: number;
+  originalName?: string;
+  contentType?: string;
+  sizeBytes?: number;
+  uploadedBy?: number;
+  uploadedAt?: string;
+  totalVersions?: number;
+  canRestorePrevious?: boolean;
+  downloadUrl?: string;
+  previewUrl?: string;
+  gradedAgainstPreviousRubricCount?: number;
+}
+
 export interface SubmitAssignmentPayload {
   /** Omit to submit every active staging file. */
   stagingFileIds?: number[];
@@ -351,4 +384,29 @@ export interface GradeRecord {
 export interface GradeSelectionPayload {
   studentUserIds?: number[];
   groupIds?: number[];
+}
+
+/** A student's assignment result from GET /v2/courses/{courseId}/my-grades. */
+export interface MyGradeItem {
+  assignmentId: number;
+  assignmentTitle?: string;
+  title?: string;
+  itemType?: string;
+  pointsPossible?: number;
+  dueAtUtc: string;
+  dueAtLocal?: string;
+  timezone?: string;
+  submissionStatus?: string;
+  submittedAt?: string;
+  versionNo?: number;
+  released: boolean;
+  gradeDisplay?: string;
+  score?: number;
+  pointsEarned?: number;
+  feedbackHtml?: string;
+  hasFeedback?: boolean;
+  releasedAt?: string;
+  hasAnnotatedFile?: boolean;
+  annotatedOriginalName?: string;
+  annotatedFileUrl?: string;
 }

@@ -1,6 +1,6 @@
 import {useParams} from 'react-router-dom';
 import {useQueries} from '@tanstack/react-query';
-import {AssignmentSummary, CourseResponse, CourseSession, CourseWeek, QuizResponse, unwrapData} from '@/apis';
+import {AssignmentSummary, CourseEvent, CourseGroupSet, CourseResponse, CourseSession, CourseWeek, QuizResponse, unwrapData} from '@/apis';
 import {courseApiService} from '@/apis/services/course-api';
 import {assignmentApiService} from '@/apis/services/assignment-api';
 import {quizApiService} from '@/apis/services/quiz-api';
@@ -25,11 +25,15 @@ export interface CourseWorkspaceData {
   sessions: CourseSession[];
   assignments: AssignmentSummary[];
   quizzes: QuizResponse[];
+  events: CourseEvent[];
+  groupSets: CourseGroupSet[];
   isLoading: boolean;
   isError: boolean;
   sessionsFailed: boolean;
   assignmentsFailed: boolean;
   quizzesFailed: boolean;
+  eventsFailed: boolean;
+  groupSetsFailed: boolean;
   refetch: () => void;
 }
 
@@ -38,6 +42,8 @@ const EMPTY_WEEKS: CourseWeek[] = [];
 const EMPTY_SESSIONS: CourseSession[] = [];
 const EMPTY_ASSIGNMENTS: AssignmentSummary[] = [];
 const EMPTY_QUIZZES: QuizResponse[] = [];
+const EMPTY_EVENTS: CourseEvent[] = [];
+const EMPTY_GROUP_SETS: CourseGroupSet[] = [];
 
 const shared = {
   staleTime: FIVE_MINUTES,
@@ -57,7 +63,7 @@ export const useCourseWorkspaceData = (): CourseWorkspaceData => {
   const id = Number.isNaN(parsed) ? null : parsed;
   const enabled = id !== null;
 
-  const [course, weeks, sessions, assignments, quizzes] = useQueries({
+  const [course, weeks, sessions, assignments, quizzes, events, groupSets] = useQueries({
     queries: [
       {
         queryKey: ['course', id],
@@ -90,6 +96,18 @@ export const useCourseWorkspaceData = (): CourseWorkspaceData => {
         enabled,
         ...shared,
       },
+      {
+        queryKey: ['course-events', id],
+        queryFn: async () => unwrapData(await courseApiService.listCourseEvents(id!), 'listCourseEvents'),
+        enabled,
+        ...shared,
+      },
+      {
+        queryKey: ['course-group-sets', id],
+        queryFn: async () => unwrapData(await courseApiService.listGroupSets(id!), 'listGroupSets'),
+        enabled,
+        ...shared,
+      },
     ],
   });
 
@@ -104,6 +122,8 @@ export const useCourseWorkspaceData = (): CourseWorkspaceData => {
     sessions: sessions.data ?? EMPTY_SESSIONS,
     assignments: assignments.data ?? EMPTY_ASSIGNMENTS,
     quizzes: quizzes.data ?? EMPTY_QUIZZES,
+    events: events.data ?? EMPTY_EVENTS,
+    groupSets: groupSets.data ?? EMPTY_GROUP_SETS,
     // A disabled query stays pending forever, so without an id this would
     // otherwise report a load that never finishes.
     isLoading: enabled && (course.isPending || weeks.isPending),
@@ -111,12 +131,16 @@ export const useCourseWorkspaceData = (): CourseWorkspaceData => {
     sessionsFailed: sessions.isError,
     assignmentsFailed: assignments.isError,
     quizzesFailed: quizzes.isError,
+    eventsFailed: events.isError,
+    groupSetsFailed: groupSets.isError,
     refetch: () => {
       void course.refetch();
       void weeks.refetch();
       void sessions.refetch();
       void assignments.refetch();
       void quizzes.refetch();
+      void events.refetch();
+      void groupSets.refetch();
     },
   };
 };

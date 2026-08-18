@@ -38,8 +38,8 @@ describe('dashboard layout at full width', () => {
   });
 
   it('puts the bottom right card under the schedule', () => {
-    expect(l['skill-graph'].x).toBe(9);
-    expect(l['skill-graph'].y).toBe(l['learning-schedule'].h);
+    expect(l['average-score'].x).toBe(9);
+    expect(l['average-score'].y).toBe(l['learning-schedule'].h);
   });
 
   it('never overflows the grid or overlaps', () => {

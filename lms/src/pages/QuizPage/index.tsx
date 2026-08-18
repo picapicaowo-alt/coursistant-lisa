@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import axios from 'axios';
-import {ArrowLeft, CheckCircle2, Clock3, Pencil, ShieldCheck} from 'lucide-react';
+import {ArrowLeft, CheckCircle2, Clock3, History, Pencil, RotateCcw, ShieldCheck} from 'lucide-react';
 import {Link, useParams} from 'react-router-dom';
 import type {QuizAttempt, QuizQuestion} from '@/apis';
 import {unwrapData} from '@/apis';
@@ -37,6 +37,7 @@ const QuizPage = () => {
   const [drafts, setDrafts] = useState<Record<number, AnswerDraft>>({});
   const [savedQuestions, setSavedQuestions] = useState<Set<number>>(new Set());
   const [confirmSubmit, setConfirmSubmit] = useState(false);
+  const [selectedHistoryAttemptId, setSelectedHistoryAttemptId] = useState<number | null>(null);
 
   const quizQuery = useQuery({
     queryKey: ['quiz', courseId, quizId],
@@ -76,6 +77,24 @@ const QuizPage = () => {
     enabled: valid && access.isResolved && !isStaff && attemptQuery.data === null,
     retry: false,
   });
+  const attemptsQuery = useQuery({
+    queryKey: ['quiz-attempts', courseId, quizId, 'mine'],
+    queryFn: async () => unwrapData(
+      await quizApiService.listAttempts(courseId, quizId, {page: 1, pageSize: 50}),
+      'listAttempts',
+    ),
+    enabled: valid && access.isResolved && !isStaff,
+    retry: 1,
+  });
+  const historyResultQuery = useQuery({
+    queryKey: ['quiz-attempt-result', courseId, quizId, selectedHistoryAttemptId],
+    queryFn: async () => unwrapData(
+      await quizApiService.getAttemptResult(courseId, quizId, selectedHistoryAttemptId!),
+      'getAttemptResult',
+    ),
+    enabled: selectedHistoryAttemptId !== null,
+    retry: 1,
+  });
 
   useEffect(() => {
     if (attemptQuery.data) setDrafts(toDrafts(attemptQuery.data));
@@ -87,6 +106,7 @@ const QuizPage = () => {
       const attempt = unwrapData(response, 'startAttempt');
       queryClient.setQueryData(['quiz-current-attempt', courseId, quizId], attempt);
       setDrafts(toDrafts(attempt));
+      void queryClient.invalidateQueries({queryKey: ['quiz-attempts', courseId, quizId, 'mine']});
     },
   });
 
@@ -111,7 +131,10 @@ const QuizPage = () => {
     onSuccess: async () => {
       setConfirmSubmit(false);
       queryClient.setQueryData(['quiz-current-attempt', courseId, quizId], null);
-      await queryClient.invalidateQueries({queryKey: ['quiz-my-result', courseId, quizId]});
+      await Promise.all([
+        queryClient.invalidateQueries({queryKey: ['quiz-my-result', courseId, quizId]}),
+        queryClient.invalidateQueries({queryKey: ['quiz-attempts', courseId, quizId, 'mine']}),
+      ]);
     },
   });
 
@@ -145,6 +168,8 @@ const QuizPage = () => {
   const questions = questionsQuery.data ?? [];
   const attempt = attemptQuery.data;
   const result = resultQuery.data;
+  const attempts = attemptsQuery.data ?? [];
+  const attemptsRemaining = Math.max(0, (quiz?.attemptsAllowed ?? 0) - attempts.length);
 
   return (
     <main className={styles.page}>
@@ -172,7 +197,7 @@ const QuizPage = () => {
             <span><Clock3 size={17}/> {quiz.timeLimitSeconds ? `${Math.round(quiz.timeLimitSeconds / 60)} minutes` : 'No time limit'}</span>
             <span>{quiz.attemptsAllowed} attempt{quiz.attemptsAllowed === 1 ? '' : 's'}</span>
             <span>{quiz.totalPoints} points</span>
-            <span>Closes {new Date(quiz.closesAtUtc).toLocaleString()}</span>
+            <span>Closes {new Date(quiz.closesAtUtc).toLocaleString('en-US')}</span>
           </div>
         </section>
       ) : null}
@@ -191,17 +216,11 @@ const QuizPage = () => {
             </ol>
           ) : <p className={styles.muted}>No questions yet. Add questions before publishing.</p>}
         </section>
-      ) : result ? (
-        <section className={styles.card}>
-          <div className={styles.resultHeader}><CheckCircle2 size={28}/><div><h2>Quiz submitted</h2><p>Receipt {result.receiptId || 'pending'}</p></div></div>
-          <p className={styles.score}>{result.totalScore === null ? 'Waiting for grading' : `${result.totalScore} / ${quiz?.totalPoints ?? 0}`}</p>
-          {result.manualGradingPending ? <p className={styles.muted}>A short-answer response still needs instructor grading.</p> : null}
-        </section>
       ) : attempt ? (
         <section className={styles.attempt}>
           <div className={styles.attemptHeader}>
             <div><h2>Attempt {attempt.attemptNumber}</h2><p>Answers are saved one question at a time.</p></div>
-            {attempt.deadlineAt ? <span>Deadline {new Date(attempt.deadlineAt).toLocaleTimeString()}</span> : null}
+            {attempt.deadlineAt ? <span>Deadline {new Date(attempt.deadlineAt).toLocaleTimeString('en-US')}</span> : null}
           </div>
           {questions.map((question, index) => {
             const draft = drafts[question.id] ?? emptyAnswer();
@@ -263,6 +282,19 @@ const QuizPage = () => {
             ) : <button type="button" className={styles.primaryButton} onClick={() => setConfirmSubmit(true)}>Submit quiz</button>}
           </div>
         </section>
+      ) : result ? (
+        <section className={styles.card}>
+          <div className={styles.resultHeader}><CheckCircle2 size={28}/><div><h2>Quiz submitted</h2><p>Receipt {result.receiptId || 'pending'}</p></div></div>
+          <p className={styles.score}>{result.totalScore === null ? 'Waiting for grading' : `${result.totalScore} / ${quiz?.totalPoints ?? 0}`}</p>
+          {result.manualGradingPending ? <p className={styles.muted}>A short-answer response still needs instructor grading.</p> : null}
+          {attemptsRemaining > 0 ? (
+            <div className={styles.retakeRow}>
+              <p>{attemptsRemaining} attempt{attemptsRemaining === 1 ? '' : 's'} remaining.</p>
+              <button type="button" className={styles.primaryButton} onClick={() => startAttempt.mutate()} disabled={startAttempt.isPending || quiz?.state !== 'Published'}><RotateCcw size={16}/> {startAttempt.isPending ? 'Starting…' : 'Start another attempt'}</button>
+            </div>
+          ) : <p className={styles.muted}>You have used all available attempts.</p>}
+          {startAttempt.isError ? <p className={styles.error} role="alert">A new attempt could not be started. The quiz window may have closed.</p> : null}
+        </section>
       ) : (
         <section className={styles.card}>
           <h2>Ready to begin?</h2>
@@ -271,8 +303,29 @@ const QuizPage = () => {
             {startAttempt.isPending ? 'Starting…' : quiz?.state === 'Published' ? 'Start attempt' : 'Quiz is not open'}
           </button>
           {startAttempt.isError || attemptQuery.isError ? <p className={styles.error} role="alert">The attempt could not be started. Check the quiz window and try again.</p> : null}
+          {resultQuery.isError ? <p className={styles.error} role="alert">Your latest result could not be loaded.</p> : null}
         </section>
       )}
+
+      {!isStaff && attempts.length ? (
+        <section className={styles.card} aria-labelledby="attempt-history-title">
+          <div className={styles.historyHeader}><div className={styles.resultHeader}><History size={24}/><div><h2 id="attempt-history-title">Attempt history</h2><p>{attempts.length} of {quiz?.attemptsAllowed ?? attempts.length} used</p></div></div></div>
+          <ol className={styles.historyList}>
+            {attempts.map(item => (
+              <li key={item.id}>
+                <div><strong>Attempt {item.attemptNumber}</strong><span>{item.submittedAt ? new Date(item.submittedAt).toLocaleString('en-US') : new Date(item.startedAt).toLocaleString('en-US')}</span></div>
+                <span className={styles.statusBadge} data-status={item.status}>{item.status}</span>
+                <button type="button" className={styles.secondaryButton} onClick={() => setSelectedHistoryAttemptId(current => current === item.id ? null : item.id)} aria-expanded={selectedHistoryAttemptId === item.id}>{selectedHistoryAttemptId === item.id ? 'Hide result' : 'View result'}</button>
+              </li>
+            ))}
+          </ol>
+          {selectedHistoryAttemptId !== null ? (
+            <div className={styles.historyResult} aria-live="polite">
+              {historyResultQuery.isPending ? <p>Loading attempt result…</p> : historyResultQuery.isError ? <p className={styles.error} role="alert">This attempt result could not be loaded.</p> : historyResultQuery.data ? <><strong>{historyResultQuery.data.totalScore === null ? 'Score pending or not released' : `${historyResultQuery.data.totalScore} / ${quiz?.totalPoints ?? 0}`}</strong><span>Receipt {historyResultQuery.data.receiptId || 'pending'}</span></> : null}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
     </main>
   );
 };

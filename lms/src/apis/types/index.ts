@@ -5,3 +5,5 @@ export * from "./assignment";
 export * from "./dashboard";
 export * from "./notification";
 export * from "./quiz";
+export * from "./profile";
+export * from "./admin";

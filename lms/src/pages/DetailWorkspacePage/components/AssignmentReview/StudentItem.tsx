@@ -42,7 +42,7 @@ export const StudentItem: React.FC<StudentItemProps> = ({
       <div className={styles.studentInfo}>
         <span className={styles.studentName}>{submission.studentName}</span>
         <span className={styles.submissionTime}>
-          {new Date(submission.updatedAt).toLocaleDateString()}
+          {new Date(submission.updatedAt).toLocaleDateString('en-US')}
         </span>
       </div>
       

@@ -6,7 +6,7 @@ import {CoursePreview} from "./components/CoursePreview";
 import {LoadingOverlay} from "@/components/LoadingOverlay";
 import {useSuspenseQuery} from "@tanstack/react-query";
 import {dashboardApiService} from "@/apis/services/dashboard-api";
-import {unwrapData} from "@/apis";
+import {CourseState, unwrapData} from "@/apis";
 import {useRequiredAuth} from "@/contexts/RequiredAuthContext";
 import {courseApiService} from "@/apis/services/course-api";
 
@@ -16,20 +16,28 @@ const CourseCataloguePage: React.FC = () => {
   const {user} = useRequiredAuth();
   const isUserAccount = user.role === 'USER';
   
-  const [activeTab, setActiveTab] = useState("My Course");
+  const [courseState, setCourseState] = useState<CourseState>('Active');
   
   return (
     <div className={styles.pageContainer}>
       <div className={styles.contentContainer}>
         <div className={styles.tabsContainer}>
-          <div
-            className={`${styles.tab} ${activeTab === "My Course" ? styles.active : ""}`}
-            onClick={() => setActiveTab("My Course")}
+          <button
+            type="button"
+            className={`${styles.tab} ${courseState === 'Active' ? styles.active : ""}`}
+            onClick={() => setCourseState('Active')}
           >
             <span className={styles.tabLabel}>
               {isUserAccount ? t("list.tabs.myCourses") : 'Courses'}
             </span>
-          </div>
+          </button>
+          <button
+            type="button"
+            className={`${styles.tab} ${courseState === 'Archived' ? styles.active : ""}`}
+            onClick={() => setCourseState('Archived')}
+          >
+            <span className={styles.tabLabel}>Archived</span>
+          </button>
           
           <div className={styles.tabSpacer}/>
           
@@ -47,7 +55,7 @@ const CourseCataloguePage: React.FC = () => {
         </div>
         
         <Suspense fallback={<LoadingOverlay/>}>
-          <CoursesList/>
+          <CoursesList key={courseState} state={courseState}/>
         </Suspense>
       </div>
     </div>
@@ -56,7 +64,7 @@ const CourseCataloguePage: React.FC = () => {
 
 const PAGE_SIZE = 20;
 
-const CoursesList: React.FC = () => {
+const CoursesList: React.FC<{state: CourseState}> = ({state}) => {
   const {t} = useTranslation("course");
   const {user} = useRequiredAuth();
   const isUserAccount = user.role === 'USER';
@@ -71,10 +79,10 @@ const CoursesList: React.FC = () => {
    * is the endpoint every USER account can call for their own enrolments.
    */
   const {data} = useSuspenseQuery({
-    queryKey: [isUserAccount ? 'my-courses' : 'admin-courses', user.id, currentPage],
+    queryKey: [isUserAccount ? 'my-courses' : 'admin-courses', user.id, state, currentPage],
     queryFn: async () => {
       const params = {
-        state: 'Active',
+        state,
         page: currentPage - 1,
         size: PAGE_SIZE,
       } as const;
@@ -111,6 +119,7 @@ const CoursesList: React.FC = () => {
             id={course.id}
             courseCode={course.courseCode}
             title={course.title}
+            state={state}
             instructorName={course.primaryInstructor?.name ?? null}
             // Archiving is a Course Manager action. A TA never qualifies, no
             // matter which permission flags it holds, so this checks the

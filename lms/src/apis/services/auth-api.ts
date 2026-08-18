@@ -5,7 +5,16 @@
 // transport despite the name. It sends credentials, which login needs — the
 // refreshToken comes back as an HttpOnly cookie and is never in the JSON.
 
-import {ApiResponse, AuthResult, LoginRequest, V2ApiClient} from '@/apis';
+import {
+  ApiResponse,
+  AuthResult,
+  ChangePasswordRequest,
+  idempotent,
+  LoginRequest,
+  PasswordResetRequest,
+  RegisterRequest,
+  V2ApiClient,
+} from '@/apis';
 
 export class AuthApiService {
   private apiClient = V2ApiClient;
@@ -31,6 +40,40 @@ export class AuthApiService {
       console.error('Failed to log in', error);
       throw error;
     }
+  }
+
+  /** Sends the one-time code consumed atomically by registration. */
+  async sendRegistrationVerification(email: string): Promise<ApiResponse<void>> {
+    return this.apiClient.post<void>(
+      '/v1/auth/email-verifications/register',
+      undefined,
+      {params: {email}, skipAuth: true},
+    );
+  }
+
+  /** Creates a student account and returns an authenticated session. */
+  async register(request: RegisterRequest): Promise<ApiResponse<AuthResult>> {
+    return this.apiClient.post<AuthResult>('/v1/auth/register', request, {skipAuth: true});
+  }
+
+  async sendPasswordResetVerification(email: string): Promise<ApiResponse<void>> {
+    return this.apiClient.post<void>(
+      '/v1/auth/email-verifications/reset',
+      undefined,
+      {params: {email}, skipAuth: true},
+    );
+  }
+
+  async resetPassword(request: PasswordResetRequest): Promise<ApiResponse<void>> {
+    return this.apiClient.post<void>(
+      '/v1/auth/password-resets',
+      request,
+      {...idempotent(), skipAuth: true},
+    );
+  }
+
+  async changePassword(request: ChangePasswordRequest): Promise<ApiResponse<void>> {
+    return this.apiClient.put<void>('/v1/auth/password', request, idempotent());
   }
 
   /** Allowed without a Bearer token — the refresh cookie identifies the session. */
