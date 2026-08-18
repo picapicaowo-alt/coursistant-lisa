@@ -3,18 +3,45 @@ import {useNavigate} from 'react-router-dom';
 import {Icon} from '@iconify/react';
 import {useAuth} from "@/contexts/AuthContext";
 import {useTranslation} from 'react-i18next';
-import {ApiError, AUTH_ERROR_CODES, V2ApiClient} from "@/apis";
+import {ApiError, AUTH_ERROR_CODES, LoginAccountType, V2ApiClient} from "@/apis";
 import {authApiService} from "@/apis/services/auth-api";
+
+type ResolvableLoginRole = Extract<LoginAccountType, 'USER' | 'ADMIN'>;
+
+const LOGIN_ROLE_STORAGE_KEY = 'preferredLoginRole';
+const LOGIN_ROLES: ResolvableLoginRole[] = ['USER', 'ADMIN'];
+
+const getLoginRoleOrder = (): ResolvableLoginRole[] => {
+  const preferredRole = localStorage.getItem(LOGIN_ROLE_STORAGE_KEY) as ResolvableLoginRole | null;
+  if (!preferredRole || !LOGIN_ROLES.includes(preferredRole)) return LOGIN_ROLES;
+  return [preferredRole, ...LOGIN_ROLES.filter((role) => role !== preferredRole)];
+};
+
+export const getLoginErrorKind = (error: unknown): 'credentials' | 'unavailable' | 'unexpected' => {
+  const apiError = error as ApiError | undefined;
+  const responseCode = apiError?.details?.code;
+
+  if (responseCode === AUTH_ERROR_CODES.invalidCredentials) return 'credentials';
+  if (
+    responseCode === AUTH_ERROR_CODES.serviceUnavailable
+    || apiError?.code === 0
+    || (typeof apiError?.code === 'number' && apiError.code >= 500)
+  ) {
+    return 'unavailable';
+  }
+  return 'unexpected';
+};
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const getFieldError = (field: string) => fieldErrors[field] || '';
   const [rememberMe, setRememberMe] = useState(false);
   const API_DOMAIN = import.meta.env.VITE_SIGNUP_API_DOMAIN_NAME;
-  const {login} = useAuth();
+  const {login, user} = useAuth();
   
   const navigate = useNavigate();
   const {t} = useTranslation("auth");
@@ -33,16 +60,10 @@ const LoginPage: React.FC = () => {
   }, [navigate]);
   
   useEffect(() => {
-    const savedAccount = localStorage.getItem('account');
-    if (savedAccount) {
-      const parsedAccount = JSON.parse(savedAccount);
-      const accessToken = localStorage.getItem('accToken');
-      if (parsedAccount.token && accessToken !== null) {
-        V2ApiClient.setAccessToken(accessToken);
-        navigate('/');
-      }
+    if (user) {
+      navigate(user.role === 'USER' ? '/' : '/course', {replace: true});
     }
-  }, [navigate]);
+  }, [navigate, user]);
   
   const handleMicrosoftLogin = async () => {
     try {
@@ -80,12 +101,30 @@ const LoginPage: React.FC = () => {
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
     setFieldErrors({});
+    setIsSubmitting(true);
     
     try {
-      // `role` is fixed to USER: it picks the account table, and the design has
-      // no role selector. Tenant and system admins sign in elsewhere.
-      // See open-decisions.md Q-15.
-      const response = await authApiService.login({email, password, role: 'USER'});
+      const normalizedEmail = email.trim();
+      let response;
+      let resolvedRole: ResolvableLoginRole | null = null;
+      let lastError: unknown;
+
+      // The current backend contract still requires an account table even
+      // though account type is not a user-facing login decision. Try the most
+      // recently successful table first, then the other supported table, and
+      // only fall back after an explicit INVALID_CREDENTIALS response.
+      for (const role of getLoginRoleOrder()) {
+        try {
+          response = await authApiService.login({email: normalizedEmail, password, role});
+          resolvedRole = role;
+          break;
+        } catch (error) {
+          lastError = error;
+          if (getLoginErrorKind(error) !== 'credentials') throw error;
+        }
+      }
+
+      if (!response || !resolvedRole) throw lastError;
 
       if (response.status === 200 && response.data) {
         const auth = response.data;
@@ -102,8 +141,9 @@ const LoginPage: React.FC = () => {
 
         login({...auth, id: auth.userId});
         V2ApiClient.setAccessToken(auth.accessToken);
+        localStorage.setItem(LOGIN_ROLE_STORAGE_KEY, resolvedRole);
         localStorage.setItem('accToken', auth.accessToken);
-        navigate('/');
+        navigate(auth.role === 'USER' ? '/' : '/course');
         return;
       }
 
@@ -113,16 +153,18 @@ const LoginPage: React.FC = () => {
       // INVALID_CREDENTIALS on purpose (NFR-15). Do not try to tell the user
       // which one it was — the frontend cannot know, and guessing would leak
       // whether an account exists.
-      const code = (err as ApiError)?.details?.code;
+      const errorKind = getLoginErrorKind(err);
 
-      if (code === AUTH_ERROR_CODES.invalidCredentials) {
+      if (errorKind === 'credentials') {
         setFieldErrors({password: t("errors.invalidCredentials")});
-      } else if (code === AUTH_ERROR_CODES.serviceUnavailable) {
+      } else if (errorKind === 'unavailable') {
         setFieldErrors({password: t("errors.serviceUnavailable")});
       } else {
         console.error('Login failed', err);
         setFieldErrors({password: t("errors.unexpected")});
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
@@ -175,40 +217,56 @@ const LoginPage: React.FC = () => {
           </div>
           
           <form className="space-y-4 mt-6" onSubmit={handleSubmit}>
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={t("login.emailPlaceholder")}
-              className={`w-full px-4 py-3 rounded-lg bg-white border text-gray-900 text-sm focus:outline-none mb-6 ${getFieldError('email') ? 'border-red-500' : 'border-gray-300 focus:border-[#566FE8]'
-              }`}
-              required
-            />
-            {getFieldError('email') && (
-              <p className="text-red-400 text-[12px] text-right mt-[-20px]">{getFieldError('email')}</p>
-            )}
-            <div className="relative">
+            <div>
+              <label htmlFor="login-email" className="block text-sm font-medium text-[#2D3748] mb-2">
+                {t("login.emailLabel")}
+              </label>
               <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={t("login.passwordPlaceholder")}
-                className={`w-full px-4 py-3 rounded-lg bg-white border text-gray-900 text-sm focus:outline-none ${getFieldError('password') ? 'border-red-500' : 'border-gray-300 focus:border-[#566FE8]'}`}
+                id="login-email"
+                type="email"
+                autoComplete="username"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={t("login.emailPlaceholder")}
+                className={`w-full px-4 py-3 rounded-lg bg-white border text-gray-900 text-sm focus:outline-none ${getFieldError('email') ? 'border-red-500' : 'border-gray-300 focus:border-[#566FE8]'
+                }`}
                 required
               />
-              
-              <div className="absolute inset-y-0 right-3 flex items-center">
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-gray-500 hover:text-gray-700 cursor-pointer"
-                >
-                  <Icon icon={showPassword ? 'eva:eye-fill' : 'eva:eye-off-fill'} width={20} height={20}/>
-                </button>
-              </div>
+              {getFieldError('email') && (
+                <p className="text-red-400 text-[12px] text-right mt-1">{getFieldError('email')}</p>
+              )}
             </div>
-            {getFieldError('password') && (
-              <p className="text-red-400 text-[12px] text-right mt-[-0.75rem] mb-6">{getFieldError('password')}</p>
-            )}
+            <div>
+              <label htmlFor="login-password" className="block text-sm font-medium text-[#2D3748] mb-2">
+                {t("login.passwordLabel")}
+              </label>
+              <div className="relative">
+                <input
+                  id="login-password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={t("login.passwordPlaceholder")}
+                  className={`w-full px-4 py-3 rounded-lg bg-white border text-gray-900 text-sm focus:outline-none ${getFieldError('password') ? 'border-red-500' : 'border-gray-300 focus:border-[#566FE8]'}`}
+                  required
+                />
+
+                <div className="absolute inset-y-0 right-3 flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? t("login.hidePassword") : t("login.showPassword")}
+                    className="text-gray-500 hover:text-gray-700 cursor-pointer"
+                  >
+                    <Icon icon={showPassword ? 'eva:eye-fill' : 'eva:eye-off-fill'} width={20} height={20}/>
+                  </button>
+                </div>
+              </div>
+              {getFieldError('password') && (
+                <p className="text-red-400 text-[12px] text-right mt-1">{getFieldError('password')}</p>
+              )}
+            </div>
             
             <div className="flex flex-wrap items-center justify-between text-sm gap-2">
               <label className="flex items-center text-[#A0AEC0]">
@@ -227,7 +285,8 @@ const LoginPage: React.FC = () => {
             
             <button
               type="submit"
-              className="w-full py-3 rounded-lg bg-[#566FE8] hover:bg-[#7F9CF5] text-white text-sm mt-8 cursor-pointer"
+              disabled={isSubmitting}
+              className="w-full py-3 rounded-lg bg-[#566FE8] hover:bg-[#7F9CF5] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm mt-8 cursor-pointer"
             >
               {t("login.logIn")}
             </button>

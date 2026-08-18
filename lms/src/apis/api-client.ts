@@ -23,6 +23,24 @@ export interface RequestConfig extends Omit<AxiosRequestConfig, 'url' | 'method'
   isRetryAfterRefresh?: boolean;
 }
 
+interface RefreshCandidate {
+  url?: string;
+  skipAuth?: boolean;
+  isRetryAfterRefresh?: boolean;
+}
+
+/** Anonymous auth calls must never revive or rotate an older user's session. */
+export const shouldAttemptTokenRefresh = (
+  refreshPath: string | undefined,
+  request: RefreshCandidate | undefined,
+): boolean => Boolean(
+  refreshPath
+  && request
+  && !request.isRetryAfterRefresh
+  && !request.skipAuth
+  && request.url !== refreshPath
+);
+
 export class ApiClient {
   private readonly client: AxiosInstance;
   private config: ApiClientConfig;
@@ -151,11 +169,7 @@ export class ApiClient {
   private async handleAuthError(error: AxiosError): Promise<never> {
     const original = error.config as (InternalAxiosRequestConfig & RequestConfig) | undefined;
 
-    const canRetry = this.config.refreshPath
-      && original
-      && !original.isRetryAfterRefresh
-      // Refreshing because the refresh call itself was rejected would loop.
-      && original.url !== this.config.refreshPath;
+    const canRetry = shouldAttemptTokenRefresh(this.config.refreshPath, original);
 
     if (canRetry) {
       try {

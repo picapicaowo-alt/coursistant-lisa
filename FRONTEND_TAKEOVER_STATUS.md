@@ -12,6 +12,8 @@ This repository is a continuation of the existing React + TypeScript LMS fronten
 - Corrected multipart requests so the browser supplies valid upload boundaries.
 - Added transparent access-token refresh with concurrent refresh coalescing.
 - Added server logout before local-session cleanup.
+- Kept the Figma login experience to one email/password form while transparently resolving USER and platform-admin account tables required by the current backend contract.
+- Prevented anonymous login failures from refreshing an unrelated previous session, removed stale legacy-account redirects, and routed platform admins to the global Courses view.
 - Removed sensitive request/response bodies from development logs.
 - Fixed the protected-route refresh race that redirected valid sessions to `/login`.
 - Added page-level error boundaries so one failed route does not blank the entire shell.
@@ -91,7 +93,7 @@ This repository is a continuation of the existing React + TypeScript LMS fronten
 - Added a local mock LMS server for safe UI testing without dev-database writes.
 - Expanded the mock server into an interactive week/material preview so every management action can be reviewed even when 8081 is unavailable.
 - Added service, authentication, upload, routing, deep-link, and store-loop regression tests.
-- Current result: 124 tests passed across 25 test files.
+- Current result: 131 tests passed across 28 test files.
 - Current production Vite build succeeds.
 - Files changed by the takeover have no TypeScript errors.
 - Live 8081 notification unread-count and inbox GET flows were verified successfully.

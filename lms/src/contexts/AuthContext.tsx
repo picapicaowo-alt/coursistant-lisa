@@ -82,6 +82,10 @@ export const AuthProvider = ({children}: AuthProviderProps) => {
       clearRocketChatCookies();
     }
     
+    // `account` belonged to the pre-v2 login implementation. Leaving it in
+    // place can make LoginPage navigate using a stale user after switching
+    // accounts, so a successful v2 session retires it permanently.
+    localStorage.removeItem('account');
     localStorage.setItem('user', JSON.stringify(normalizedUser));
     setUser(normalizedUser);
   };

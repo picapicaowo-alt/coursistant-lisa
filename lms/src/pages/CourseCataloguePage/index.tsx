@@ -8,11 +8,13 @@ import {useSuspenseQuery} from "@tanstack/react-query";
 import {dashboardApiService} from "@/apis/services/dashboard-api";
 import {unwrapData} from "@/apis";
 import {useRequiredAuth} from "@/contexts/RequiredAuthContext";
+import {courseApiService} from "@/apis/services/course-api";
 
 const CourseCataloguePage: React.FC = () => {
   const {t} = useTranslation("course");
   const navigate = useNavigate();
   const {user} = useRequiredAuth();
+  const isUserAccount = user.role === 'USER';
   
   const [activeTab, setActiveTab] = useState("My Course");
   
@@ -25,7 +27,7 @@ const CourseCataloguePage: React.FC = () => {
             onClick={() => setActiveTab("My Course")}
           >
             <span className={styles.tabLabel}>
-              {t("list.tabs.myCourses")}
+              {isUserAccount ? t("list.tabs.myCourses") : 'Courses'}
             </span>
           </div>
           
@@ -57,6 +59,7 @@ const PAGE_SIZE = 20;
 const CoursesList: React.FC = () => {
   const {t} = useTranslation("course");
   const {user} = useRequiredAuth();
+  const isUserAccount = user.role === 'USER';
   const [currentPage, setCurrentPage] = useState(1);
 
   /**
@@ -68,14 +71,17 @@ const CoursesList: React.FC = () => {
    * is the endpoint every USER account can call for their own enrolments.
    */
   const {data} = useSuspenseQuery({
-    queryKey: ['my-courses', user.id, currentPage],
+    queryKey: [isUserAccount ? 'my-courses' : 'admin-courses', user.id, currentPage],
     queryFn: async () => {
-      const response = await dashboardApiService.getMyCourses({
+      const params = {
         state: 'Active',
         page: currentPage - 1,
         size: PAGE_SIZE,
-      });
-      return unwrapData(response, 'getMyCourses');
+      } as const;
+      const response = isUserAccount
+        ? await dashboardApiService.getMyCourses(params)
+        : await courseApiService.browseCourses(params);
+      return unwrapData(response, isUserAccount ? 'getMyCourses' : 'browseCourses');
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
@@ -104,12 +110,12 @@ const CoursesList: React.FC = () => {
             key={course.id}
             id={course.id}
             courseCode={course.courseCode}
-            title={course.title ?? course.name}
+            title={course.title}
             instructorName={course.primaryInstructor?.name ?? null}
             // Archiving is a Course Manager action. A TA never qualifies, no
             // matter which permission flags it holds, so this checks the
             // enrolment role rather than any of them.
-            canManage={(course.courseRole ?? course.role) === 'Instructor'}
+            canManage={!isUserAccount || ('courseRole' in course && (course.courseRole ?? course.role) === 'Instructor')}
           />
         ))}
       </div>

@@ -1,0 +1,24 @@
+import {describe, expect, it} from 'vitest';
+import {shouldAttemptTokenRefresh} from './api-client';
+
+describe('shouldAttemptTokenRefresh', () => {
+  it('never refreshes an anonymous login request after a 401', () => {
+    expect(shouldAttemptTokenRefresh('/v1/auth/refresh-token', {
+      url: '/v1/auth/login',
+      skipAuth: true,
+    })).toBe(false);
+  });
+
+  it('refreshes one authenticated business request but not the refresh request itself', () => {
+    expect(shouldAttemptTokenRefresh('/v1/auth/refresh-token', {
+      url: '/v2/me/courses',
+    })).toBe(true);
+    expect(shouldAttemptTokenRefresh('/v1/auth/refresh-token', {
+      url: '/v1/auth/refresh-token',
+    })).toBe(false);
+    expect(shouldAttemptTokenRefresh('/v1/auth/refresh-token', {
+      url: '/v2/me/courses',
+      isRetryAfterRefresh: true,
+    })).toBe(false);
+  });
+});

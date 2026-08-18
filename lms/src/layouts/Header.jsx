@@ -46,7 +46,7 @@ const Header = () => {
   return (
     <div className="lms-home-header">
       <div className="spacer"/>
-      <NotificationCenter/>
+      {user?.role === 'USER' && <NotificationCenter/>}
       <div className="profile">
         <img
           className="profile-avatar"

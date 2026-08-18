@@ -30,7 +30,8 @@ export interface AuthResult {
   name: string;
   username: string;
   role: LoginAccountType;
-  level: UserLevel;
+  /** Admin account tables do not have a student/instructor standing. */
+  level: UserLevel | null;
   /** May be null. */
   avatar: string | null;
   accessToken: string;
