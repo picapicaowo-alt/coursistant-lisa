@@ -1,10 +1,12 @@
 import {createContext, useContext, useState, useEffect, ReactNode} from 'react';
-import {LoginResponse} from "@/apis";
+import {V2ApiClient} from "@/apis";
+import type {LoginResponse} from "@/apis";
+import {authApiService} from "@/apis/services/auth-api";
 
 interface AuthContextValue {
   user: LoginResponse | null;
   login: (userData: LoginResponse) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   loading: boolean;
 }
 
@@ -55,38 +57,64 @@ export const AuthProvider = ({children}: AuthProviderProps) => {
   
   const login = (userData: LoginResponse) => {
     const storedUser = localStorage.getItem('user');
-    const previousEmail = storedUser ? (JSON.parse(storedUser) as LoginResponse).email : null;
+    let previousEmail: string | null = null;
+
+    if (storedUser) {
+      try {
+        previousEmail = (JSON.parse(storedUser) as LoginResponse).email;
+      } catch {
+        localStorage.removeItem('user');
+      }
+    }
+
     const newEmail = userData.email;
     
     if (previousEmail && previousEmail !== newEmail) {
       clearRocketChatCookies();
     }
     
-    localStorage.clear();
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
   };
   
-  const logout = () => {
+  const clearLocalSession = () => {
+    V2ApiClient.clearAccessToken();
+    localStorage.removeItem('accToken');
+    localStorage.removeItem('account');
+    localStorage.removeItem('user');
+    setUser(null);
+  };
+
+  const logout = async () => {
     const rocketChatIframe = document.querySelector('iframe[title="RocketChat"]') as HTMLIFrameElement | null;
+    const rocketChatOrigin = import.meta.env.VITE_ROCKETCHAT_BASE_URL;
     
-    if (rocketChatIframe?.contentWindow) {
+    if (rocketChatIframe?.contentWindow && rocketChatOrigin) {
       try {
         rocketChatIframe.contentWindow.postMessage({
           event: 'call-api',
           method: 'logout'
-        }, 'https://dev.chat.xlearnedu.com');
+        }, rocketChatOrigin);
       } catch {
         // Ignored
       }
     }
-    
-    localStorage.clear();
-    setUser(null);
-    
-    setTimeout(() => {
-      window.location.href = '/login';
-    }, 500);
+
+    try {
+      // The refresh cookie identifies the server-side session. Calling this
+      // endpoint before clearing local state prevents a logged-out browser
+      // from silently obtaining another access token.
+      await authApiService.logout();
+    } catch (error) {
+      // Local logout must still complete if the dev API is unavailable.
+      if (import.meta.env.DEV) {
+        console.warn('Server logout failed; local session was cleared', error);
+      }
+    } finally {
+      clearRocketChatCookies();
+      clearLocalSession();
+      window.location.assign('/login');
+    }
   };
   
   return (

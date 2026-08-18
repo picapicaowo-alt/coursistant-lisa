@@ -26,7 +26,7 @@ export class AuthApiService {
    */
   async login(request: LoginRequest): Promise<ApiResponse<AuthResult>> {
     try {
-      return await this.apiClient.post<AuthResult>('/v1/auth/login', request);
+      return await this.apiClient.post<AuthResult>('/v1/auth/login', request, {skipAuth: true});
     } catch (error) {
       console.error('Failed to log in', error);
       throw error;
@@ -36,7 +36,7 @@ export class AuthApiService {
   /** Allowed without a Bearer token — the refresh cookie identifies the session. */
   async logout(): Promise<ApiResponse<void>> {
     try {
-      return await this.apiClient.post<void>('/v1/auth/logout');
+      return await this.apiClient.post<void>('/v1/auth/logout', undefined, {skipAuth: true});
     } catch (error) {
       console.error('Failed to log out', error);
       throw error;
@@ -46,7 +46,7 @@ export class AuthApiService {
   /** `data` is the new access token as a bare string, not an object. */
   async refreshToken(): Promise<ApiResponse<string>> {
     try {
-      return await this.apiClient.post<string>('/v1/auth/refresh-token');
+      return await this.apiClient.post<string>('/v1/auth/refresh-token', undefined, {skipAuth: true});
     } catch (error) {
       console.error('Failed to refresh token', error);
       throw error;

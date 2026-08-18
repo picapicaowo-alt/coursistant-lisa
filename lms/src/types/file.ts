@@ -2,11 +2,12 @@ export type FileUploadStatus = 'idle' | 'uploading' | 'success' | 'error';
 
 // Represents file data from the server (DTO)
 export interface FileDto {
-  id: number;
+  id: string | number;
   filename: string;
   mimeType: string;
   fileSize: number;
-  updatedAt: Date;
+  /** API payloads are ISO-8601 strings; older view models may already parse them. */
+  updatedAt: string | Date;
 }
 
 // Extends FileDto with UI-specific fields for upload status

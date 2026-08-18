@@ -9,6 +9,9 @@ const LMSHome = lazy(() => import("./pages/LmsHomePage"));
 const CourseCataloguePage = lazy(() => import("./pages/CourseCataloguePage"));
 const CourseWorkspacePage = lazy(() => import("./pages/CourseWorkspacePage"));
 const CourseCreatePage = lazy(() => import("./pages/CourseWorkspacePage/CourseCreatePage"));
+const AssignmentDetailPage = lazy(() => import('./pages/AssignmentDetailPage'));
+const AssignmentEditorPage = lazy(() => import('./pages/AssignmentEditorPage'));
+const AssignmentGradingPage = lazy(() => import('./pages/AssignmentGradingPage'));
 const Post = lazy(() => import("./pages/post"));
 const PostDetail = lazy(() => import("./sections/posts/post-detail"));
 const Roster = lazy(() => import("./pages/roster"));
@@ -98,6 +101,10 @@ const App = () => {
               <Route index element={<LMSHome/>}/>
               <Route path="course" element={<CourseCataloguePage/>}/>
               <Route path="course/:courseId" element={<CourseWorkspacePage/>}/>
+              <Route path="course/:courseId/assignments/:assignmentId" element={<AssignmentDetailPage/>}/>
+              <Route path="course/:courseId/assignments/new" element={<AssignmentEditorPage/>}/>
+              <Route path="course/:courseId/assignments/:assignmentId/edit" element={<AssignmentEditorPage/>}/>
+              <Route path="course/:courseId/assignments/:assignmentId/grading" element={<AssignmentGradingPage/>}/>
               <Route path="post" element={<Post/>}/>
               <Route path="post/:postId" element={<PostDetail/>}/>
               <Route path="roster" element={<Roster/>}/>

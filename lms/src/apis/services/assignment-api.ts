@@ -1,15 +1,27 @@
 ﻿import {
   ApiResponse,
+  AssignmentAttachment,
+  AssignmentDetail,
   AssignmentForEditResponse,
   AssignmentForReviewResponse,
   AssignmentForSubmissionResponse,
   AssignmentSubmissionRequest,
   AssignmentSummary,
+  CreateAssignmentPayload,
   CreateSubmissionReviewRequest,
   EditAssignmentRequest,
+  GradeRecord,
+  GradeSelectionPayload,
+  GradingRoster,
+  PatchAssignmentPayload,
+  StagingFile,
+  SubmissionState,
+  SubmitAssignmentPayload,
   UpdateSubmissionReviewRequest,
+  UpsertGradePayload,
   V2ApiClient
 } from "@/apis";
+import {idempotent} from '@/apis/types/common';
 
 export class AssignmentApiService {
   private apiClient = V2ApiClient;
@@ -35,6 +47,185 @@ export class AssignmentApiService {
       console.error(`Failed to get assignment summaries for courseId: ${courseId}`, error);
       throw error;
     }
+  }
+
+  /** Role-shaped assignment detail from the current 8081 contract. */
+  async getAssignment(courseId: number, assignmentId: number): Promise<ApiResponse<AssignmentDetail>> {
+    return this.apiClient.get<AssignmentDetail>(
+      `/v2/courses/${courseId}/assignments/${assignmentId}`
+    );
+  }
+
+  async createAssignment(
+    courseId: number,
+    request: CreateAssignmentPayload
+  ): Promise<ApiResponse<AssignmentDetail>> {
+    return this.apiClient.post<AssignmentDetail>(`/v2/courses/${courseId}/assignments`, request);
+  }
+
+  async patchAssignment(
+    courseId: number,
+    assignmentId: number,
+    request: PatchAssignmentPayload
+  ): Promise<ApiResponse<AssignmentDetail>> {
+    return this.apiClient.patch<AssignmentDetail>(
+      `/v2/courses/${courseId}/assignments/${assignmentId}`,
+      request
+    );
+  }
+
+  async publishAssignment(
+    courseId: number,
+    assignmentId: number
+  ): Promise<ApiResponse<AssignmentDetail>> {
+    return this.apiClient.post<AssignmentDetail>(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/publish`
+    );
+  }
+
+  async unpublishAssignment(
+    courseId: number,
+    assignmentId: number
+  ): Promise<ApiResponse<AssignmentDetail>> {
+    return this.apiClient.post<AssignmentDetail>(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/unpublish`
+    );
+  }
+
+  async getGradingRoster(
+    courseId: number,
+    assignmentId: number
+  ): Promise<ApiResponse<GradingRoster>> {
+    return this.apiClient.get<GradingRoster>(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/grading-roster`
+    );
+  }
+
+  async upsertStudentGrade(
+    courseId: number,
+    assignmentId: number,
+    studentUserId: number,
+    request: UpsertGradePayload
+  ): Promise<ApiResponse<GradeRecord>> {
+    return this.apiClient.put<GradeRecord>(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/students/${studentUserId}/grade`,
+      request
+    );
+  }
+
+  async upsertGroupGrade(
+    courseId: number,
+    assignmentId: number,
+    groupId: number,
+    request: UpsertGradePayload
+  ): Promise<ApiResponse<GradeRecord>> {
+    return this.apiClient.put<GradeRecord>(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/groups/${groupId}/grade`,
+      request
+    );
+  }
+
+  async releaseGrades(
+    courseId: number,
+    assignmentId: number,
+    request: GradeSelectionPayload
+  ): Promise<ApiResponse<GradingRoster>> {
+    return this.apiClient.post<GradingRoster>(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/grades/release`,
+      request
+    );
+  }
+
+  async releaseAllGrades(
+    courseId: number,
+    assignmentId: number
+  ): Promise<ApiResponse<GradingRoster>> {
+    return this.apiClient.post<GradingRoster>(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/grades/release-all`
+    );
+  }
+
+  async retractGrades(
+    courseId: number,
+    assignmentId: number,
+    request: GradeSelectionPayload
+  ): Promise<ApiResponse<GradingRoster>> {
+    return this.apiClient.post<GradingRoster>(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/grades/retract`,
+      request
+    );
+  }
+
+  async uploadAttachments(
+    courseId: number,
+    assignmentId: number,
+    files: File[]
+  ): Promise<ApiResponse<AssignmentAttachment[]>> {
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+
+    return this.apiClient.post<AssignmentAttachment[]>(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/attachments`,
+      formData
+    );
+  }
+
+  async deleteAttachment(
+    courseId: number,
+    assignmentId: number,
+    attachmentId: number
+  ): Promise<ApiResponse<void>> {
+    return this.apiClient.delete<void>(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/attachments/${attachmentId}`
+    );
+  }
+
+  async getMySubmission(
+    courseId: number,
+    assignmentId: number
+  ): Promise<ApiResponse<SubmissionState>> {
+    return this.apiClient.get<SubmissionState>(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/submission`
+    );
+  }
+
+  async uploadStagingFiles(
+    courseId: number,
+    assignmentId: number,
+    files: File[],
+    signal?: AbortSignal
+  ): Promise<ApiResponse<StagingFile[]>> {
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+
+    return this.apiClient.post<StagingFile[]>(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/submission-staging-files`,
+      formData,
+      signal ? {signal} : undefined
+    );
+  }
+
+  async deleteStagingFile(
+    courseId: number,
+    assignmentId: number,
+    stagingFileId: number
+  ): Promise<ApiResponse<void>> {
+    return this.apiClient.delete<void>(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/submission-staging-files/${stagingFileId}`
+    );
+  }
+
+  async submitStagedFiles(
+    courseId: number,
+    assignmentId: number,
+    request?: SubmitAssignmentPayload,
+    idempotencyKey: string = crypto.randomUUID()
+  ): Promise<ApiResponse<SubmissionState>> {
+    return this.apiClient.post<SubmissionState>(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/submissions`,
+      request,
+      idempotent(idempotencyKey)
+    );
   }
 
   async getAssignmentForEdit(assignmentId: number): Promise<ApiResponse<AssignmentForEditResponse>> {

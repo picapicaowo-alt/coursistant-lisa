@@ -20,8 +20,7 @@ vi.mock('react-i18next', () => ({
       const translations: Record<string, string> = {
         'fileUploadBox.prompt': 'Upload',
         'fileUploadBox.choose': 'choose',
-        'fileUploadBox.toUpload': 'to upload',
-        'fileUploadBox.dragDrop': 'or drag and drop'
+        'fileUploadBox.toUpload': 'to upload'
       };
       return translations[key] || key;
     }
@@ -53,7 +52,6 @@ describe('FileUploadBox', () => {
         />
       );
       
-      expect(screen.getByText(/drag and drop/i)).toBeInTheDocument();
       // Text is split across multiple elements, so check for each part
       expect(screen.getByText(/Upload/)).toBeInTheDocument();
       expect(screen.getByText(/choose/)).toBeInTheDocument();
@@ -85,9 +83,8 @@ describe('FileUploadBox', () => {
         />
       );
       
-      const uploadIcon = screen.getByAltText('Upload icon');
+      const uploadIcon = screen.getByRole('button').querySelector('.lucide-upload');
       expect(uploadIcon).toBeInTheDocument();
-      expect(uploadIcon).toHaveAttribute('src', '/icons/add-content/directbox-send.png');
     });
   });
   
@@ -111,13 +108,33 @@ describe('FileUploadBox', () => {
       };
       
       // Click the upload area
-      const uploadArea = screen.getByText(/drag and drop/i).closest('div');
+      const uploadArea = screen.getByRole('button');
       fireEvent.click(uploadArea!);
       
       expect(clickCount).toBe(1);
       
       // Restore original click method
       fileInput.click = originalClick;
+    });
+
+    it('triggers file selection from the keyboard', () => {
+      const {container} = render(
+        <FileUploadBox
+          uploadFunction={mockUploadFunction}
+          onUploadStart={mockOnUploadStart}
+          onUploadSucceed={mockOnUploadSucceed}
+          onUploadError={mockOnUploadError}
+        />
+      );
+
+      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+      const clickSpy = vi.spyOn(fileInput, 'click').mockImplementation(() => undefined);
+      const uploadArea = screen.getByRole('button');
+
+      fireEvent.keyDown(uploadArea, {key: 'Enter'});
+      fireEvent.keyDown(uploadArea, {key: ' '});
+
+      expect(clickSpy).toHaveBeenCalledTimes(2);
     });
     
     it('handles file selection and triggers upload start', async () => {
@@ -146,9 +163,9 @@ describe('FileUploadBox', () => {
       await waitFor(() => {
         expect(mockOnUploadStart).toHaveBeenCalledTimes(1);
         const calledWith = mockOnUploadStart.mock.calls[0][0];
-        expect(calledWith.name).toBe('test.pdf');
-        expect(calledWith.type).toBe('application/pdf');
-        expect(calledWith.size).toBe(7);
+        expect(calledWith.filename).toBe('test.pdf');
+        expect(calledWith.mimeType).toBe('application/pdf');
+        expect(calledWith.fileSize).toBe(7);
       });
     });
   });
@@ -248,7 +265,7 @@ describe('FileUploadBox', () => {
         />
       );
       
-      const uploadArea = screen.getByText(/drag and drop/i).closest('div')!.parentElement;
+      const uploadArea = screen.getByRole('button');
       fireEvent.dragOver(uploadArea!);
       
       // The CSS module class name might be different due to transformation
@@ -268,7 +285,7 @@ describe('FileUploadBox', () => {
         />
       );
       
-      const uploadArea = screen.getByText(/drag and drop/i).closest('div');
+      const uploadArea = screen.getByRole('button');
       fireEvent.drop(uploadArea!, {
         dataTransfer: {
           files: [mockFile],

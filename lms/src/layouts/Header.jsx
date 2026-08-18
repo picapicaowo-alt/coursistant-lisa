@@ -3,6 +3,7 @@ import {useNavigate} from 'react-router-dom';
 import {useTranslation} from 'react-i18next';
 import {useAuth} from '../contexts/AuthContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import NotificationCenter from '../components/NotificationCenter';
 import './Header.scss';
 
 const Header = () => {
@@ -47,6 +48,7 @@ const Header = () => {
     <div className="lms-home-header">
       <div className="spacer"/>
       <LanguageSwitcher/>
+      <NotificationCenter/>
       <div className="profile">
         <img className="profile-avatar" src={profileImage} alt="profile"/>
         <div className="profile-info">

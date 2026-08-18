@@ -2,10 +2,13 @@ import React from "react";
 import styles from "./index.module.scss";
 import {AssignmentSummary} from "@/apis";
 import {formatDeadline} from "@/utils/datetime";
+import {Link} from 'react-router-dom';
 
 interface AssignmentsCardProps {
+  courseId: number;
   assignments: AssignmentSummary[];
   failed: boolean;
+  canCreate?: boolean;
 }
 
 /**
@@ -19,10 +22,11 @@ interface AssignmentsCardProps {
  * dropdown is left out rather than offering a filter that cannot filter
  * (open-decisions.md S-5).
  */
-export const AssignmentsCard: React.FC<AssignmentsCardProps> = ({assignments, failed}) => (
+export const AssignmentsCard: React.FC<AssignmentsCardProps> = ({courseId, assignments, failed, canCreate = false}) => (
   <section className={styles.card}>
     <div className={styles.cardHeader}>
       <h2 className={styles.cardTitle}>Homework / Problem Set</h2>
+      {canCreate ? <Link to={`/course/${courseId}/assignments/new`} className={styles.addButton}>Add new</Link> : null}
     </div>
 
     {failed ? (
@@ -33,13 +37,18 @@ export const AssignmentsCard: React.FC<AssignmentsCardProps> = ({assignments, fa
       <ul className={styles.rowList}>
         {assignments.map((assignment) => (
           <li key={assignment.id} className={styles.row}>
-            {assignment.submissionType === 'Group' && (
-              <span className={styles.groupBadge}>Group</span>
-            )}
-            <span className={styles.rowTitle}>{assignment.title}</span>
-            <span className={styles.rowMeta}>
-              {formatDeadline(assignment.dueAtLocal, assignment.timezone)}
-            </span>
+            <Link
+              to={`/course/${courseId}/assignments/${assignment.id}`}
+              className={styles.rowLink}
+            >
+              {assignment.submissionType === 'Group' && (
+                <span className={styles.groupBadge}>Group</span>
+              )}
+              <span className={styles.rowTitle}>{assignment.title}</span>
+              <span className={styles.rowMeta}>
+                {formatDeadline(assignment.dueAtLocal, assignment.timezone)}
+              </span>
+            </Link>
           </li>
         ))}
       </ul>

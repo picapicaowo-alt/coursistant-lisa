@@ -17,7 +17,8 @@ const CourseWorkspacePage: React.FC = () => {
 
 const Container: React.FC = () => {
   useCourseEdit();
-  const {workspaceMode, setWorkspaceMode} = useCourseWorkspaceStore();
+  const workspaceMode = useCourseWorkspaceStore(state => state.workspaceMode);
+  const setWorkspaceMode = useCourseWorkspaceStore(state => state.setWorkspaceMode);
   const {courseId} = useParams();
 
   // The workspace store is a module singleton, so the mode outlives the page
@@ -26,7 +27,7 @@ const Container: React.FC = () => {
   // view mode.
   React.useEffect(() => {
     setWorkspaceMode("view");
-  }, [courseId]);
+  }, [courseId, setWorkspaceMode]);
   return (
     <div className={styles.container}>
       {workspaceMode !== "detailWorkspace" && <PageHeader/>}

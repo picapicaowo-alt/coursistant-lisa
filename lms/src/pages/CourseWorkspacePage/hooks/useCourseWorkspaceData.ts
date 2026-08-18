@@ -31,6 +31,9 @@ export interface CourseWorkspaceData {
 }
 
 const FIVE_MINUTES = 5 * 60 * 1000;
+const EMPTY_WEEKS: CourseWeek[] = [];
+const EMPTY_SESSIONS: CourseSession[] = [];
+const EMPTY_ASSIGNMENTS: AssignmentSummary[] = [];
 
 const shared = {
   staleTime: FIVE_MINUTES,
@@ -83,9 +86,13 @@ export const useCourseWorkspaceData = (): CourseWorkspaceData => {
   return {
     courseId: id,
     course: course.data,
-    weeks: weeks.data ?? [],
-    sessions: sessions.data ?? [],
-    assignments: assignments.data ?? [],
+    // Stable fallbacks matter here. useCourseEdit depends on `weeks` and
+    // mirrors it into a Zustand store; allocating a fresh [] while the weeks
+    // request is pending makes that effect write on every store-triggered
+    // render and eventually hits React's maximum update depth.
+    weeks: weeks.data ?? EMPTY_WEEKS,
+    sessions: sessions.data ?? EMPTY_SESSIONS,
+    assignments: assignments.data ?? EMPTY_ASSIGNMENTS,
     // A disabled query stays pending forever, so without an id this would
     // otherwise report a load that never finishes.
     isLoading: enabled && (course.isPending || weeks.isPending),

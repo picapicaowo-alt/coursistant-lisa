@@ -1,0 +1,326 @@
+.root {
+    position: relative;
+    flex: 0 0 auto;
+}
+
+.bellButton {
+    position: relative;
+    display: inline-grid;
+    width: 2.65rem;
+    height: 2.65rem;
+    place-items: center;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-control;
+    background: t.$card-bg;
+    color: t.$text-muted;
+    cursor: pointer;
+
+    &:hover,
+    &[aria-expanded='true'] {
+        border-color: t.$brand;
+        background: t.$brand-subtle;
+        color: t.$brand;
+    }
+
+    &:focus-visible {
+        outline: 3px solid t.$brand-subtle;
+        outline-offset: 2px;
+    }
+}
+
+.countBadge {
+    position: absolute;
+    top: -0.4rem;
+    right: -0.4rem;
+    display: inline-flex;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.3rem;
+    border: 2px solid t.$card-bg;
+    border-radius: t.$radius-pill;
+    background: t.$danger;
+    color: t.$card-bg;
+    font-size: 0.65rem;
+    font-weight: t.$fw-bold;
+    line-height: 1;
+}
+
+.panel {
+    position: absolute;
+    z-index: 1200;
+    top: calc(100% + 0.75rem);
+    right: 0;
+    display: flex;
+    width: min(27rem, calc(100vw - 2rem));
+    max-height: min(42rem, calc(100vh - 7rem));
+    overflow: hidden;
+    flex-direction: column;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-card-lg;
+    background: t.$card-bg;
+    box-shadow: 0 18px 48px rgba(t.$text, 0.16);
+}
+
+.panelHeader {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1rem 0.9rem 1.1rem;
+    border-bottom: 1px solid t.$border;
+
+    p {
+        margin: 0 0 0.1rem;
+        color: t.$brand;
+        font-size: 0.7rem;
+        font-weight: t.$fw-bold;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    h2 {
+        margin: 0;
+        color: t.$text;
+        font-size: 1.15rem;
+        line-height: 1.3;
+    }
+}
+
+.headerActions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.markAllButton,
+.closeButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: t.$radius-control-sm;
+    color: t.$text-muted;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        background: t.$subcard-bg;
+        color: t.$brand;
+    }
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+    }
+}
+
+.markAllButton {
+    min-height: 2.25rem;
+    gap: 0.35rem;
+    padding: 0 0.55rem;
+    font-size: 0.72rem;
+    font-weight: t.$fw-semibold;
+}
+
+.closeButton {
+    width: 2.25rem;
+    height: 2.25rem;
+}
+
+.panelBody {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.notificationList {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.notificationRow {
+    border-bottom: 1px solid t.$border;
+
+    &[data-unread='true'] {
+        background: rgba(t.$brand, 0.045);
+    }
+}
+
+.notificationButton {
+    display: grid;
+    width: 100%;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        background: t.$subcard-bg;
+    }
+
+    &:focus-visible {
+        outline: 2px solid t.$brand;
+        outline-offset: -2px;
+    }
+
+    &:disabled {
+        cursor: default;
+    }
+}
+
+.typeIcon {
+    display: inline-grid;
+    width: 2.25rem;
+    height: 2.25rem;
+    place-items: center;
+    border-radius: t.$radius-control;
+    background: t.$brand-subtle;
+    color: t.$brand;
+}
+
+.notificationCopy {
+    display: grid;
+    min-width: 0;
+    gap: 0.3rem;
+}
+
+.rowHeading {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.4rem;
+
+    strong {
+        overflow: hidden;
+        color: t.$text;
+        font-size: t.$fs-caption;
+        font-weight: t.$fw-semibold;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+.unreadDot {
+    width: 0.45rem;
+    height: 0.45rem;
+    flex: 0 0 auto;
+    border-radius: t.$radius-pill;
+    background: t.$brand;
+}
+
+.message {
+    display: -webkit-box;
+    overflow: hidden;
+    color: t.$text-muted;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.metadata {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.55rem;
+    color: t.$text-placeholder;
+    font-size: 0.68rem;
+}
+
+.unavailable {
+    padding: 0.15rem 0.4rem;
+    border-radius: t.$radius-pill;
+    background: t.$type-orange-subtle;
+    color: t.$type-orange;
+    font-weight: t.$fw-semibold;
+}
+
+.chevron {
+    align-self: center;
+    color: t.$text-placeholder;
+}
+
+.status,
+.empty {
+    display: grid;
+    min-height: 12rem;
+    place-items: center;
+    align-content: center;
+    gap: 0.55rem;
+    margin: 0;
+    padding: 1.5rem;
+    color: t.$text-muted;
+    font-size: t.$fs-caption;
+    text-align: center;
+}
+
+.status button,
+.loadMoreButton {
+    display: inline-flex;
+    min-height: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-control-sm;
+    color: t.$brand;
+    font-size: t.$fs-caption;
+    font-weight: t.$fw-semibold;
+    cursor: pointer;
+}
+
+.empty {
+    span {
+        display: inline-grid;
+        width: 3rem;
+        height: 3rem;
+        place-items: center;
+        border-radius: t.$radius-pill;
+        background: t.$brand-subtle;
+        color: t.$brand;
+    }
+
+    strong {
+        color: t.$text;
+    }
+
+    p {
+        margin: 0;
+    }
+}
+
+.loadMoreButton {
+    width: calc(100% - 2rem);
+    margin: 0.8rem 1rem;
+    background: t.$card-bg;
+}
+
+.actionError {
+    margin: 0;
+    padding: 0.65rem 1rem;
+    background: rgba(t.$danger, 0.08);
+    color: t.$danger;
+    font-size: 0.72rem;
+    text-align: center;
+}
+
+@media (max-width: 620px) {
+    .panel {
+        position: fixed;
+        top: 4.75rem;
+        right: 1rem;
+        left: 1rem;
+        width: auto;
+        max-height: calc(100vh - 6rem);
+    }
+
+    .markAllButton {
+        span {
+            display: none;
+        }
+    }
+}

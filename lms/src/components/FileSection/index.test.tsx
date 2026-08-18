@@ -18,10 +18,9 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => {
       const translations: Record<string, string> = {
-        'fileUploadBox.prompt': 'Upload',
+        'fileUploadBox.prompt': 'Drag and drop files here or',
         'fileUploadBox.choose': 'choose',
-        'fileUploadBox.toUpload': 'to upload',
-        'fileUploadBox.dragDrop': 'or drag and drop'
+        'fileUploadBox.toUpload': 'to upload'
       };
       return translations[key] || key;
     }
@@ -52,7 +51,7 @@ describe('FileSection', () => {
       
       expect(screen.getByText(/test-file.pdf/)).toBeInTheDocument();
       expect(screen.getByText(/1.0 MB/)).toBeInTheDocument();
-      expect(screen.getByText(/drag and drop/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', {name: /drag and drop/i})).toBeInTheDocument();
     });
     
     it('displays file list with existing files', () => {
@@ -77,7 +76,7 @@ describe('FileSection', () => {
         />
       );
       
-      expect(screen.getByText(/drag and drop/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', {name: /drag and drop/i})).toBeInTheDocument();
       expect(screen.queryByText(/test-file.pdf/)).not.toBeInTheDocument();
     });
     
@@ -257,9 +256,9 @@ describe('FileSection', () => {
       // Check the exact call
       expect(mockOnUploaded).toHaveBeenCalledWith(expect.objectContaining({
         id: 'uploaded-file-id',
-        name: 'test.pdf',
-        type: 'application/pdf',
-        size: 7,
+        filename: 'test.pdf',
+        mimeType: 'application/pdf',
+        fileSize: 7,
         uploadStatus: 'success',
         uploadProgress: 100
       }));

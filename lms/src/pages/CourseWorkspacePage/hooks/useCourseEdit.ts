@@ -47,12 +47,14 @@ const toCourseDetail = (course: CourseResponse, weeks: CourseWeek[]): CourseDeta
 });
 
 export const useCourseEdit = () => {
-  const {loadCourseInfo} = useCourseWorkspaceStore();
+  // Subscribe only to the action. Subscribing to the full store causes this
+  // hook to render again because of its own loadCourseInfo write.
+  const loadCourseInfo = useCourseWorkspaceStore(state => state.loadCourseInfo);
   const {course, weeks} = useCourseWorkspaceData();
 
   React.useEffect(() => {
     if (course) {
       loadCourseInfo(toCourseDetail(course, weeks));
     }
-  }, [course, weeks]);
+  }, [course, weeks, loadCourseInfo]);
 };

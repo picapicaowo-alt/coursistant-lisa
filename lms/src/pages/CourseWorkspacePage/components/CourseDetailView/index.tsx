@@ -6,6 +6,7 @@ import {WeekOutline} from "./WeekOutline";
 import {ContentCard} from "./ContentCard";
 import {AssignmentsCard} from "./AssignmentsCard";
 import {ScheduleCard} from "./ScheduleCard";
+import {useAuth} from '@/contexts/AuthContext';
 
 /**
  * Course detail, view mode — see docs/design/13-course-detail-view.png.
@@ -17,6 +18,7 @@ import {ScheduleCard} from "./ScheduleCard";
  * the card would be decoration over nothing (open-decisions.md B-3).
  */
 export const CourseDetailView: React.FC = () => {
+  const {user} = useAuth();
   const {
     course, weeks, sessions, assignments,
     isLoading, isError, sessionsFailed, assignmentsFailed, refetch,
@@ -63,7 +65,12 @@ export const CourseDetailView: React.FC = () => {
 
       <div className={styles.cards}>
         <ContentCard week={activeWeek}/>
-        <AssignmentsCard assignments={assignments} failed={assignmentsFailed}/>
+        <AssignmentsCard
+          courseId={course.id}
+          assignments={assignments}
+          failed={assignmentsFailed}
+          canCreate={user?.level === 'INSTRUCTOR'}
+        />
         <ScheduleCard sessions={sessions} failed={sessionsFailed}/>
       </div>
     </div>

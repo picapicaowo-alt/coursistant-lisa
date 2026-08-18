@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import {LoginResponse} from "@/apis";
-import {useNavigate} from "react-router-dom";
+import {Navigate} from "react-router-dom";
 import {useAuth} from "@/contexts/AuthContext";
 
 interface RequiredAuthContextValue {
@@ -14,12 +14,13 @@ interface RequiredAuthProviderProps {
 }
 
 export const RequiredAuthProvider = ({children}: RequiredAuthProviderProps) => {
-  const {user} = useAuth();
-  const navigate = useNavigate();
-  
+  const {user, loading} = useAuth();
+
+  if (loading) {
+    return <div role="status">Loading session…</div>;
+  }
   if (!user) {
-    navigate('/login');
-    return null;
+    return <Navigate to="/login" replace/>;
   }
   
   return (

@@ -72,6 +72,12 @@ export class ApiClient {
   private handleRequest(config: InternalAxiosRequestConfig): InternalAxiosRequestConfig {
     config.headers = config.headers || {};
 
+    // Let the browser supply the multipart boundary. Keeping the instance's
+    // application/json default on FormData produces an invalid upload request.
+    if (config.data instanceof FormData && 'delete' in config.headers) {
+      config.headers.delete('Content-Type');
+    }
+
     // No X-Request-Timestamp header. It appears in no API contract, nothing
     // reads it, and being a custom header it forces a CORS preflight that the
     // server rejects: its Access-Control-Allow-Headers lists the name as
@@ -92,10 +98,11 @@ export class ApiClient {
       }
     }
     
-    console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, {
-      headers: config.headers,
-      data: config.data || ''
-    });
+    if (import.meta.env.DEV) {
+      // Never print request headers or bodies: they may contain bearer tokens,
+      // passwords, assignment submissions, or uploaded-file metadata.
+      console.debug(`[API Request] ${config.method?.toUpperCase()} ${config.url}`);
+    }
     
     return config;
   }
@@ -105,12 +112,11 @@ export class ApiClient {
   }
   
   private handleResponse(response: AxiosResponse): AxiosResponse {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[API Response] ${response.config.method?.toUpperCase()} ${response.config.url}`, {
-        status: response.status,
-        headers: response.headers,
-        data: response.data
-      });
+    if (import.meta.env.DEV) {
+      // Response bodies can contain access tokens and student data.
+      console.debug(
+        `[API Response] ${response.config.method?.toUpperCase()} ${response.config.url} ${response.status}`
+      );
     }
     
     return response;
@@ -127,7 +133,9 @@ export class ApiClient {
       return this.handleAuthError(error);
     }
     
-    console.error('[API Error]', apiError);
+    // Keep diagnostics useful without logging response bodies, which may
+    // contain private course or student data.
+    console.error(`[API Error] ${apiError.code}: ${apiError.message}`);
     return Promise.reject(apiError);
   }
   

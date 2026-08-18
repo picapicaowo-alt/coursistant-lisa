@@ -112,6 +112,35 @@ export class CourseApiService {
       throw error;
     }
   }
+
+  /**
+   * Fetches material bytes with the current Bearer token.
+   *
+   * These endpoints return raw binary rather than an ApiResponse envelope.
+   * A plain anchor cannot attach Authorization, so the UI downloads a Blob
+   * through this authenticated client and then opens/saves an object URL.
+   * Storage stays opaque to the browser (S3 today, another provider later).
+   */
+  private async getMaterialBlob(
+    courseId: number,
+    weekId: number,
+    materialId: number,
+    action: 'download' | 'preview'
+  ): Promise<Blob> {
+    const response = await this.apiClient.getClient().get<Blob>(
+      `/v2/courses/${courseId}/weeks/${weekId}/materials/${materialId}/${action}`,
+      {responseType: 'blob'}
+    );
+    return response.data;
+  }
+
+  async downloadMaterial(courseId: number, weekId: number, materialId: number): Promise<Blob> {
+    return this.getMaterialBlob(courseId, weekId, materialId, 'download');
+  }
+
+  async previewMaterial(courseId: number, weekId: number, materialId: number): Promise<Blob> {
+    return this.getMaterialBlob(courseId, weekId, materialId, 'preview');
+  }
   
   /**
    * Edits a course. Course Manager only.

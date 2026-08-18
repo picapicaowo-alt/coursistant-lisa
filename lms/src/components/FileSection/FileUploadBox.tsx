@@ -3,6 +3,7 @@ import {useTranslation} from "react-i18next";
 import styles from './FileUploadBox.module.scss';
 import {v4} from "uuid";
 import {FileView} from "@/types";
+import {Upload} from 'lucide-react';
 
 /**
  * FileUploadBox Component
@@ -17,13 +18,15 @@ interface FileUploadBoxProps {
   onUploadSucceed?: (taskId: string, uploadedFileId: string) => void;
   onUploadError?: (taskId: string, error: Error) => void;
   uploadFunction: (file: File, abortSignal: AbortSignal) => Promise<string>;
+  accept?: string;
 }
 
 const FileUploadBox: React.FC<FileUploadBoxProps> = ({
                                                        onUploadStart,
                                                        onUploadSucceed,
                                                        onUploadError,
-                                                       uploadFunction
+                                                       uploadFunction,
+                                                       accept,
                                                      }) => {
   const abortControllerRef = React.useRef<AbortController | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -59,6 +62,13 @@ const FileUploadBox: React.FC<FileUploadBoxProps> = ({
   const handleChooseClick = () => {
     fileInputRef.current?.click();
   };
+
+  const handleChooseKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleChooseClick();
+    }
+  };
   
   const handleFiles = (files: FileList) => {
     if (files.length === 0) return;
@@ -76,13 +86,16 @@ const FileUploadBox: React.FC<FileUploadBoxProps> = ({
     
     if (onUploadStart) onUploadStart(fileInfo);
     
-    const signal = abortControllerRef.current?.signal ?? new AbortSignal();
+    const controller = abortControllerRef.current ?? new AbortController();
+    abortControllerRef.current = controller;
+    const signal = controller.signal;
     uploadFunction(file, signal)
       .then((uploadedFileId) => {
         if (onUploadSucceed) onUploadSucceed(id, uploadedFileId);
       })
-      .catch((reason) => {
-        if (onUploadError) onUploadError(id, reason);
+      .catch((reason: unknown) => {
+        const error = reason instanceof Error ? reason : new Error('Upload failed');
+        if (onUploadError) onUploadError(id, error);
       });
   };
   
@@ -101,16 +114,18 @@ const FileUploadBox: React.FC<FileUploadBoxProps> = ({
     <div>
       <div
         className={getUploadAreaClass()}
+        role="button"
+        tabIndex={0}
         onClick={handleChooseClick}
+        onKeyDown={handleChooseKeyDown}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
         <div className={styles.uploadAreaContent}>
-          <img
+          <Upload
             className={styles.uploadIcon}
-            src="/icons/add-content/directbox-send.png"
-            alt="Upload icon"
+            aria-hidden="true"
           />
           <p className={styles.promptText}>
             {t("fileUploadBox.prompt")}{" "}
@@ -119,9 +134,6 @@ const FileUploadBox: React.FC<FileUploadBoxProps> = ({
             </span>{" "}
             {t("fileUploadBox.toUpload")}
           </p>
-          <p className={styles.dragDropText}>
-            {t("fileUploadBox.dragDrop") || "or drag and drop"}
-          </p>
         </div>
         
         <input
@@ -129,6 +141,7 @@ const FileUploadBox: React.FC<FileUploadBoxProps> = ({
           type="file"
           className={styles.fileInput}
           multiple={false}
+          accept={accept}
           onChange={handleFileInputChange}
         />
       </div>
