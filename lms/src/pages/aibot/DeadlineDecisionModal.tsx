@@ -69,7 +69,7 @@ const DeadlineDecisionModal = ({
           {confirmationText}
         </p>
         <p id="deadline-decision-warning" className={styles.modalWarning}>
-          The deadline has not changed yet. Allowing this action will also remove any existing late submission window.
+          The deadline has not changed yet.
         </p>
 
         {errorMessage ? <p className={styles.modalError} role="alert">{errorMessage}</p> : null}

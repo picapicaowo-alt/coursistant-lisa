@@ -55,7 +55,8 @@ describe('WorkflowPanel', () => {
     const dialog = await screen.findByRole('dialog', {name: 'Deadline change approval'});
     expect(dialog).toHaveAttribute('aria-modal', 'true');
     expect(within(dialog).getByText('Change Assignment A from August 26 to August 27?')).toBeInTheDocument();
-    expect(within(dialog).getByText(/remove any existing late submission window/i)).toBeInTheDocument();
+    expect(within(dialog).getByText('The deadline has not changed yet.')).toBeInTheDocument();
+    expect(within(dialog).queryByText(/late submission window/i)).not.toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', {name: 'Reject'}));
 
     await waitFor(() => expect(agentApi.decideDeadlineChange).toHaveBeenCalledWith({
