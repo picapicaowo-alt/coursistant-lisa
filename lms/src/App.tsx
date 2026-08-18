@@ -12,6 +12,10 @@ const CourseCreatePage = lazy(() => import("./pages/CourseWorkspacePage/CourseCr
 const AssignmentDetailPage = lazy(() => import('./pages/AssignmentDetailPage'));
 const AssignmentEditorPage = lazy(() => import('./pages/AssignmentEditorPage'));
 const AssignmentGradingPage = lazy(() => import('./pages/AssignmentGradingPage'));
+const NotificationSubjectPage = lazy(() => import('./pages/NotificationSubjectPage'));
+const QuizPage = lazy(() => import('./pages/QuizPage'));
+const QuizEditorPage = lazy(() => import('./pages/QuizEditorPage'));
+const QuizGradingPage = lazy(() => import('./pages/QuizGradingPage'));
 const Post = lazy(() => import("./pages/post"));
 const PostDetail = lazy(() => import("./sections/posts/post-detail"));
 const Roster = lazy(() => import("./pages/roster"));
@@ -105,6 +109,14 @@ const App = () => {
               <Route path="course/:courseId/assignments/new" element={<AssignmentEditorPage/>}/>
               <Route path="course/:courseId/assignments/:assignmentId/edit" element={<AssignmentEditorPage/>}/>
               <Route path="course/:courseId/assignments/:assignmentId/grading" element={<AssignmentGradingPage/>}/>
+              <Route path="course/:courseId/announcements/:subjectId" element={<NotificationSubjectPage kind="announcement"/>}/>
+              <Route path="course/:courseId/events/:subjectId" element={<NotificationSubjectPage kind="event"/>}/>
+              <Route path="course/:courseId/group-sets/:subjectId" element={<NotificationSubjectPage kind="group-set"/>}/>
+              <Route path="course/:courseId/weeks/:subjectId" element={<NotificationSubjectPage kind="week"/>}/>
+              <Route path="course/:courseId/quizzes/new" element={<QuizEditorPage/>}/>
+              <Route path="course/:courseId/quizzes/:quizId" element={<QuizPage/>}/>
+              <Route path="course/:courseId/quizzes/:quizId/edit" element={<QuizEditorPage/>}/>
+              <Route path="course/:courseId/quizzes/:quizId/grading" element={<QuizGradingPage/>}/>
               <Route path="post" element={<Post/>}/>
               <Route path="post/:postId" element={<PostDetail/>}/>
               <Route path="roster" element={<Roster/>}/>

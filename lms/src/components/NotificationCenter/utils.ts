@@ -36,12 +36,16 @@ export const resolveNotificationPath = (
 
   const deepLink = notification.deepLink?.trim();
   if (deepLink?.startsWith('/') && !deepLink.startsWith('//')) {
-    const pluralAssignment = deepLink.match(/^\/courses\/(\d+)\/assignments\/(\d+)\/?$/);
-    if (pluralAssignment) {
-      return `/course/${pluralAssignment[1]}/assignments/${pluralAssignment[2]}`;
+    const pluralSubject = deepLink.match(
+      /^\/courses\/(\d+)\/(assignments|quizzes|announcements|events|weeks|groups|group-sets)\/(\d+)\/?$/,
+    );
+    if (pluralSubject) {
+      const [, courseId, rawKind, subjectId] = pluralSubject;
+      const kind = rawKind === 'groups' ? 'group-sets' : rawKind;
+      return `/course/${courseId}/${kind}/${subjectId}`;
     }
 
-    if (/^\/course\/\d+(?:\/assignments\/\d+)?\/?$/.test(deepLink)) {
+    if (/^\/course\/\d+(?:\/(?:assignments|quizzes|announcements|events|weeks|group-sets)\/\d+)?\/?$/.test(deepLink)) {
       return deepLink.replace(/\/$/, '');
     }
 

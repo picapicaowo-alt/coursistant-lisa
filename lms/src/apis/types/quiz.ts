@@ -1,0 +1,163 @@
+export type QuizState = 'Draft' | 'Published' | 'Closed';
+export type QuizResultVisibility = 'AfterRelease' | 'InstantAutoScore';
+export type QuizQuestionType = 'SingleChoice' | 'MultipleSelect' | 'TrueFalse' | 'ShortAnswer';
+
+export interface QuizResponse {
+  id: number;
+  courseId: number;
+  title: string;
+  instructions: string | null;
+  opensAtUtc: string;
+  opensAtLocal: string;
+  closesAtUtc: string;
+  closesAtLocal: string;
+  timezone: string;
+  timeLimitSeconds: number | null;
+  attemptsAllowed: number;
+  resultVisibility: QuizResultVisibility;
+  state: QuizState;
+  version: number;
+  totalPoints: number;
+  questionCount: number;
+  hasAttempts: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateQuizRequest {
+  title: string;
+  instructions?: string;
+  opensAt: string;
+  closesAt: string;
+  timeLimitSeconds?: number | null;
+  attemptsAllowed?: number;
+  resultVisibility?: QuizResultVisibility;
+}
+
+export interface PatchQuizRequest extends Partial<CreateQuizRequest> {
+  expectedVersion: number;
+}
+
+export interface QuizOptionInput {
+  id?: number;
+  label: string;
+  isCorrect?: boolean;
+  position?: number;
+}
+
+export interface CreateQuizQuestionRequest {
+  type: QuizQuestionType;
+  stem: string;
+  points: number;
+  options?: QuizOptionInput[];
+}
+
+export interface PatchQuizQuestionRequest {
+  expectedVersion: number;
+  stem?: string;
+  points?: number;
+  options?: QuizOptionInput[];
+}
+
+export interface QuizOption {
+  id: number;
+  label: string;
+  position: number;
+  /** Instructor-only answer-key field. */
+  isCorrect?: boolean;
+}
+
+export interface QuizQuestion {
+  id: number;
+  quizId: number;
+  type: QuizQuestionType;
+  stem: string;
+  points: number;
+  position: number;
+  /** Instructor-only optimistic concurrency field. */
+  version?: number;
+  options: QuizOption[];
+}
+
+export type QuizAttemptStatus = 'InProgress' | 'Submitted' | 'AutoSubmitted' | 'Closed';
+
+export interface QuizAttemptAnswer {
+  questionId: number;
+  selectedOptionIds: number[];
+  textAnswer: string | null;
+  revision: number;
+  savedAt: string;
+}
+
+export interface QuizAttempt {
+  id: number;
+  quizId: number;
+  userId: number;
+  attemptNumber: number;
+  status: QuizAttemptStatus;
+  closeReason: string | null;
+  receiptId: string | null;
+  startedAt: string;
+  deadlineAt: string | null;
+  submittedAt: string | null;
+  serverNowUtc: string;
+  autoScore: number | null;
+  manualScore: number | null;
+  totalScore: number | null;
+  manualGradingComplete: boolean;
+  answers: QuizAttemptAnswer[];
+}
+
+export interface QuizAutosaveResponse {
+  attemptId: number;
+  questionId: number;
+  revision: number;
+  savedAtUtc: string;
+  serverNowUtc: string;
+  deadlineAtUtc: string | null;
+}
+
+export interface QuizReceipt {
+  attemptId: number;
+  receiptId: string;
+  submittedAt: string;
+}
+
+export interface QuizResult {
+  quizId: number;
+  countedAttemptId: number;
+  gradeStatus: string;
+  closeReason: string | null;
+  receiptId: string | null;
+  autoScore: number | null;
+  manualScore: number | null;
+  totalScore: number | null;
+  manualGradingPending: boolean;
+  showCorrectAnswers: boolean;
+  questions: Array<{
+    questionId: number;
+    type: QuizQuestionType;
+    points: number;
+    score: number | null;
+    selectedOptionIds: number[];
+    textAnswer: string | null;
+    correctOptionIds?: number[];
+  }>;
+}
+
+export interface QuizGradingSummary {
+  pendingShortAnswerCount: number;
+  submittedAttemptCount: number;
+  releasedUserCount: number;
+  manualIncompleteAttemptCount: number;
+}
+
+export interface QuizShortAnswerGradingItem {
+  attemptId: number;
+  userId: number;
+  questionId: number;
+  textAnswer: string | null;
+  score: number | null;
+  pendingManual: boolean;
+  feedback: string | null;
+}

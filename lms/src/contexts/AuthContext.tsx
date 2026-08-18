@@ -2,6 +2,7 @@ import {createContext, useContext, useState, useEffect, ReactNode} from 'react';
 import {V2ApiClient} from "@/apis";
 import type {LoginResponse} from "@/apis";
 import {authApiService} from "@/apis/services/auth-api";
+import {normalizeAvatarUrl} from "@/utils/avatarUrl";
 
 interface AuthContextValue {
   user: LoginResponse | null;
@@ -11,6 +12,11 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+const normalizeUser = (user: LoginResponse): LoginResponse => ({
+  ...user,
+  avatar: normalizeAvatarUrl(user.avatar),
+});
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -24,7 +30,9 @@ export const AuthProvider = ({children}: AuthProviderProps) => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const normalizedUser = normalizeUser(JSON.parse(storedUser));
+        localStorage.setItem('user', JSON.stringify(normalizedUser));
+        setUser(normalizedUser);
       } catch {
         localStorage.removeItem('user');
       }
@@ -56,6 +64,7 @@ export const AuthProvider = ({children}: AuthProviderProps) => {
   };
   
   const login = (userData: LoginResponse) => {
+    const normalizedUser = normalizeUser(userData);
     const storedUser = localStorage.getItem('user');
     let previousEmail: string | null = null;
 
@@ -73,8 +82,8 @@ export const AuthProvider = ({children}: AuthProviderProps) => {
       clearRocketChatCookies();
     }
     
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(normalizedUser));
+    setUser(normalizedUser);
   };
   
   const clearLocalSession = () => {

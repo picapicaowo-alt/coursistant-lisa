@@ -1,5 +1,5 @@
 import styles from "./styles.module.scss";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import About from "./about";
 import MyCourse from "./myCourse";
 import Preferences from "./preferences";
@@ -15,59 +15,14 @@ const Profile = () => {
     const [activeTab, setActiveTab] = useState("About");
     const { user } = useAuth();
     const VITE_PROFILE_API_DOMAIN = import.meta.env.VITE_PROFILE_API_DOMAIN_NAME;
-    const VITE_PROFILE_API_AVATAR_DOMAIN_NAME=import.meta.env.VITE_PROFILE_API_AVATAR_DOMAIN_NAME
     const [isCropModalOpen, setCropModalOpen] = useState(false);
     const [imageSrc, setImageSrc] = useState(null);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
-    const [avatarUrl, setAvatarUrl] = useState(null);
+    const [avatarUrl, setAvatarUrl] = useState(user?.avatar || "/icons/default_avatar.jpg");
     const [editModalOpen, setEditModalOpen] = useState(false);
     const navigate = useNavigate();
-
-    useEffect(() => {
-      const fetchAvatar = async () => {
-        try {
-          // 1️⃣ Get the file path from your profile API
-          const res = await axios.get(`${VITE_PROFILE_API_AVATAR_DOMAIN_NAME}/profile/avatar/${user.id}`, {
-            headers: { 'token': user.accessToken }
-          });
-    
-          if (res.data && res.data.data) {
-            const filePath = res.data.data;
-    
-            // 2️⃣ Fetch the actual image bytes
-            const imageResponse = await axios.get(`${import.meta.env.VITE_API_DOMAIN_NAME}/common/readFile`, {
-              headers: { 'token': user.accessToken },
-              params: { filePath },
-              responseType: 'arraybuffer', // important to get raw bytes
-            });
-    
-            // 3️⃣ Convert bytes to base64
-            const base64 = btoa(
-              new Uint8Array(imageResponse.data).reduce((data, byte) => data + String.fromCharCode(byte), '')
-            );
-    
-            // 4️⃣ Set the avatar URL as a data URL
-            setAvatarUrl(`data:image/png;base64,${base64}`);
-          } else {
-            setAvatarUrl("/icons/default_avatar.jpg");
-          }
-        } catch (err) {
-          console.error("Avatar GET error:", err);
-          setAvatarUrl("/icons/default_avatar.jpg");
-        }
-      };
-    
-      fetchAvatar();
-    }, [user]);
-    
-    
-    useEffect(() => {
-      if (avatarUrl) {
-        console.log("Avatar updated:", avatarUrl);
-      }
-    }, [avatarUrl]);
 
     const name = user?.name;
 
@@ -143,6 +98,10 @@ const Profile = () => {
           <img
             src={avatarUrl}
             alt="Profile"
+            onError={(event) => {
+              event.currentTarget.onerror = null;
+              event.currentTarget.src = "/icons/default_avatar.jpg";
+            }}
             className="max-w-40 max-h-40 rounded-full border-4 border-[rgba(203,213,224,1)] bg-gray-100 cursor-pointer"
             onClick={() => document.getElementById('avatarUploadHome').click()}
           />

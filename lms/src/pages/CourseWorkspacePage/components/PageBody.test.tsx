@@ -18,13 +18,13 @@ vi.mock('@/pages/DetailWorkspacePage', () => ({DetailWorkspacePage: () => <div>d
 import {PageBody} from './PageBody';
 import {useCourseWorkspaceStore} from '../stores/useCourseWorkspaceStore';
 
-const renderAt = (path: string, routePattern: string) => {
+const renderAt = (path: string, routePattern: string, canEditCourse = false) => {
   const client = new QueryClient({defaultOptions: {queries: {retry: false}}});
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={[path]}>
         <Routes>
-          <Route path={routePattern} element={<PageBody/>}/>
+          <Route path={routePattern} element={<PageBody canEditCourse={canEditCourse}/>}/>
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>
@@ -43,8 +43,15 @@ describe('PageBody route handling', () => {
 
   it('shows the edit view when the mode says so', () => {
     useCourseWorkspaceStore.setState({workspaceMode: 'edit'});
-    renderAt('/course/23', '/course/:courseId');
+    renderAt('/course/23', '/course/:courseId', true);
     expect(screen.getByText('edit-view')).toBeInTheDocument();
+  });
+
+  it('does not render the edit view without course-manager permission', () => {
+    useCourseWorkspaceStore.setState({workspaceMode: 'edit'});
+    renderAt('/course/23', '/course/:courseId');
+    expect(screen.queryByText('edit-view')).not.toBeInTheDocument();
+    expect(screen.getByText('detail-view')).toBeInTheDocument();
   });
 
   /**

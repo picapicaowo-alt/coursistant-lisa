@@ -6,7 +6,11 @@ import {WeekOutline} from "./WeekOutline";
 import {ContentCard} from "./ContentCard";
 import {AssignmentsCard} from "./AssignmentsCard";
 import {ScheduleCard} from "./ScheduleCard";
-import {useAuth} from '@/contexts/AuthContext';
+import {QuizzesCard} from './QuizzesCard';
+
+interface CourseDetailViewProps {
+  canCreateAssignments?: boolean;
+}
 
 /**
  * Course detail, view mode — see docs/design/13-course-detail-view.png.
@@ -17,11 +21,10 @@ import {useAuth} from '@/contexts/AuthContext';
  * per-item scores and no course total — and no endpoint stores a weight, so
  * the card would be decoration over nothing (open-decisions.md B-3).
  */
-export const CourseDetailView: React.FC = () => {
-  const {user} = useAuth();
+export const CourseDetailView: React.FC<CourseDetailViewProps> = ({canCreateAssignments = false}) => {
   const {
-    course, weeks, sessions, assignments,
-    isLoading, isError, sessionsFailed, assignmentsFailed, refetch,
+    course, weeks, sessions, assignments, quizzes,
+    isLoading, isError, sessionsFailed, assignmentsFailed, quizzesFailed, refetch,
   } = useCourseWorkspaceData();
 
   const [activeWeekId, setActiveWeekId] = useState<number | null>(null);
@@ -69,7 +72,13 @@ export const CourseDetailView: React.FC = () => {
           courseId={course.id}
           assignments={assignments}
           failed={assignmentsFailed}
-          canCreate={user?.level === 'INSTRUCTOR'}
+          canCreate={canCreateAssignments}
+        />
+        <QuizzesCard
+          courseId={course.id}
+          quizzes={quizzes}
+          failed={quizzesFailed}
+          canCreate={canCreateAssignments}
         />
         <ScheduleCard sessions={sessions} failed={sessionsFailed}/>
       </div>

@@ -46,6 +46,16 @@ describe('AssignmentApiService 8081 routes', () => {
     expect((body as FormData).getAll('files')).toEqual([file]);
   });
 
+  it('lists staged files even before a formal submission exists', async () => {
+    client.get.mockResolvedValue({status: 200, data: []});
+
+    await service.listStagingFiles(4, 9);
+
+    expect(client.get).toHaveBeenCalledWith(
+      '/v2/courses/4/assignments/9/submission-staging-files'
+    );
+  });
+
   it('submits staged files through the idempotent submissions endpoint', async () => {
     const payload = {stagingFileIds: [101, 102]};
     client.post.mockResolvedValue({status: 200, data: {submissionId: 20}});

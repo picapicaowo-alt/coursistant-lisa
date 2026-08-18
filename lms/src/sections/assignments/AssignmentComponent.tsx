@@ -1,5 +1,5 @@
 import React, {useMemo, useState} from "react";
-import {useNavigate} from "react-router-dom";
+import {Link} from "react-router-dom";
 import "./AssignmentComponent.scss";
 import {AssignmentRow, useDashboardAssignments} from "@/pages/LmsHomePage/hooks/useDashboardAssignments";
 import {formatDeadline, isPastDeadline} from "@/utils/datetime";
@@ -37,7 +37,6 @@ const STATUS_LABEL: Record<SubmissionStatus, string> = {
  * does provide rather than inventing the roster.
  */
 const AssignmentComponent: React.FC = () => {
-  const navigate = useNavigate();
   const {rows, isInstructor, isLoading, isError, refetch} = useDashboardAssignments();
   const [pickedCourseId, setPickedCourseId] = useState<number | null>(null);
 
@@ -82,13 +81,14 @@ const AssignmentComponent: React.FC = () => {
         <div className="spacer"/>
 
         {activeCourse && (
-          <div
+          <Link
             className="assignment-header-see-all"
-            onClick={() => navigate(`/course/${activeCourse.id}`)}
+            to={`/course/${activeCourse.id}`}
+            aria-label={`See all work in ${activeCourse.code}`}
           >
             <p>See all</p>
             <img src="icons/assignments/arrow-right.png" alt=""/>
-          </div>
+          </Link>
         )}
       </div>
 
@@ -168,13 +168,12 @@ const studentAction = (status: SubmissionStatus): {label: string; primary: boole
 
 const Row: React.FC<{row: AssignmentRow; isInstructor: boolean}> = ({row, isInstructor}) => {
   const overdue = isPastDeadline(row.atLocal, row.timezone);
-  const navigate = useNavigate();
 
   if (isInstructor) {
     return (
       <div className="xl-row">
         <div className="xl-row-main">
-          <p className="xl-row-title">{row.title}</p>
+          <Link className="xl-row-title xl-row-title-link" to={row.destination}>{row.title}</Link>
         </div>
         <div className="xl-row-status">
           <span className={`xl-dot xl-dot--${overdue ? "red" : "green"}`}/>
@@ -201,7 +200,7 @@ const Row: React.FC<{row: AssignmentRow; isInstructor: boolean}> = ({row, isInst
         {/* This endpoint only ever returns assignments, so the badge is not a
             guess — the type is implied by the source. */}
         <span className="xl-type-badge">Assignments</span>
-        <p className="xl-row-title">{row.title}</p>
+        <Link className="xl-row-title xl-row-title-link" to={row.destination}>{row.title}</Link>
       </div>
 
       <div className="xl-row-status">
@@ -210,13 +209,13 @@ const Row: React.FC<{row: AssignmentRow; isInstructor: boolean}> = ({row, isInst
       </div>
 
       {action && (
-        <button
-          type="button"
+        <Link
           className={`xl-row-action${action.primary ? " xl-row-action--primary" : ""}`}
-          onClick={() => navigate(`/course/${row.courseId}`)}
+          to={row.destination}
+          aria-label={`${action.label} ${row.title}`}
         >
           {action.label}
-        </button>
+        </Link>
       )}
     </div>
   );

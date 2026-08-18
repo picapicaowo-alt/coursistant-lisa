@@ -70,6 +70,8 @@ export interface MyCourse {
   canGrade: boolean | null;
   canPostAnnouncements: boolean | null;
   canManageGroups: boolean | null;
+  /** PRD TA content toggle. Optional until the backend contract is aligned. */
+  canManageContent?: boolean | null;
   canManageCourseEvents: boolean | null;
   /** May carry only `userId` when the user row is missing. */
   primaryInstructor: PrimaryInstructor | null;

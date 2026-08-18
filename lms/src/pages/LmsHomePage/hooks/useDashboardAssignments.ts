@@ -24,6 +24,8 @@ export interface AssignmentRow {
   /** Teaching staff only: how many eligible students have submitted so far. */
   progress?: {submitted: number; total: number};
   assignmentId: number | null;
+  /** Exact object destination; dashboard actions should not drop users at the course root. */
+  destination: string;
 }
 
 const fromStudentDeadline = (d: UpcomingDeadline): AssignmentRow => ({
@@ -35,18 +37,29 @@ const fromStudentDeadline = (d: UpcomingDeadline): AssignmentRow => ({
   timezone: d.timezone,
   submissionStatus: d.submissionStatus,
   assignmentId: d.assignmentId,
+  destination: `/course/${d.courseId}/assignments/${d.assignmentId}`,
 });
 
-const fromTeachingDeadline = (d: TeachingDeadline): AssignmentRow => ({
-  key: `teaching-${d.kind}-${d.courseId}-${d.assignmentId ?? d.quizId}`,
-  courseId: d.courseId,
-  courseCode: d.courseCode,
-  title: d.title,
-  atLocal: d.atLocal,
-  timezone: d.timezone,
-  progress: {submitted: d.submittedCount, total: d.totalStudents},
-  assignmentId: d.assignmentId,
-});
+const fromTeachingDeadline = (d: TeachingDeadline): AssignmentRow => {
+  const objectId = d.kind === 'Quiz' ? d.quizId : d.assignmentId;
+  if (objectId === null) {
+    throw new Error(`Malformed teaching deadline: ${d.kind} is missing its id`);
+  }
+
+  return {
+    key: `teaching-${d.kind}-${d.courseId}-${objectId}`,
+    courseId: d.courseId,
+    courseCode: d.courseCode,
+    title: d.title,
+    atLocal: d.atLocal,
+    timezone: d.timezone,
+    progress: {submitted: d.submittedCount, total: d.totalStudents},
+    assignmentId: d.assignmentId,
+    destination: d.kind === 'Quiz'
+      ? `/course/${d.courseId}/quizzes/${objectId}`
+      : `/course/${d.courseId}/assignments/${objectId}`,
+  };
+};
 
 export interface DashboardAssignmentsResult {
   rows: AssignmentRow[];

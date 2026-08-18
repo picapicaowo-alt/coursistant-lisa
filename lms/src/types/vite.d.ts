@@ -2,6 +2,9 @@
 /// <reference types="vitest/globals" />
 
 interface ImportMetaEnv {
+  readonly VITE_BASE_PROTOCOL: string;
+  readonly VITE_BASE_DOMAIN: string;
+  readonly VITE_BASE_PORT: string;
   readonly VITE_BASE_PATH: string;
   readonly VITE_STATIC_BASE_URL: string;
   readonly VITE_API_DOMAIN_NAME: string;

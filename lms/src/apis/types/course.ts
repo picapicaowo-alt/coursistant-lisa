@@ -106,6 +106,47 @@ export interface CourseWeek {
   updatedAt: string;
 }
 
+export interface CourseAnnouncement {
+  id: number;
+  courseId: number;
+  title: string;
+  body: string;
+  authorUserId: number;
+  authorName: string;
+  postedAt: string;
+  editedAt: string | null;
+  read: boolean;
+}
+
+export interface CourseEvent {
+  id: number;
+  courseId: number;
+  name: string;
+  date: string;
+  startTime: string | null;
+  endTime: string | null;
+  location: string | null;
+  description: string | null;
+  timezone: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CourseGroupSet {
+  id: number;
+  courseId: number;
+  name: string;
+  defaultCapacity: number | null;
+  joinOpensAtLocal: string | null;
+  joinClosesAtLocal: string | null;
+  timezone: string;
+  locked: boolean;
+  openForSelfService: boolean;
+  warnings?: string[];
+  myGroup?: {id: number; name: string} | null;
+  groups?: Array<{id: number; name: string}>;
+}
+
 /** Day codes used by sessions. */
 export type SessionDayOfWeek = 'MON' | 'TUE' | 'WED' | 'THU' | 'FRI' | 'SAT' | 'SUN';
 

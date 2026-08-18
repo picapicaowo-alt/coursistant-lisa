@@ -189,6 +189,16 @@ export class AssignmentApiService {
     );
   }
 
+  /** Active, not-yet-submitted files owned by the current student. */
+  async listStagingFiles(
+    courseId: number,
+    assignmentId: number
+  ): Promise<ApiResponse<StagingFile[]>> {
+    return this.apiClient.get<StagingFile[]>(
+      `/v2/courses/${courseId}/assignments/${assignmentId}/submission-staging-files`
+    );
+  }
+
   async uploadStagingFiles(
     courseId: number,
     assignmentId: number,

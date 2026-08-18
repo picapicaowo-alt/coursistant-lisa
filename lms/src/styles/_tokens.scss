@@ -20,6 +20,7 @@ $text-muted: #69728A; // Labels, descriptions
 $text-placeholder: #A3AAB8; // "Name your Course", "Enter the name of the course"
 $border: #E4E7EE; // Cards, inputs, dividers
 $danger: #EF4444; // Delete Course, Delete project, delete icons
+$warning: #F97316; // Pending/manual review states
 $neutral-fill: #E9EBF0; // Back button background (sec. 2), selected card (sec. 9)
 
 // Content type colors — used on badges. Saturated fill with white text,
@@ -35,6 +36,11 @@ $type-cyan-subtle: rgba($type-cyan, 0.12);
 $type-green-subtle: rgba($type-green, 0.12);
 $type-orange-subtle: rgba($type-orange, 0.12);
 $type-pink-subtle: rgba($type-pink, 0.12);
+
+// Positive operation/checkpoint feedback.
+$success: $type-green;
+$success-subtle: $type-green-subtle;
+$success-border: rgba($type-green, 0.28);
 
 // Lab Manual / Course Slides / Term Project / Textbook / Course Notes / Others
 // only appear as legend dots and their exact hex values are not readable from

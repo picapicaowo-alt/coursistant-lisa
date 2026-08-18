@@ -37,6 +37,50 @@
     letter-spacing: 0.08em;
 }
 
+.recoveryNotice {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid t.$success-border;
+    border-radius: t.$radius-control;
+    background: t.$success-subtle;
+    color: t.$success;
+
+    > div {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        gap: 0.15rem;
+    }
+
+    strong {
+        color: t.$text;
+        font-size: t.$fs-label;
+    }
+
+    span,
+    a {
+        font-size: t.$fs-caption;
+    }
+
+    span {
+        color: t.$text-muted;
+    }
+
+    a {
+        color: t.$brand;
+        font-weight: t.$fw-semibold;
+        white-space: nowrap;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
+
 .closeButton {
     display: inline-grid;
     place-items: center;
@@ -310,5 +354,13 @@
     .actions {
         align-items: stretch;
         flex-direction: column-reverse;
+    }
+
+    .recoveryNotice {
+        grid-template-columns: auto minmax(0, 1fr);
+
+        a {
+            grid-column: 2;
+        }
     }
 }

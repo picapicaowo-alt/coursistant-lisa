@@ -1,1 +1,2 @@
-*.png filter=lfs diff=lfs merge=lfs -text
+# Keep the 4.5 MiB UI image set directly in Git so backup clones and deploy
+# checkouts do not render Git LFS pointer text when git-lfs is unavailable.

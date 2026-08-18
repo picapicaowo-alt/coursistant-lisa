@@ -11,7 +11,17 @@ import {DetailWorkspacePage} from "@/pages/DetailWorkspacePage";
 import {CourseDetailView} from "./CourseDetailView";
 import {CourseEditView} from "./CourseEditView";
 
-export const PageBody: React.FC = () => {
+interface PageBodyProps {
+  canEditCourse?: boolean;
+  canCreateAssignments?: boolean;
+  canManageMaterials?: boolean;
+}
+
+export const PageBody: React.FC<PageBodyProps> = ({
+  canEditCourse = false,
+  canCreateAssignments = false,
+  canManageMaterials = false,
+}) => {
   const {courseId} = useParams();
   const {workspaceMode, closeDetailWorkspace, detailWorkspaceProps} = useCourseWorkspaceStore();
   
@@ -28,18 +38,23 @@ export const PageBody: React.FC = () => {
   // View and edit are different screens, not two states of one. Rendering the
   // edit shell underneath view mode is what left an empty white panel down the
   // right-hand side of the detail page.
-  if (isCourseRoute && workspaceMode === "view") {
+  const canOpenEditor = canEditCourse || canManageMaterials;
+
+  if (isCourseRoute && (workspaceMode === "view" || (workspaceMode === "edit" && !canOpenEditor))) {
     return (
       <div className={styles.contentArea}>
-        <CourseDetailView/>
+        <CourseDetailView canCreateAssignments={canCreateAssignments}/>
       </div>
     );
   }
 
-  if (isCourseRoute && workspaceMode === "edit") {
+  if (isCourseRoute && workspaceMode === "edit" && canOpenEditor) {
     return (
       <div className={styles.contentArea}>
-        <CourseEditView/>
+        <CourseEditView
+          canEditStructure={canEditCourse}
+          canUploadMaterials={canManageMaterials}
+        />
       </div>
     );
   }

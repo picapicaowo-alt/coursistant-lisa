@@ -1,6 +1,10 @@
 ﻿import {
   ApiResponse,
   CourseBrowseParams,
+  CourseAnnouncement,
+  CourseEvent,
+  CourseGroupSet,
+  CourseMaterial,
   CoursePageResponse,
   CourseResponse,
   CourseSession,
@@ -113,6 +117,31 @@ export class CourseApiService {
     }
   }
 
+  async getAnnouncement(
+    courseId: number,
+    announcementId: number
+  ): Promise<ApiResponse<CourseAnnouncement>> {
+    return this.apiClient.get<CourseAnnouncement>(
+      `/v2/courses/${courseId}/announcements/${announcementId}`
+    );
+  }
+
+  async getCourseEvent(
+    courseId: number,
+    eventId: number
+  ): Promise<ApiResponse<CourseEvent>> {
+    return this.apiClient.get<CourseEvent>(`/v2/courses/${courseId}/events/${eventId}`);
+  }
+
+  async getGroupSet(
+    courseId: number,
+    groupSetId: number
+  ): Promise<ApiResponse<CourseGroupSet>> {
+    return this.apiClient.get<CourseGroupSet>(
+      `/v2/courses/${courseId}/group-sets/${groupSetId}`
+    );
+  }
+
   /**
    * Fetches material bytes with the current Bearer token.
    *
@@ -140,6 +169,74 @@ export class CourseApiService {
 
   async previewMaterial(courseId: number, weekId: number, materialId: number): Promise<Blob> {
     return this.getMaterialBlob(courseId, weekId, materialId, 'preview');
+  }
+
+  /** Uploads files, creates a link, or does both in one multipart request. */
+  async createMaterials(
+    courseId: number,
+    weekId: number,
+    request: {files?: File[]; linkUrl?: string; linkDisplayName?: string},
+    idempotencyKey: string = crypto.randomUUID()
+  ): Promise<ApiResponse<CourseMaterial[]>> {
+    const formData = new FormData();
+    request.files?.forEach(file => formData.append('files', file));
+    if (request.linkUrl) formData.append('linkUrl', request.linkUrl);
+    if (request.linkDisplayName) formData.append('linkDisplayName', request.linkDisplayName);
+
+    return this.apiClient.post<CourseMaterial[]>(
+      `/v2/courses/${courseId}/weeks/${weekId}/materials`,
+      formData,
+      idempotent(idempotencyKey)
+    );
+  }
+
+  async renameMaterial(
+    courseId: number,
+    weekId: number,
+    materialId: number,
+    displayName: string
+  ): Promise<ApiResponse<CourseMaterial>> {
+    return this.apiClient.patch<CourseMaterial>(
+      `/v2/courses/${courseId}/weeks/${weekId}/materials/${materialId}`,
+      {displayName},
+      idempotent()
+    );
+  }
+
+  async deleteMaterial(
+    courseId: number,
+    weekId: number,
+    materialId: number
+  ): Promise<ApiResponse<void>> {
+    return this.apiClient.delete<void>(
+      `/v2/courses/${courseId}/weeks/${weekId}/materials/${materialId}`
+    );
+  }
+
+  async moveMaterial(
+    courseId: number,
+    weekId: number,
+    materialId: number,
+    targetWeekId: number
+  ): Promise<ApiResponse<CourseMaterial>> {
+    return this.apiClient.post<CourseMaterial>(
+      `/v2/courses/${courseId}/weeks/${weekId}/materials/${materialId}/move`,
+      {targetWeekId},
+      idempotent()
+    );
+  }
+
+  /** `materialIds` must be a full permutation of the materials in the week. */
+  async reorderMaterials(
+    courseId: number,
+    weekId: number,
+    materialIds: number[]
+  ): Promise<ApiResponse<CourseMaterial[]>> {
+    return this.apiClient.put<CourseMaterial[]>(
+      `/v2/courses/${courseId}/weeks/${weekId}/materials/reorder`,
+      {materialIds},
+      idempotent()
+    );
   }
   
   /**
@@ -188,12 +285,16 @@ export class CourseApiService {
   // with COURSE_ARCHIVED once the course is archived. A new week starts as a
   // Draft and stays invisible to students until it is published.
 
-  async createWeek(courseId: number, title: string): Promise<ApiResponse<CourseWeek>> {
+  async createWeek(
+    courseId: number,
+    title: string,
+    idempotencyKey: string = crypto.randomUUID()
+  ): Promise<ApiResponse<CourseWeek>> {
     try {
       return await this.apiClient.post<CourseWeek>(
         `/v2/courses/${courseId}/weeks`,
         {title},
-        idempotent()
+        idempotent(idempotencyKey)
       );
     } catch (error) {
       console.error(`Failed to create week for courseId: ${courseId}`, error);

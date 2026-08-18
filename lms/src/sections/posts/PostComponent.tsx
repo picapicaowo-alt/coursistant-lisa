@@ -1,5 +1,5 @@
 import React from "react";
-import {useNavigate} from "react-router-dom";
+import {Link} from "react-router-dom";
 import {useQuery} from "@tanstack/react-query";
 import "./PostComponent.scss";
 import {dashboardApiService} from "@/apis/services/dashboard-api";
@@ -23,7 +23,6 @@ dayjs.extend(relativeTime);
  * to truncate and no excerpt to fabricate.
  */
 const PostComponent: React.FC = () => {
-  const navigate = useNavigate();
   const {user} = useRequiredAuth();
 
   const query = useQuery({
@@ -70,7 +69,12 @@ const PostComponent: React.FC = () => {
         )}
 
         {!query.isError && announcements.map((announcement) => (
-          <div className="post-item" key={`${announcement.courseId}-${announcement.id}`}>
+          <Link
+            className="post-item"
+            key={`${announcement.courseId}-${announcement.id}`}
+            to={`/course/${announcement.courseId}/announcements/${announcement.id}`}
+            aria-label={`Open announcement: ${announcement.title}`}
+          >
             <div className="post-item-content">
               <div className="post-item-content-header">
                 <h2 className="text-primary-color font-semibold">{announcement.title}</h2>
@@ -88,15 +92,10 @@ const PostComponent: React.FC = () => {
                 <p>{dayjs(announcement.postedAt).fromNow()}</p>
               </div>
               <div className="post-item-content-body">
-                <a
-                  className="text-brand-primary whitespace-nowrap cursor-pointer"
-                  onClick={() => navigate(`/course/${announcement.courseId}`)}
-                >
-                  Open in course
-                </a>
+                <span className="text-brand-primary whitespace-nowrap">Open announcement</span>
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>

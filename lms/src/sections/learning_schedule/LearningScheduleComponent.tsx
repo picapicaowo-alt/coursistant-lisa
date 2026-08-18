@@ -1,4 +1,5 @@
 import React, {useMemo, useState} from "react";
+import {Link} from "react-router-dom";
 import {
   addDays,
   addMonths,
@@ -82,9 +83,12 @@ const LearningScheduleComponent: React.FC = () => {
         const hasActivity = byDate.has(dateKey);
 
         days.push(
-          <div
+          <button
+            type="button"
             key={dateKey}
             onClick={() => setSelectedDate(thisDay)}
+            aria-label={format(thisDay, "EEEE, MMMM d, yyyy")}
+            aria-pressed={isSelected}
             className={`ml-1 h-8 w-8 flex items-center justify-center text-sm cursor-pointer relative transition
               ${isSelected ? "text-white font-semibold rounded-xl" : ""}
               ${!inMonth ? "opacity-40" : ""}`}
@@ -97,7 +101,7 @@ const LearningScheduleComponent: React.FC = () => {
                 style={{backgroundColor: isSelected ? "#FFFFFF" : "var(--xl-brand)"}}
               />
             )}
-          </div>
+          </button>
         );
         day = addDays(day, 1);
       }
@@ -143,7 +147,12 @@ const LearningScheduleComponent: React.FC = () => {
     }
 
     return items.map((activity) => (
-      <div className="schedule-item" key={`${activity.source}-${activity.sourceId}-${activity.startTime}`}>
+      <Link
+        className="schedule-item"
+        key={`${activity.source}-${activity.sourceId}-${activity.startTime}`}
+        to={`/course/${activity.courseId}`}
+        aria-label={`Open ${activity.courseCode}: ${activity.title}`}
+      >
         <ActivityIcon source={activity.source}/>
         <div className="schedule-item-content">
           <h3>{activity.title}</h3>
@@ -153,8 +162,12 @@ const LearningScheduleComponent: React.FC = () => {
           </p>
         </div>
         <div className="spacer"/>
-        <span className="text-xs opacity-70">{activity.courseCode}</span>
-      </div>
+        <span className="schedule-item-course">{activity.courseCode}</span>
+        <svg className="schedule-item-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <path d="m9 18 6-6-6-6"/>
+        </svg>
+      </Link>
     ));
   };
 

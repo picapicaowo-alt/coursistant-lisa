@@ -1,5 +1,6 @@
 import React, {useState} from "react";
 import {useMutation} from "@tanstack/react-query";
+import {ArrowDown, ArrowUp, Eye, EyeOff, Pencil, Plus, Trash2} from 'lucide-react';
 import styles from "../CourseDetailView/index.module.scss";
 import editStyles from "./index.module.scss";
 import {CourseWeek} from "@/apis";
@@ -11,6 +12,7 @@ interface WeekEditorListProps {
   activeWeekId: number | null;
   onSelect: (weekId: number) => void;
   onChanged: () => void;
+  canEditStructure?: boolean;
 }
 
 /**
@@ -30,14 +32,18 @@ export const WeekEditorList: React.FC<WeekEditorListProps> = ({
                                                                 activeWeekId,
                                                                 onSelect,
                                                                 onChanged,
+                                                                canEditStructure = true,
                                                               }) => {
   const [draftTitle, setDraftTitle] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
 
   const createWeek = useMutation({
-    mutationFn: (title: string) => courseApiService.createWeek(courseId, title),
+    mutationFn: ({title, idempotencyKey}: {title: string; idempotencyKey: string}) =>
+      courseApiService.createWeek(courseId, title, idempotencyKey),
+    retry: 1,
     onSuccess: () => {
       setDraftTitle('');
       setFailure(null);
@@ -60,6 +66,7 @@ export const WeekEditorList: React.FC<WeekEditorListProps> = ({
   const deleteWeek = useMutation({
     mutationFn: (weekId: number) => courseApiService.deleteWeek(courseId, weekId),
     onSuccess: () => {
+      setConfirmDeleteId(null);
       setFailure(null);
       onChanged();
     },
@@ -78,6 +85,24 @@ export const WeekEditorList: React.FC<WeekEditorListProps> = ({
     onError: () => setFailure("Couldn't change the week's visibility."),
   });
 
+  const reorderWeeks = useMutation({
+    mutationFn: (weekIds: number[]) => courseApiService.reorderWeeks(courseId, weekIds),
+    onSuccess: () => {
+      setFailure(null);
+      onChanged();
+    },
+    onError: () => setFailure("Couldn't reorder the weeks."),
+  });
+
+  const moveWeek = (index: number, offset: -1 | 1) => {
+    const targetIndex = index + offset;
+    if (targetIndex < 0 || targetIndex >= weeks.length) return;
+
+    const weekIds = weeks.map(week => week.id);
+    [weekIds[index], weekIds[targetIndex]] = [weekIds[targetIndex], weekIds[index]];
+    reorderWeeks.mutate(weekIds);
+  };
+
   const commitRename = (weekId: number) => {
     const title = editingTitle.trim();
     if (!title) {
@@ -90,7 +115,7 @@ export const WeekEditorList: React.FC<WeekEditorListProps> = ({
   return (
     <>
       <ul className={styles.weekList}>
-        {weeks.map((week) => (
+        {weeks.map((week, index) => (
           <li key={week.id}>
             <div
               className={`${styles.weekCard} ${week.id === activeWeekId ? styles.weekCardActive : ''}`}
@@ -101,7 +126,7 @@ export const WeekEditorList: React.FC<WeekEditorListProps> = ({
                 {week.state === 'Draft' && <span className={styles.draftTag}>Draft</span>}
               </span>
 
-              {editingId === week.id ? (
+              {canEditStructure && editingId === week.id ? (
                 <input
                   className={editStyles.weekInput}
                   value={editingTitle}
@@ -118,7 +143,29 @@ export const WeekEditorList: React.FC<WeekEditorListProps> = ({
                 <span className={styles.weekTitle}>{week.title}</span>
               )}
 
-              <div className={editStyles.weekActions}>
+              {canEditStructure ? <div className={editStyles.weekActions}>
+                <button
+                  type="button"
+                  disabled={index === 0 || reorderWeeks.isPending}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    moveWeek(index, -1);
+                  }}
+                  aria-label={`Move ${week.title} up`}
+                >
+                  <ArrowUp size={14}/> Up
+                </button>
+                <button
+                  type="button"
+                  disabled={index === weeks.length - 1 || reorderWeeks.isPending}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    moveWeek(index, 1);
+                  }}
+                  aria-label={`Move ${week.title} down`}
+                >
+                  <ArrowDown size={14}/> Down
+                </button>
                 <button
                   type="button"
                   onClick={(event) => {
@@ -127,7 +174,7 @@ export const WeekEditorList: React.FC<WeekEditorListProps> = ({
                     setEditingTitle(week.title);
                   }}
                 >
-                  Rename
+                  <Pencil size={14}/> Rename
                 </button>
                 <button
                   type="button"
@@ -137,25 +184,40 @@ export const WeekEditorList: React.FC<WeekEditorListProps> = ({
                     togglePublish.mutate(week);
                   }}
                 >
+                  {week.state === 'Published' ? <EyeOff size={14}/> : <Eye size={14}/>}
                   {week.state === 'Published' ? 'Unpublish' : 'Publish'}
                 </button>
-                <button
-                  type="button"
-                  className={editStyles.dangerAction}
-                  disabled={deleteWeek.isPending}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    deleteWeek.mutate(week.id);
-                  }}
-                >
-                  Delete
-                </button>
-              </div>
+                {confirmDeleteId === week.id ? (
+                  <span className={editStyles.deleteConfirm} onClick={event => event.stopPropagation()}>
+                    <button
+                      type="button"
+                      className={editStyles.dangerAction}
+                      disabled={deleteWeek.isPending}
+                      onClick={() => deleteWeek.mutate(week.id)}
+                    >
+                      Confirm
+                    </button>
+                    <button type="button" onClick={() => setConfirmDeleteId(null)}>Cancel</button>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    className={editStyles.dangerAction}
+                    disabled={deleteWeek.isPending}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setConfirmDeleteId(week.id);
+                    }}
+                  >
+                    <Trash2 size={14}/> Delete
+                  </button>
+                )}
+              </div> : null}
             </div>
           </li>
         ))}
 
-        <li>
+        {canEditStructure ? <li>
           <div className={editStyles.newWeekCard}>
             <span className={styles.weekLabel}>WEEK {weeks.length + 1}</span>
             <div className={editStyles.newWeekRow}>
@@ -166,7 +228,10 @@ export const WeekEditorList: React.FC<WeekEditorListProps> = ({
                 onChange={(event) => setDraftTitle(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' && draftTitle.trim()) {
-                    createWeek.mutate(draftTitle.trim());
+                    createWeek.mutate({
+                      title: draftTitle.trim(),
+                      idempotencyKey: crypto.randomUUID(),
+                    });
                   }
                 }}
               />
@@ -174,14 +239,17 @@ export const WeekEditorList: React.FC<WeekEditorListProps> = ({
                 type="button"
                 className={editStyles.addButton}
                 disabled={!draftTitle.trim() || createWeek.isPending}
-                onClick={() => createWeek.mutate(draftTitle.trim())}
+                onClick={() => createWeek.mutate({
+                  title: draftTitle.trim(),
+                  idempotencyKey: crypto.randomUUID(),
+                })}
                 aria-label="Add week"
               >
-                +
+                <Plus size={16}/>
               </button>
             </div>
           </div>
-        </li>
+        </li> : null}
       </ul>
 
       {failure && <p className={editStyles.error} role="alert">{failure}</p>}

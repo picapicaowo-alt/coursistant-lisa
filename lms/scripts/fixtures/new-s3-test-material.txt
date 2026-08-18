@@ -1,0 +1,3 @@
+Coursistant upload-first S3 verification file.
+
+Use this newly uploaded object for preview, download, and delete checks.

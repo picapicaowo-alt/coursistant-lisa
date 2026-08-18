@@ -43,12 +43,14 @@ describe('useCourseEdit', () => {
       courseId: 31,
       course,
       weeks: [],
-      sessions: [],
-      assignments: [],
+    sessions: [],
+    assignments: [],
+    quizzes: [],
       isLoading: false,
       isError: false,
       sessionsFailed: false,
-      assignmentsFailed: false,
+    assignmentsFailed: false,
+    quizzesFailed: false,
       refetch: vi.fn(),
     });
 

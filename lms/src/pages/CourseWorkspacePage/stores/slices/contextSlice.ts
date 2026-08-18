@@ -4,6 +4,7 @@ import {UserRole, WorkspaceMode} from "../../types";
 import {DetailWorkspaceProps} from "@/pages/DetailWorkspacePage/types";
 
 export interface ContextSlice {
+  /** Legacy detail-workspace audience. Privileged page controls no longer use this value. */
   role: UserRole;
   setRole: (role: UserRole) => void;
   workspaceMode: WorkspaceMode;
@@ -22,14 +23,15 @@ export const createContextSlice: StateCreator<
   let previousWorkspaceMode: WorkspaceMode = "view";
   
   return {
-    role: "teacher",
+    // Fail closed until a course enrollment is resolved.
+    role: "student",
     workspaceMode: "view",
     detailWorkspaceProps: null,
-    
+
     setRole: (role) => set((state) => {
       state.role = role;
     }),
-    
+
     setWorkspaceMode: (mode) => set((state) => {
       state.workspaceMode = mode;
     }),

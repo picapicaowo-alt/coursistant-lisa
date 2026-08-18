@@ -13,6 +13,14 @@
     margin-inline: auto;
 }
 
+.taNotice {
+    max-width: 360px;
+    color: t.$text-muted;
+    font-size: t.$fs-caption;
+    line-height: 1.45;
+    text-align: right;
+}
+
 .pageHeader {
     display: flex;
     align-items: center;

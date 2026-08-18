@@ -1,7 +1,7 @@
 ﻿export interface SidebarConfig {
   name: string;
   path: string;
-  sidebarItem?: {
+  sidebarItem: {
     filledIcon: string;
     unfilledIcon: string;
     translationLabel: string;
@@ -46,3 +46,13 @@ export const SIDEBAR_CONFIGS: SidebarConfig[] = [
     },
   }
 ];
+
+export const getSidebarIndex = (pathname: string): number =>
+  SIDEBAR_CONFIGS.findIndex(({path}) =>
+    path === "/"
+      ? pathname === "/"
+      : pathname === path || pathname.startsWith(`${path}/`),
+  );
+
+export const shouldShowAppShell = (pathname: string): boolean =>
+  getSidebarIndex(pathname) >= 0;

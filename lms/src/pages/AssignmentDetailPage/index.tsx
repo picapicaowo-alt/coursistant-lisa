@@ -5,8 +5,14 @@ import {ArrowLeft, CalendarClock, UsersRound} from 'lucide-react';
 import {assignmentApiService} from '@/apis/services/assignment-api';
 import {unwrapData} from '@/apis';
 import {useAuth} from '@/contexts/AuthContext';
+import {useCourseAccess} from '@/hooks/useCourseAccess';
 import {formatDeadline} from '@/utils/datetime';
 import {SubmitAssignmentDialog} from './SubmitAssignmentDialog';
+import {
+  buildEmptySubmissionState,
+  formatSubmissionStatus,
+  isNoFormalSubmissionError,
+} from './submissionState';
 import styles from './index.module.scss';
 
 const parseId = (value?: string) => {
@@ -20,6 +26,7 @@ const AssignmentDetailPage = () => {
   const [isSubmitDialogOpen, setSubmitDialogOpen] = useState(false);
   const courseId = parseId(courseIdParam);
   const assignmentId = parseId(assignmentIdParam);
+  const access = useCourseAccess(courseId);
 
   const assignmentQuery = useQuery({
     queryKey: ['assignment', courseId, assignmentId],
@@ -32,15 +39,37 @@ const AssignmentDetailPage = () => {
 
   const isStaff = assignmentQuery.data?.activeStudentCount !== undefined
     || assignmentQuery.data?.canEditStructure !== undefined;
-  const isStudent = assignmentQuery.data ? !isStaff : user?.level === 'STUDENT';
+  const isStudent = access.membership
+    ? access.isStudent
+    : assignmentQuery.data
+      ? !isStaff
+      : user?.level === 'STUDENT';
 
   const submissionQuery = useQuery({
     queryKey: ['assignment-submission', courseId, assignmentId],
     enabled: assignmentQuery.isSuccess && isStudent && courseId !== null && assignmentId !== null,
-    queryFn: async () => unwrapData(
-      await assignmentApiService.getMySubmission(courseId!, assignmentId!),
-      'getMySubmission'
-    ),
+    queryFn: async () => {
+      try {
+        return unwrapData(
+          await assignmentApiService.getMySubmission(courseId!, assignmentId!),
+          'getMySubmission'
+        );
+      } catch (error) {
+        const assignment = assignmentQuery.data;
+        if (!isNoFormalSubmissionError(error) || !assignment || !user) throw error;
+
+        // 8081 models “never submitted” as a 404. Preserve any staged files,
+        // then turn it into the empty state the student screen expects.
+        const stagingFiles = assignment.stagedFileCount
+          ? unwrapData(
+            await assignmentApiService.listStagingFiles(courseId!, assignmentId!),
+            'listStagingFiles'
+          )
+          : [];
+
+        return buildEmptySubmissionState(assignment, user.id, stagingFiles);
+      }
+    },
   });
 
   if (courseId === null || assignmentId === null) {
@@ -78,14 +107,18 @@ const AssignmentDetailPage = () => {
           </div>
           <h1>{assignment.title}</h1>
         </div>
-        {isStaff ? (
+        {access.canConfigureAssignments || access.canGrade ? (
           <div className={styles.headerActions}>
-            <Link to={`/course/${courseId}/assignments/${assignmentId}/edit`} className={styles.secondaryLink}>
-              Edit
-            </Link>
-            <Link to={`/course/${courseId}/assignments/${assignmentId}/grading`} className={styles.primaryLink}>
-              Grade submissions
-            </Link>
+            {access.canConfigureAssignments ? (
+              <Link to={`/course/${courseId}/assignments/${assignmentId}/edit`} className={styles.secondaryLink}>
+                Edit
+              </Link>
+            ) : null}
+            {access.canGrade ? (
+              <Link to={`/course/${courseId}/assignments/${assignmentId}/grading`} className={styles.primaryLink}>
+                Grade submissions
+              </Link>
+            ) : null}
           </div>
         ) : null}
       </header>
@@ -117,23 +150,24 @@ const AssignmentDetailPage = () => {
                 <div>
                   <h2>Your submission</h2>
                   <p className={styles.secondaryText}>
-                    {submissionQuery.data?.submissionStatus ?? 'Not submitted'}
+                    {formatSubmissionStatus(submissionQuery.data?.submissionStatus)}
                   </p>
                 </div>
                 <button
                   type="button"
                   className={styles.primaryButton}
                   onClick={() => setSubmitDialogOpen(true)}
-                  disabled={!submissionQuery.data?.acceptingSubmissions}
+                  disabled={submissionQuery.isPending || !submissionQuery.data?.acceptingSubmissions}
                 >
                   {submissionQuery.data?.totalVersions ? 'Submit new version' : 'Submit assignment'}
                 </button>
               </div>
 
               {submissionQuery.isError && (
-                <p className={styles.error} role="alert">
-                  Submission status is temporarily unavailable. Try again when the 8081 API is online.
-                </p>
+                <div className={styles.error} role="alert">
+                  <span>Submission details couldn&apos;t be loaded.</span>{' '}
+                  <button type="button" onClick={() => void submissionQuery.refetch()}>Try again</button>
+                </div>
               )}
 
               {submissionQuery.data?.currentVersion && (

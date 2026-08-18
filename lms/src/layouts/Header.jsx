@@ -2,7 +2,6 @@ import {useRef, useState, useEffect} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {useTranslation} from 'react-i18next';
 import {useAuth} from '../contexts/AuthContext';
-import LanguageSwitcher from '../components/LanguageSwitcher';
 import NotificationCenter from '../components/NotificationCenter';
 import './Header.scss';
 
@@ -47,10 +46,17 @@ const Header = () => {
   return (
     <div className="lms-home-header">
       <div className="spacer"/>
-      <LanguageSwitcher/>
       <NotificationCenter/>
       <div className="profile">
-        <img className="profile-avatar" src={profileImage} alt="profile"/>
+        <img
+          className="profile-avatar"
+          src={profileImage}
+          alt="profile"
+          onError={(event) => {
+            event.currentTarget.onerror = null;
+            event.currentTarget.src = "/icons/default_avatar.jpg";
+          }}
+        />
         <div className="profile-info">
           <p>{name}</p>
           <p className="profile-email">{email}</p>

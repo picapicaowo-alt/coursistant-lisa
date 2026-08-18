@@ -1,8 +1,9 @@
 import {useParams} from 'react-router-dom';
 import {useQueries} from '@tanstack/react-query';
-import {AssignmentSummary, CourseResponse, CourseSession, CourseWeek, unwrapData} from '@/apis';
+import {AssignmentSummary, CourseResponse, CourseSession, CourseWeek, QuizResponse, unwrapData} from '@/apis';
 import {courseApiService} from '@/apis/services/course-api';
 import {assignmentApiService} from '@/apis/services/assignment-api';
+import {quizApiService} from '@/apis/services/quiz-api';
 
 /**
  * Everything the course workspace renders.
@@ -23,10 +24,12 @@ export interface CourseWorkspaceData {
   weeks: CourseWeek[];
   sessions: CourseSession[];
   assignments: AssignmentSummary[];
+  quizzes: QuizResponse[];
   isLoading: boolean;
   isError: boolean;
   sessionsFailed: boolean;
   assignmentsFailed: boolean;
+  quizzesFailed: boolean;
   refetch: () => void;
 }
 
@@ -34,6 +37,7 @@ const FIVE_MINUTES = 5 * 60 * 1000;
 const EMPTY_WEEKS: CourseWeek[] = [];
 const EMPTY_SESSIONS: CourseSession[] = [];
 const EMPTY_ASSIGNMENTS: AssignmentSummary[] = [];
+const EMPTY_QUIZZES: QuizResponse[] = [];
 
 const shared = {
   staleTime: FIVE_MINUTES,
@@ -53,7 +57,7 @@ export const useCourseWorkspaceData = (): CourseWorkspaceData => {
   const id = Number.isNaN(parsed) ? null : parsed;
   const enabled = id !== null;
 
-  const [course, weeks, sessions, assignments] = useQueries({
+  const [course, weeks, sessions, assignments, quizzes] = useQueries({
     queries: [
       {
         queryKey: ['course', id],
@@ -80,6 +84,12 @@ export const useCourseWorkspaceData = (): CourseWorkspaceData => {
         enabled,
         ...shared,
       },
+      {
+        queryKey: ['course-quizzes', id],
+        queryFn: async () => (await quizApiService.listQuizzes(id!)).data ?? [],
+        enabled,
+        ...shared,
+      },
     ],
   });
 
@@ -93,17 +103,20 @@ export const useCourseWorkspaceData = (): CourseWorkspaceData => {
     weeks: weeks.data ?? EMPTY_WEEKS,
     sessions: sessions.data ?? EMPTY_SESSIONS,
     assignments: assignments.data ?? EMPTY_ASSIGNMENTS,
+    quizzes: quizzes.data ?? EMPTY_QUIZZES,
     // A disabled query stays pending forever, so without an id this would
     // otherwise report a load that never finishes.
     isLoading: enabled && (course.isPending || weeks.isPending),
     isError: !enabled || course.isError || weeks.isError,
     sessionsFailed: sessions.isError,
     assignmentsFailed: assignments.isError,
+    quizzesFailed: quizzes.isError,
     refetch: () => {
       void course.refetch();
       void weeks.refetch();
       void sessions.refetch();
       void assignments.refetch();
+      void quizzes.refetch();
     },
   };
 };

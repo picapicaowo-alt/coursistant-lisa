@@ -10,12 +10,25 @@ describe('resolveNotificationPath', () => {
     })).toBe('/course/7/assignments/12');
   });
 
-  it('falls back to the course when a subject route is not implemented yet', () => {
+  it('opens the quiz destination instead of dropping the user at the course root', () => {
     expect(resolveNotificationPath({
       availability: 'AVAILABLE',
       courseId: 7,
       deepLink: '/courses/7/quizzes/3',
-    })).toBe('/course/7');
+    })).toBe('/course/7/quizzes/3');
+  });
+
+  it.each([
+    ['announcements', 'announcements'],
+    ['events', 'events'],
+    ['weeks', 'weeks'],
+    ['groups', 'group-sets'],
+  ])('maps plural %s notification paths', (backendKind, frontendKind) => {
+    expect(resolveNotificationPath({
+      availability: 'AVAILABLE',
+      courseId: 7,
+      deepLink: `/courses/7/${backendKind}/3`,
+    })).toBe(`/course/7/${frontendKind}/3`);
   });
 
   it('never follows an absolute URL supplied as a deep link', () => {

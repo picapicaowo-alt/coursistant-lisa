@@ -1,6 +1,5 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
-import LanguageDetector from "i18next-browser-languagedetector";
 
 // Import translation files
 import enCommon from "./resources/en/common.json";
@@ -13,9 +12,12 @@ import zhAuth from "./resources/zh-CN/auth.json";
 import zhCourse from "./resources/zh-CN/course.json";
 import zhDetailWorkspace from "./resources/zh-CN/detailWorkspace.json";
 
-// Supported languages
-export const SUPPORTED_LOCALES = ["en", "zh-CN"];
+// Chinese resources stay in the repository for the eventual full translation,
+// but the product currently exposes English only. A partial language mode is
+// more confusing than useful because large parts of the LMS are still English.
+export const SUPPORTED_LOCALES = ["en"];
 export const DEFAULT_LOCALE = "en";
+export const LANGUAGE_SWITCHER_ENABLED = false;
 
 // Language labels for UI display
 export const LOCALE_LABELS = {
@@ -24,7 +26,6 @@ export const LOCALE_LABELS = {
 };
 
 i18n
-  .use(LanguageDetector) // Detects user language
   .use(initReactI18next) // Passes i18n to react-i18next
   .init({
     resources: {
@@ -41,18 +42,12 @@ i18n
          detailWorkspace: zhDetailWorkspace
         },
     },
+    lng: DEFAULT_LOCALE,
     supportedLngs: SUPPORTED_LOCALES,
     fallbackLng: "en", // Fallback to English if translation missing
 
     defaultNS: "common", // Default namespace
     ns: ["common", "auth", "course", "detailWorkspace"], // Available namespaces
-
-    detection: {
-      // Detection order: localStorage first, then browser language
-      order: ["localStorage", "navigator", "htmlTag"],
-      caches: ["localStorage"], // Cache detected language in localStorage
-      lookupLocalStorage: "locale", // Key name in localStorage
-    },
 
     interpolation: {
       escapeValue: false, // React already escapes by default

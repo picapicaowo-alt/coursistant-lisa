@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { SUPPORTED_LOCALES, LOCALE_LABELS } from "../i18n";
+import { LANGUAGE_SWITCHER_ENABLED, SUPPORTED_LOCALES, LOCALE_LABELS } from "../i18n";
 
 /**
  * Language switcher dropdown component.
@@ -8,6 +8,10 @@ import { SUPPORTED_LOCALES, LOCALE_LABELS } from "../i18n";
  */
 export default function LanguageSwitcher() {
   const { i18n } = useTranslation();
+
+  // Keep the component ready for the completed translation rollout, while
+  // ensuring a legacy import cannot accidentally expose the partial Chinese UI.
+  if (!LANGUAGE_SWITCHER_ENABLED) return null;
 
   // Get current language (resolved or fallback)
   const currentLanguage = i18n.resolvedLanguage || i18n.language;

@@ -105,6 +105,16 @@
     color: t.$text-muted;
 }
 
+.stateTag {
+    flex: 0 0 auto;
+    padding: 0.18rem 0.55rem;
+    border-radius: t.$radius-pill;
+    background: t.$brand-subtle;
+    color: t.$brand;
+    font-size: 0.7rem;
+    font-weight: t.$fw-semibold;
+}
+
 .weekTitle {
     font-size: t.$fs-item-sub;
     color: t.$text;

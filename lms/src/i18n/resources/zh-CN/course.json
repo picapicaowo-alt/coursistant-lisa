@@ -34,6 +34,7 @@
         "sunday": "星期日"
     },
     "detail": {
+        "backToDashboard": "返回首页",
         "students": "学生",
         "teacher": "教师",
         "assignments": "作业",
@@ -44,6 +45,7 @@
         "unitPlaceholder": "单元",
         "manageGroup": "管理小组",
         "editCourse": "编辑课程",
+        "manageContent": "管理内容",
         "courseSummary": "课程概览",
         "weeklySummary": "每周概览",
         "aiHelperHint": "开始输入，按空格键唤起 AI，输入 / 查看命令。",

@@ -8,6 +8,12 @@ import {formatCourseName} from "@/utils/course";
 import {ScheduleCard} from "../CourseDetailView/ScheduleCard";
 import {WeekEditorList} from "./WeekEditorList";
 import {WeekContentCard} from "./WeekContentCard";
+import {useRequiredAuth} from '@/contexts/RequiredAuthContext';
+
+interface CourseEditViewProps {
+  canEditStructure: boolean;
+  canUploadMaterials: boolean;
+}
 
 /**
  * Course detail, edit mode — see docs/design/14-course-edit-empty.png and 16.
@@ -27,16 +33,26 @@ import {WeekContentCard} from "./WeekContentCard";
  * materials, not rich text; there is no document to edit and no field to save
  * one into. Its AI affordances are out of scope for V1 regardless (B-4).
  */
-export const CourseEditView: React.FC = () => {
+export const CourseEditView: React.FC<CourseEditViewProps> = ({
+  canEditStructure,
+  canUploadMaterials,
+}) => {
   const {courseId, course, weeks, sessions, isLoading, isError, sessionsFailed, refetch} =
     useCourseWorkspaceData();
   const queryClient = useQueryClient();
+  const {user} = useRequiredAuth();
 
   const [activeWeekId, setActiveWeekId] = useState<number | null>(null);
   const [titleDraft, setTitleDraft] = useState<string | null>(null);
 
   useEffect(() => {
-    if (activeWeekId === null && weeks.length > 0) setActiveWeekId(weeks[0].id);
+    if (weeks.length === 0) {
+      if (activeWeekId !== null) setActiveWeekId(null);
+      return;
+    }
+    if (activeWeekId === null || !weeks.some(week => week.id === activeWeekId)) {
+      setActiveWeekId(weeks[0].id);
+    }
   }, [weeks, activeWeekId]);
 
   const invalidate = () => {
@@ -83,14 +99,16 @@ export const CourseEditView: React.FC = () => {
         {titleDraft === null ? (
           <h1 className={styles.courseTitle}>
             {formatCourseName(course.courseCode, currentTitle)}
-            <button
-              type="button"
-              className={editStyles.inlineEdit}
-              onClick={() => setTitleDraft(currentTitle)}
-              aria-label="Rename course"
-            >
-              ✎
-            </button>
+            {canEditStructure ? (
+              <button
+                type="button"
+                className={editStyles.inlineEdit}
+                onClick={() => setTitleDraft(currentTitle)}
+                aria-label="Rename course"
+              >
+                ✎
+              </button>
+            ) : null}
           </h1>
         ) : (
           <input
@@ -118,11 +136,20 @@ export const CourseEditView: React.FC = () => {
           activeWeekId={activeWeekId}
           onSelect={setActiveWeekId}
           onChanged={invalidate}
+          canEditStructure={canEditStructure}
         />
       </aside>
 
       <div className={styles.cards}>
-        <WeekContentCard courseId={courseId} week={activeWeek} onChanged={invalidate}/>
+        <WeekContentCard
+          courseId={courseId}
+          week={activeWeek}
+          weeks={weeks}
+          currentUserId={user.id}
+          canEditStructure={canEditStructure}
+          canUploadMaterials={canUploadMaterials}
+          onChanged={invalidate}
+        />
         <ScheduleCard sessions={sessions} failed={sessionsFailed}/>
       </div>
     </div>

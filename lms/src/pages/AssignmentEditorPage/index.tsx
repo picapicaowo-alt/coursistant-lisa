@@ -1,10 +1,11 @@
-import {ChangeEvent, FormEvent, useState} from 'react';
+import {ChangeEvent, FormEvent, useRef, useState} from 'react';
 import {useQuery, useQueryClient} from '@tanstack/react-query';
-import {ArrowLeft, CalendarClock, FileText, Upload, UsersRound, X} from 'lucide-react';
+import {ArrowLeft, CalendarClock, CheckCircle2, FileText, Upload, UsersRound, X} from 'lucide-react';
 import {Link, useNavigate, useParams} from 'react-router-dom';
 import type {AssignmentDetail, AssignmentSubmissionType, CreateAssignmentPayload} from '@/apis';
 import {unwrapData} from '@/apis';
 import {assignmentApiService} from '@/apis/services/assignment-api';
+import {useCourseAccess} from '@/hooks/useCourseAccess';
 import styles from './index.module.scss';
 
 const parseId = (value?: string) => {
@@ -24,7 +25,7 @@ interface AssignmentEditorFormProps {
   assignment?: AssignmentDetail;
 }
 
-const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFormProps) => {
+export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFormProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [title, setTitle] = useState(assignment?.title ?? '');
@@ -48,8 +49,18 @@ const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFormProps)
     String(Math.round((assignment?.maxFileSizeBytes ?? 10 * 1024 * 1024) / 1024 / 1024))
   );
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  // A successful record write becomes a checkpoint immediately. If a later
+  // attachment upload or publish call fails, retrying patches this same record
+  // instead of creating a second assignment.
+  const [checkpointAssignment, setCheckpointAssignment] = useState<AssignmentDetail | null>(assignment ?? null);
   const [isSaving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const savingRef = useRef(false);
+
+  const hasRecoveredDraft = !assignment && checkpointAssignment !== null;
+  const exitPath = checkpointAssignment
+    ? `/course/${courseId}/assignments/${checkpointAssignment.id}`
+    : `/course/${courseId}`;
 
   const removePendingFile = (index: number) => {
     setPendingFiles(files => files.filter((_, fileIndex) => fileIndex !== index));
@@ -101,30 +112,47 @@ const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFormProps)
   };
 
   const persist = async (publish: boolean) => {
+    if (savingRef.current) return;
+
     const payload = buildPayload();
     if (!payload) return;
 
+    savingRef.current = true;
     setSaving(true);
     setError(null);
+    let saved = checkpointAssignment;
+    let stage: 'record' | 'attachments' | 'publish' = 'record';
 
     try {
-      const response = assignment
-        ? await assignmentApiService.patchAssignment(courseId, assignment.id, {
+      const response = saved
+        ? await assignmentApiService.patchAssignment(courseId, saved.id, {
           ...payload,
-          ...(assignment.lateUntilLocal && !lateUntil ? {clearLateUntil: true} : {}),
+          ...(checkpointAssignment?.lateUntilLocal && !lateUntil ? {clearLateUntil: true} : {}),
         })
         : await assignmentApiService.createAssignment(courseId, payload);
-      let saved = unwrapData(response, assignment ? 'patchAssignment' : 'createAssignment');
+      saved = unwrapData(response, checkpointAssignment ? 'patchAssignment' : 'createAssignment');
+      setCheckpointAssignment(saved);
 
       if (pendingFiles.length > 0) {
-        await assignmentApiService.uploadAttachments(courseId, saved.id, pendingFiles);
+        stage = 'attachments';
+        const uploaded = unwrapData(
+          await assignmentApiService.uploadAttachments(courseId, saved.id, pendingFiles),
+          'uploadAttachments'
+        );
+        saved = {...saved, attachments: [...(saved.attachments ?? []), ...uploaded]};
+        setCheckpointAssignment(saved);
+        // If publishing fails next, a retry must not upload the same successful
+        // batch again.
+        setPendingFiles([]);
       }
 
       if (publish && saved.state !== 'Published') {
+        stage = 'publish';
         saved = unwrapData(
           await assignmentApiService.publishAssignment(courseId, saved.id),
           'publishAssignment'
         );
+        setCheckpointAssignment(saved);
       }
 
       await Promise.all([
@@ -133,12 +161,19 @@ const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFormProps)
       ]);
       navigate(`/course/${courseId}/assignments/${saved.id}`);
     } catch {
-      setError(
-        assignment
-          ? 'The assignment could not be updated. Your form values are still here.'
-          : 'The assignment could not be created. Your form values are still here.'
-      );
+      if (stage === 'attachments' && saved) {
+        setError(`Assignment #${saved.id} is saved, but its attachments could not be uploaded. Retry will continue this same assignment.`);
+      } else if (stage === 'publish' && saved) {
+        setError(`Assignment #${saved.id} and its attachments are saved, but publishing failed. Retry will publish this same assignment.`);
+      } else {
+        setError(
+          checkpointAssignment
+            ? 'The saved assignment could not be updated. Your form values are still here.'
+            : 'The assignment could not be created. Your form values are still here.'
+        );
+      }
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
@@ -153,17 +188,28 @@ const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFormProps)
       <form className={styles.editor} onSubmit={submitDraft}>
         <header className={styles.header}>
           <div>
-            <p className={styles.eyebrow}>{assignment ? 'Edit assignment' : 'New assignment'}</p>
-            <h1>{assignment ? 'Edit Homework/Problem Set' : 'Create Homework/Problem Set'}</h1>
+            <p className={styles.eyebrow}>{assignment ? 'Edit assignment' : hasRecoveredDraft ? 'Resume saved draft' : 'New assignment'}</p>
+            <h1>{assignment ? 'Edit Homework/Problem Set' : hasRecoveredDraft ? 'Finish Homework/Problem Set' : 'Create Homework/Problem Set'}</h1>
           </div>
           <Link
-            to={assignment ? `/course/${courseId}/assignments/${assignment.id}` : `/course/${courseId}`}
+            to={exitPath}
             className={styles.closeButton}
             aria-label="Close assignment editor"
           >
             <X size={22}/>
           </Link>
         </header>
+
+        {hasRecoveredDraft ? (
+          <div className={styles.recoveryNotice} role="status">
+            <CheckCircle2 size={20} aria-hidden="true"/>
+            <div>
+              <strong>Draft #{checkpointAssignment.id} is already saved.</strong>
+              <span>Attachment or publish retries will continue this draft instead of creating a duplicate.</span>
+            </div>
+            <Link to={exitPath}>Open draft</Link>
+          </div>
+        ) : null}
 
         <div className={styles.fieldGrid}>
           <label className={`${styles.field} ${styles.titleField}`}>
@@ -249,11 +295,11 @@ const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFormProps)
           <input type="file" multiple onChange={onChooseFiles}/>
         </label>
 
-        {assignment?.attachments.length ? (
+        {checkpointAssignment?.attachments.length ? (
           <section className={styles.existingAttachments} aria-labelledby="current-attachments-title">
             <p id="current-attachments-title">Current attachments</p>
             <ul>
-              {assignment.attachments.map(file => (
+              {checkpointAssignment.attachments.map(file => (
                 <li key={file.id}>
                   <FileText size={18} aria-hidden="true"/>
                   <a href={file.downloadUrl} target="_blank" rel="noreferrer">{file.originalName}</a>
@@ -281,16 +327,16 @@ const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFormProps)
 
         <footer className={styles.actions}>
           <Link
-            to={assignment ? `/course/${courseId}/assignments/${assignment.id}` : `/course/${courseId}`}
+            to={exitPath}
             className={styles.secondaryButton}
           >
             Cancel
           </Link>
           <button type="submit" className={styles.secondaryButton} disabled={isSaving}>
-            {assignment ? 'Save changes' : 'Save draft'}
+            {assignment || hasRecoveredDraft ? 'Save changes' : 'Save draft'}
           </button>
           <button type="button" className={styles.primaryButton} disabled={isSaving} onClick={() => void persist(true)}>
-            {isSaving ? 'Saving…' : assignment?.state === 'Published' ? 'Save & keep published' : 'Publish'}
+            {isSaving ? 'Saving…' : checkpointAssignment?.state === 'Published' ? 'Save & keep published' : 'Publish'}
           </button>
         </footer>
       </form>
@@ -307,10 +353,14 @@ const AssignmentEditorPage = () => {
   const courseId = parseId(courseParam);
   const assignmentId = assignmentParam ? parseId(assignmentParam) : null;
   const isEditing = Boolean(assignmentParam);
+  const access = useCourseAccess(courseId);
 
   const assignmentQuery = useQuery({
     queryKey: ['assignment', courseId, assignmentId],
-    enabled: courseId !== null && assignmentId !== null,
+    enabled: courseId !== null
+      && assignmentId !== null
+      && access.isResolved
+      && access.canConfigureAssignments,
     queryFn: async () => unwrapData(
       await assignmentApiService.getAssignment(courseId!, assignmentId!),
       'getAssignment'
@@ -319,6 +369,23 @@ const AssignmentEditorPage = () => {
 
   if (courseId === null || (isEditing && assignmentId === null)) {
     return <div className={styles.status} role="alert">This assignment editor link is invalid.</div>;
+  }
+
+  if (access.isLoading) {
+    return <div className={styles.status}>Checking course permissions…</div>;
+  }
+
+  if (access.isError) {
+    return (
+      <div className={styles.status} role="alert">
+        <p>Course permissions couldn&apos;t be loaded.</p>
+        <button type="button" className={styles.primaryButton} onClick={access.refetch}>Try again</button>
+      </div>
+    );
+  }
+
+  if (!access.canConfigureAssignments) {
+    return <div className={styles.status} role="alert">Only the course Instructor can create or edit assignments.</div>;
   }
 
   if (isEditing && assignmentQuery.isLoading) {

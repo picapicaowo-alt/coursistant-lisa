@@ -1,0 +1,32 @@
+.page { min-height: 100%; padding: 2rem clamp(1rem, 4vw, 3.75rem) 4rem; background: t.$page-bg; color: t.$text; }
+.header, .card { max-width: 1050px; margin-inline: auto; }
+.header { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.25rem; }
+.header h1 { margin: 0.25rem 0 0; font-size: clamp(1.8rem, 4vw, t.$fs-h1); }
+.backLink { display: inline-grid; place-items: center; flex: 0 0 t.$control-size; width: t.$control-size; height: t.$control-size; border-radius: t.$radius-control; background: t.$neutral-fill; color: t.$text; }
+.eyebrow { margin: 0; color: t.$brand; font-size: t.$fs-caption; font-weight: t.$fw-semibold; text-transform: uppercase; letter-spacing: .08em; }
+.card { margin-bottom: 1.25rem; padding: 1.5rem; border: 1px solid t.$border; border-radius: t.$radius-card-lg; background: t.$card-bg; box-shadow: t.$shadow-card; }
+.cardHeader { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.25rem; }
+.cardHeader h2, .cardHeader p { margin: 0; }
+.cardHeader p { margin-top: .25rem; color: t.$text-muted; }
+.formGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.formGrid label { display: grid; gap: .4rem; color: t.$text-muted; font-size: t.$fs-caption; font-weight: t.$fw-semibold; }
+.formGrid input, .formGrid textarea, .formGrid select, .optionEditor input[type='text'], .optionEditor input:not([type]) { width: 100%; padding: .72rem .8rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; color: t.$text; font: inherit; }
+.full { grid-column: 1 / -1; }
+.primaryButton, .secondaryButton { display: inline-flex; min-height: 2.5rem; align-items: center; justify-content: center; gap: .4rem; padding: 0 .95rem; border-radius: t.$radius-control-sm; font-weight: t.$fw-semibold; cursor: pointer; }
+.primaryButton { border: 1px solid t.$brand; background: t.$brand; color: white; }
+.secondaryButton { border: 1px solid t.$border; background: t.$card-bg; color: t.$text; }
+.primaryButton:disabled, .rowActions button:disabled { cursor: not-allowed; opacity: .5; }
+.questionList { display: grid; gap: .65rem; margin: 0; padding: 0; list-style: none; }
+.questionList > li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .85rem 0; border-top: 1px solid t.$border; }
+.questionList small { display: block; margin-top: .2rem; color: t.$text-muted; }
+.rowActions { display: flex; align-items: center; gap: .35rem; }
+.rowActions button { display: inline-grid; min-width: 2rem; min-height: 2rem; place-items: center; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; color: t.$text; cursor: pointer; }
+.dangerText, .error { color: t.$danger !important; }
+.success { color: t.$success; }
+.empty { color: t.$text-muted; }
+.optionEditor { display: grid; gap: .65rem; margin-top: 1rem; padding: 1rem; border-radius: t.$radius-card; background: t.$subcard-bg; }
+.optionEditor > div { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .65rem; }
+.optionEditor > div > input:last-of-type { width: 100%; padding: .65rem .75rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; }
+.optionEditor button:not(.secondaryButton) { border: 0; background: transparent; color: t.$danger; cursor: pointer; }
+.footer { display: flex; justify-content: flex-end; margin-top: 1rem; }
+@media (max-width: 700px) { .formGrid { grid-template-columns: 1fr; } .full { grid-column: auto; } .cardHeader, .questionList > li { align-items: stretch; flex-direction: column; } }

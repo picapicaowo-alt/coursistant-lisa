@@ -1,0 +1,254 @@
+.page {
+  min-height: 100%;
+  padding: 2rem clamp(1rem, 4vw, 3.75rem) 4rem;
+  background: t.$page-bg;
+  color: t.$text;
+}
+
+.header,
+.summaryCard,
+.card,
+.attempt {
+  max-width: 1050px;
+  margin-inline: auto;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.backLink {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 t.$control-size;
+  width: t.$control-size;
+  height: t.$control-size;
+  border-radius: t.$radius-control;
+  background: t.$neutral-fill;
+  color: t.$text;
+}
+
+.headerText {
+  min-width: 0;
+  flex: 1;
+
+  h1 {
+    margin: 0.25rem 0 0;
+    font-size: clamp(1.8rem, 4vw, t.$fs-h1);
+    line-height: 1.15;
+  }
+}
+
+.eyebrow {
+  margin: 0;
+  color: t.$brand;
+  font-size: t.$fs-caption;
+  font-weight: t.$fw-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.headerActions,
+.questionFooter,
+.submitBar {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.primaryButton,
+.secondaryButton {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0 0.95rem;
+  border-radius: t.$radius-control-sm;
+  font-weight: t.$fw-semibold;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+}
+
+.primaryButton {
+  border: 1px solid t.$brand;
+  background: t.$brand;
+  color: white;
+}
+
+.secondaryButton {
+  border: 1px solid t.$border;
+  background: t.$card-bg;
+  color: t.$text;
+}
+
+.summaryCard,
+.card,
+.questionCard {
+  padding: 1.5rem;
+  border: 1px solid t.$border;
+  border-radius: t.$radius-card-lg;
+  background: t.$card-bg;
+  box-shadow: t.$shadow-card;
+}
+
+.summaryCard,
+.card {
+  margin-bottom: 1.25rem;
+}
+
+.instructions,
+.muted {
+  color: t.$text-muted;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.summaryGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid t.$border;
+  color: t.$text-muted;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+}
+
+.questionSummary {
+  display: grid;
+  gap: 0.65rem;
+  margin: 1rem 0 0;
+  padding-left: 1.25rem;
+
+  li {
+    padding-left: 0.35rem;
+  }
+
+  small {
+    display: block;
+    margin-top: 0.2rem;
+    color: t.$text-muted;
+  }
+}
+
+.attempt {
+  display: grid;
+  gap: 1rem;
+}
+
+.attemptHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: t.$text-muted;
+
+  h2,
+  p {
+    margin: 0;
+  }
+}
+
+.questionHeading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+
+  h3 {
+    font-size: 1.05rem;
+  }
+
+  span {
+    flex: 0 0 auto;
+    color: t.$text-muted;
+  }
+}
+
+.questionCard textarea {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.8rem;
+  border: 1px solid t.$border;
+  border-radius: t.$radius-control-sm;
+  resize: vertical;
+}
+
+.options {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1rem;
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.75rem;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-control-sm;
+    cursor: pointer;
+  }
+}
+
+.questionFooter {
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+
+.saved,
+.resultHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: t.$success;
+}
+
+.submitBar {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  padding: 1rem;
+  border: 1px solid t.$border;
+  border-radius: t.$radius-card;
+  background: t.$card-bg;
+
+  p {
+    flex: 1;
+    margin: 0;
+  }
+}
+
+.score {
+  margin: 1.5rem 0 0;
+  font-size: 2rem;
+  font-weight: t.$fw-extrabold;
+}
+
+.error {
+  max-width: 1050px;
+  margin: 1rem auto;
+  color: t.$danger;
+}
+
+@media (max-width: 780px) {
+  .header {
+    flex-wrap: wrap;
+  }
+
+  .headerActions {
+    width: 100%;
+    padding-left: calc(t.$control-size + 1rem);
+    flex-wrap: wrap;
+  }
+}

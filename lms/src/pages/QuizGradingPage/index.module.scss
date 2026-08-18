@@ -1,0 +1,34 @@
+.page { min-height: 100%; padding: 2rem clamp(1rem, 4vw, 3.75rem) 4rem; background: t.$page-bg; color: t.$text; }
+.header, .summaryGrid, .card, .page > .success, .page > .error { max-width: 1100px; margin-inline: auto; }
+.header { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.25rem; }
+.header h1 { margin: .25rem 0 0; font-size: clamp(1.8rem, 4vw, t.$fs-h1); }
+.backLink { display: inline-grid; place-items: center; flex: 0 0 t.$control-size; width: t.$control-size; height: t.$control-size; border-radius: t.$radius-control; background: t.$neutral-fill; color: t.$text; }
+.eyebrow { margin: 0; color: t.$brand; font-size: t.$fs-caption; font-weight: t.$fw-semibold; text-transform: uppercase; letter-spacing: .08em; }
+.headerActions { display: flex; gap: .65rem; margin-left: auto; }
+.primaryButton, .secondaryButton { display: inline-flex; min-height: 2.5rem; align-items: center; justify-content: center; gap: .4rem; padding: 0 .95rem; border-radius: t.$radius-control-sm; font-weight: t.$fw-semibold; cursor: pointer; }
+.primaryButton { border: 1px solid t.$brand; background: t.$brand; color: white; }
+.secondaryButton { border: 1px solid t.$border; background: t.$card-bg; color: t.$text; }
+.primaryButton:disabled, .secondaryButton:disabled { cursor: not-allowed; opacity: .5; }
+.summaryGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .85rem; margin-bottom: 1.25rem; }
+.summaryGrid > div { display: grid; gap: .2rem; padding: 1.1rem; border: 1px solid t.$border; border-radius: t.$radius-card; background: t.$card-bg; }
+.summaryGrid strong { font-size: 1.65rem; }
+.summaryGrid span { color: t.$text-muted; font-size: t.$fs-caption; }
+.card { padding: 1.5rem; border: 1px solid t.$border; border-radius: t.$radius-card-lg; background: t.$card-bg; box-shadow: t.$shadow-card; }
+.cardHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
+.cardHeader h2, .cardHeader p { margin: 0; }
+.cardHeader p { margin-top: .25rem; color: t.$text-muted; }
+.cardHeader label { display: grid; gap: .35rem; color: t.$text-muted; font-size: t.$fs-caption; }
+.cardHeader select, .gradeControls input { min-height: 2.5rem; padding: 0 .7rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; }
+.answerList { display: grid; gap: 1rem; }
+.answerCard { padding: 1.1rem; border: 1px solid t.$border; border-radius: t.$radius-card; background: t.$subcard-bg; }
+.answerHeading { display: flex; align-items: center; justify-content: space-between; }
+.answerHeading > div { display: grid; gap: .15rem; }
+.answerHeading span, .empty { color: t.$text-muted; }
+.answerCard blockquote { margin: 1rem 0; padding: .85rem 1rem; border-left: 3px solid t.$brand; background: t.$card-bg; line-height: 1.6; }
+.pending { color: t.$warning !important; }
+.graded, .success { color: t.$success !important; }
+.graded { display: inline-flex; align-items: center; gap: .3rem; }
+.gradeControls { display: grid; grid-template-columns: 130px minmax(180px, 1fr) auto; align-items: end; gap: .75rem; }
+.gradeControls label { display: grid; gap: .35rem; color: t.$text-muted; font-size: t.$fs-caption; }
+.error { color: t.$danger !important; }
+@media (max-width: 850px) { .header { flex-wrap: wrap; } .headerActions { width: 100%; margin-left: 0; padding-left: calc(t.$control-size + 1rem); } .summaryGrid { grid-template-columns: repeat(2, 1fr); } .gradeControls { grid-template-columns: 1fr; } .cardHeader { flex-direction: column; } }

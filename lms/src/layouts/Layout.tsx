@@ -3,15 +3,13 @@ import Sidebar from "./Sidebar";
 import Header from "./Header";
 import {Outlet, useLocation} from "react-router-dom";
 import styles from './Layout.module.scss';
-import {SIDEBAR_CONFIGS} from "@/configs/routes.config";
+import {shouldShowAppShell} from "@/configs/routes.config";
 import {ErrorBoundary} from "@/components/ErrorBoundary";
 
 const Layout: React.FC = () => {
   const location = useLocation();
   
-  const showLayout = React.useMemo(() =>
-      SIDEBAR_CONFIGS.some(c => c.path === location.pathname),
-    [location]);
+  const showLayout = shouldShowAppShell(location.pathname);
   
   return (
     <div className={styles.layoutContainer}>

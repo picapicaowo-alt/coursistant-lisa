@@ -1,7 +1,5 @@
-import {useQuery} from '@tanstack/react-query';
-import {dashboardApiService} from '@/apis/services/dashboard-api';
 import {MyCourse} from '@/apis';
-import {useRequiredAuth} from '@/contexts/RequiredAuthContext';
+import {useMyCourses} from '@/hooks/useCourseAccess';
 import {DashboardCourse} from '../types';
 
 const INSTRUCTOR_AVATAR_FALLBACK = '/icons/course/instructor.png';
@@ -39,30 +37,16 @@ export interface CourseListResult {
  * collapsing into `courses: []`.
  */
 export const useCourseList = (): CourseListResult => {
-  const {user} = useRequiredAuth();
-
-  const query = useQuery({
-    queryKey: ['dashboard', 'my-courses', user.id],
-    queryFn: async () => {
-      const response = await dashboardApiService.getMyCourses({state: 'Active'});
-      // A success envelope with no page object means the contract was broken.
-      // Treating it as "no courses" is exactly the false-empty PRIN-03 forbids.
-      if (!response.data?.items) {
-        throw new Error('Malformed response from /v2/me/courses: missing items');
-      }
-      return response.data.items.map(toDashboardCourse);
-    },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 5 * 60 * 1000,
-    retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-  });
+  const query = useMyCourses();
+  const courses = (query.data ?? [])
+    .filter(course => (course.state ?? course.status) === 'Active')
+    .map(toDashboardCourse);
 
   return {
-    courses: query.data ?? [],
+    courses,
     isLoading: query.isPending,
     isError: query.isError,
-    error: query.error,
+    error: query.error instanceof Error ? query.error : null,
     refetch: () => void query.refetch(),
   };
 };

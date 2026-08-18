@@ -5,6 +5,7 @@ import {Link, useParams} from 'react-router-dom';
 import type {GradingRosterItem, UpsertGradePayload} from '@/apis';
 import {unwrapData} from '@/apis';
 import {assignmentApiService} from '@/apis/services/assignment-api';
+import {useCourseAccess} from '@/hooks/useCourseAccess';
 import styles from './index.module.scss';
 
 type RosterFilter = 'All' | 'Ungraded' | 'Graded';
@@ -142,6 +143,7 @@ const AssignmentGradingPage = () => {
   const {courseId: courseParam, assignmentId: assignmentParam} = useParams();
   const courseId = parseId(courseParam);
   const assignmentId = parseId(assignmentParam);
+  const access = useCourseAccess(courseId);
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<RosterFilter>('All');
@@ -152,7 +154,7 @@ const AssignmentGradingPage = () => {
 
   const rosterQuery = useQuery({
     queryKey: ['assignment-grading-roster', courseId, assignmentId],
-    enabled: courseId !== null && assignmentId !== null,
+    enabled: courseId !== null && assignmentId !== null && access.isResolved && access.canGrade,
     queryFn: async () => unwrapData(
       await assignmentApiService.getGradingRoster(courseId!, assignmentId!),
       'getGradingRoster'
@@ -218,7 +220,24 @@ const AssignmentGradingPage = () => {
     return <div className={styles.status} role="alert">This grading link is invalid.</div>;
   }
 
-  if (rosterQuery.isLoading) {
+  if (access.isLoading) {
+    return <div className={styles.status}>Checking course permissions…</div>;
+  }
+
+  if (access.isError) {
+    return (
+      <div className={styles.status} role="alert">
+        <p>Course permissions couldn&apos;t be loaded.</p>
+        <button type="button" className={styles.primaryButton} onClick={access.refetch}>Try again</button>
+      </div>
+    );
+  }
+
+  if (!access.canGrade) {
+    return <div className={styles.status} role="alert">You don&apos;t have grading permission for this course.</div>;
+  }
+
+  if (rosterQuery.isLoading || rosterQuery.isPending) {
     return <div className={styles.status}>Loading grading roster…</div>;
   }
 
@@ -245,15 +264,19 @@ const AssignmentGradingPage = () => {
             <h1>{roster.assignmentTitle}</h1>
           </div>
         </div>
-        <button
-          type="button"
-          className={styles.primaryButton}
-          onClick={() => void releaseAll()}
-          disabled={isReleasing || roster.enteredCount === 0 || !roster.gradingWritable}
-        >
-          <CheckCircle2 size={18}/>
-          {isReleasing ? 'Releasing…' : `Release entered grades (${roster.enteredCount})`}
-        </button>
+        {access.canReleaseGrades ? (
+          <button
+            type="button"
+            className={styles.primaryButton}
+            onClick={() => void releaseAll()}
+            disabled={isReleasing || roster.enteredCount === 0 || !roster.gradingWritable}
+          >
+            <CheckCircle2 size={18}/>
+            {isReleasing ? 'Releasing…' : `Release entered grades (${roster.enteredCount})`}
+          </button>
+        ) : (
+          <p className={styles.taNotice}>TA access: grades can be entered, but only the Instructor can release them.</p>
+        )}
       </header>
 
       <section className={styles.metrics} aria-label="Grading summary">

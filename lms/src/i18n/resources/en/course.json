@@ -34,6 +34,7 @@
         "sunday": "Sunday"
     },
     "detail": {
+        "backToDashboard": "Back to dashboard",
         "students": "Students",
         "teacher": "Teacher",
         "assignments": "Assignments",
@@ -44,6 +45,7 @@
         "unitPlaceholder": "Unit",
         "manageGroup": "Manage group",
         "editCourse": "Edit course",
+        "manageContent": "Manage content",
         "courseSummary": "Course Summary",
         "weeklySummary": "Weekly Summary",
         "aiHelperHint": "Write, press 'space' for AI, / for commands.",
