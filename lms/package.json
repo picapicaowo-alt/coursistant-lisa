@@ -8,6 +8,7 @@
         "dev": "vite",
         "dev:mock-api": "node scripts/mock-lms-api.mjs",
         "build": "vite build",
+        "build:dev": "vite build --mode development",
         "lint": "eslint .",
         "preview": "vite preview",
         "vite:build": "vite build --mode production",
