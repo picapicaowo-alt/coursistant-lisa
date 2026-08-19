@@ -1,5 +1,9 @@
 ﻿# Frontend Architecture for Educational Management System
 
+> **Status:** Historical / aspirational design notes.  
+> **Current practice:** follow [`PROJECT_STANDARDS.md`](./PROJECT_STANDARDS.md).  
+> This file still describes useful normalized-store ideas, but the live app does **not** require Zod or Socket.io, and day-to-day work uses TanStack Query + page Zustand stores + `src/apis/*`.
+
 ## 1. Overview
 
 This document outlines the frontend architecture for a complex educational management system using modern state management patterns. The system manages courses, units, assignments, and student/teacher workflows with real-time collaboration features.
@@ -11,8 +15,8 @@ This document outlines the frontend architecture for a complex educational manag
 - **Server State**: React Query (TanStack Query)
 - **Build Tool**: Vite
 - **UI Framework**: React 18+
-- **Validation**: Zod
-- **Real-time**: WebSocket/Socket.io
+- **Validation**: (optional / not adopted repo-wide)
+- **Real-time**: (optional / not adopted repo-wide)
 
 ## 3. Core Principles
 

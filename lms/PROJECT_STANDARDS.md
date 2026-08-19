@@ -1,165 +1,226 @@
-# Project Standards Document
+# Project Standards
 
-## 1. Overview
+Living coding standards for **coursistant-lisa** (Coursistant LMS frontend).
 
-This document establishes comprehensive project standards for the LMS Frontend project based on the refactored implementation in the `src/pages/LmsHomePage/` directory. These standards define clear coding guidelines, component organization principles, and best practices to ensure consistency, maintainability, and scalability across the entire codebase.
+These rules started from the LmsHomePage / CourseWorkspacePage refactor guidelines and are extended for the current LMS v2 work (assignments, quiz, roster, notifications, AI workplace, Dev 8084).
 
-## 2. Component Structure
+**Canonical repo:** `https://github.com/picapicaowo-alt/coursistant-lisa`  
+**Related:** `ARCHITECTURE.md`, `STATE_MANAGEMENT.md`, and `API_STANDARDS.md` are historical design notes — prefer this file when they conflict with current code.
 
-### 2.1 Component Organization
-- **Container vs. Presentational Components**: Separate container components (handling logic) from presentational components (focused on UI)
-- **Widget-Based Architecture**: Adopt a modular widget-based approach where complex pages are composed of smaller, reusable widgets
-- **Single Responsibility Principle**: Each component should have a single, well-defined responsibility
-- **Component Size**: Keep components focused and concise; split large components into smaller, manageable pieces
+---
 
-### 2.2 Component Design
-- **Props Typing**: All component props must be properly typed using TypeScript interfaces
-- **Default Props**: Provide sensible default values for optional props
-- **Component Composition**: Favor composition over inheritance for building complex UIs
-- **Reusability**: Design components to be reusable across different parts of the application
-- **Lifecycle Management**: Use appropriate React hooks for lifecycle management and side effects
+## 1. Stack (required)
 
-## 3. Naming Conventions
+| Layer | Choice |
+|-------|--------|
+| UI | React 18 functional components + hooks |
+| Language | TypeScript (`.ts` / `.tsx`) |
+| Build | Vite 7 |
+| Server state | TanStack Query (`@tanstack/react-query`) |
+| Client / page state | Zustand (+ Immer where stores already use it) |
+| HTTP | Axios via `src/apis/api-client.ts` / `v2-api-client.ts` |
+| Routing | `react-router-dom` |
+| Styles | SCSS modules + design tokens (`src/styles/_tokens.scss`) + Tailwind utilities when needed |
+| Tests | Vitest + Testing Library |
+| i18n | `i18next` / `react-i18next` |
 
-### 3.1 File Naming
-- **Components**: Use PascalCase for component files (e.g., `Dashboard.tsx`)
-- **Hooks**: Use camelCase with `use` prefix for hook files (e.g., `useWidgetLayout.tsx`)
-- **Utilities**: Use camelCase for utility files (e.g., `layoutCalculations.ts`)
-- **Styles**: Use component name with `.module.scss` extension for SCSS modules (e.g., `Dashboard.module.scss`)
-- **Types**: Use `types.ts` for type definitions relevant to a specific directory
+Do **not** introduce new UI kits (e.g. do not start using MUI even though it may still be in `package.json`). Prefer existing SCSS modules and tokens.
 
-### 3.2 Naming Patterns
-- **Components**: Use descriptive, semantic names that reflect the component's purpose
-- **Hooks**: Use `use` prefix followed by a descriptive name of the hook's functionality
-- **Variables**: Use camelCase for variables and functions
-- **Constants**: Use UPPER_SNAKE_CASE for constants
-- **Types/Interfaces**: Use PascalCase for TypeScript interfaces and types
-- **CSS Classes**: Use kebab-case for CSS class names (e.g., `grid-layout-container`)
+---
 
-## 4. Folder Organization
+## 2. Component structure
 
-### 4.1 Directory Structure
+### 2.1 Organization
+
+- Prefer **container vs presentational** split for complex pages (logic in hooks/container; UI in focused components).
+- One responsibility per component; split when a file owns unrelated flows.
+- Page-local pieces stay under that page; shared pieces go in `src/components/`, `src/hooks/`, `src/utils/`.
+
+### 2.2 Reference layouts
+
+Good examples to copy:
+
+- `src/pages/LmsHomePage/` — widgets, page hooks, types, tests
+- `src/pages/CourseWorkspacePage/` — store slices, edit/view split, role-aware cards
+- `src/pages/RosterPage/` — page hook + row components + SCSS module + tests
+- `src/pages/AssignmentDetailPage/` — feature components colocated with tests
+
+### 2.3 Props and composition
+
+- Type props with TypeScript interfaces or type aliases (no PropTypes for new code).
+- Prefer composition over inheritance.
+- Keep optional props explicit; use `null` when “empty” is a real domain value.
+
+---
+
+## 3. Naming
+
+### 3.1 Files
+
+| Kind | Convention | Example |
+|------|------------|---------|
+| Components | PascalCase `.tsx` | `MemberRow.tsx` |
+| Hooks | `use` + camelCase | `useRoster.ts` |
+| Utils | camelCase `.ts` | `submissionState.ts` |
+| Styles | `Name.module.scss` | `index.module.scss` |
+| Tests | `*.test.ts(x)` next to source | `MemberRow.test.tsx` |
+| API services | `*-api.ts` under `apis/services/` | `quiz-api.ts` |
+| API types | domain file under `apis/types/` | `assignment.ts` |
+
+### 3.2 Symbols
+
+- Components / types / interfaces: PascalCase
+- Functions / variables: camelCase
+- Constants: UPPER_SNAKE_CASE when module-level fixed values
+- CSS module keys: camelCase in TS; keep selectors readable (avoid one-letter names)
+
+---
+
+## 4. Folder organization
+
 ```
 src/
+├── apis/
+│   ├── api-client.ts          # Axios client, refresh, errors
+│   ├── v2-api-client.ts
+│   ├── services/              # Domain API classes/functions
+│   └── types/                 # Request/Response/envelope types
 ├── pages/
-│   ├── PageName/
-│   │   ├── components/      # Reusable components specific to this page
-│   │   ├── hooks/           # Custom hooks specific to this page
-│   │   ├── utils/           # Utility functions specific to this page
-│   │   ├── constants.ts     # Constants specific to this page
-│   │   ├── types.ts         # Type definitions specific to this page
-│   │   ├── index.tsx        # Main page component
-│   │   └── styles.module.scss # Main page styles
-├── components/              # Global reusable components
-├── hooks/                   # Global custom hooks
-├── utils/                   # Global utility functions
-├── contexts/                # React contexts
-├── services/                # API services
-└── types/                   # Global type definitions
+│   └── PageName/
+│       ├── components/        # Page-only UI
+│       ├── hooks/             # Page-only hooks
+│       ├── stores/            # Page Zustand stores (when needed)
+│       ├── utils/
+│       ├── types.ts | types/
+│       ├── index.tsx
+│       └── *.module.scss
+├── components/                # Shared UI
+├── contexts/                  # Auth and other app-wide React context
+├── hooks/
+├── utils/
+├── styles/                    # Tokens and globals
+└── types/
 ```
 
-### 4.2 Folder Guidelines
-- **Page-Specific Components**: Components used only within a specific page should be placed in that page's `components/` directory
-- **Shared Components**: Components used across multiple pages should be placed in the global `components/` directory
-- **Hooks Organization**: Custom hooks should be organized by their functionality and scope (page-specific vs. global)
-- **Utility Functions**: Utility functions should be grouped by their purpose and scope
-- **Type Definitions**: Type definitions should be organized by their scope (page-specific vs. global)
+Legacy folders (`pages/chat`, `pages/profile`, `sections/chat`, …) may still be `.jsx`. **New work must not add `.jsx` / `.js` sources.** When you touch a legacy file for behavior, prefer converting it to `.tsx` in the same change if scope allows.
 
-## 5. State Management Approach
+---
 
-### 5.1 Local State
-- **useState Hook**: Use React's built-in `useState` hook for local component state
-- **State Initialization**: Initialize state with appropriate default values
-- **State Updates**: Use functional updates for complex state changes
-- **Derivative State**: Use `useMemo` for computationally expensive derived state
+## 5. State management
 
-### 5.2 Data Fetching and Caching
-- **React Query**: Use React Query for data fetching, caching, and state management
-- **Custom Hooks**: Encapsulate data fetching logic in custom hooks
-- **Error Handling**: Implement proper error handling for API requests
-- **Loading States**: Use React Suspense or loading states for asynchronous operations
-- **Cache Management**: Configure appropriate cache times and invalidation strategies
+### 5.1 Choose the right layer
 
-### 5.3 Global State
-- **Context API**: Use React's Context API for global state that needs to be accessed by multiple components
-- **State Scope**: Keep global state minimal and focused on application-wide concerns
-- **Performance Optimization**: Use `useMemo` and `useCallback` to optimize context consumers
+| Need | Use |
+|------|-----|
+| Server data (lists, detail, mutations) | TanStack Query + `apis/services/*` |
+| Auth session | `AuthContext` / existing auth helpers |
+| Complex page UI / draft / workspace mode | Zustand store colocated with the page |
+| Ephemeral local UI (open/closed, input) | `useState` |
 
-## 6. Code Style Guidelines
+### 5.2 Rules
 
-### 6.1 TypeScript Usage
-- **Type Definitions**: Define clear, descriptive interfaces for props, state, and data structures
-- **Type Inference**: Use TypeScript's type inference where appropriate, but explicitly define types for complex structures
-- **Nullable Types**: Use nullable types (`string | null`) instead of optional types when null is a valid value
-- **Union Types**: Use union types for values that can be one of several types
-- **Type Guards**: Implement type guards for runtime type checking when necessary
+- Do not call Axios directly from presentational components — go through API services (and usually a hook or query).
+- Invalidate or update Query caches after successful mutations that change shared lists.
+- Zustand stores that are module singletons must reset or re-key when the route entity changes (see CourseWorkspacePage mode reset on `courseId`).
+- Avoid duplicating the same server entity in both Query and Zustand unless there is a clear draft/edit reason.
 
-### 6.2 React Best Practices
-- **Functional Components**: Use functional components with hooks instead of class components
-- **Hooks Order**: Follow the recommended order for React hooks within components
-- **Custom Hooks**: Extract complex logic into custom hooks for reusability and clarity
-- **Memoization**: Use `React.memo`, `useMemo`, and `useCallback` for performance optimization
-- **Cleanup**: Properly clean up side effects in `useEffect` hooks
-- **Prop Drilling**: Avoid excessive prop drilling by using context or custom hooks
+Historical normalized-store designs in `STATE_MANAGEMENT.md` / `ARCHITECTURE.md` are optional inspiration, not mandatory for every page.
 
-### 6.3 Styling Guidelines
-- **SCSS Modules**: Use SCSS modules for component-specific styling
-- **BEM Convention**: Follow BEM (Block, Element, Modifier) principles for CSS class naming
-- **CSS Variables**: Use CSS variables for consistent theming
-- **Responsive Design**: Implement responsive design using CSS Grid, Flexbox, and media queries
-- **Performance**: Optimize CSS by removing unused styles and using efficient selectors
-- **Accessibility**: Ensure styles do not compromise accessibility (e.g., proper color contrast)
+---
 
-### 6.4 Import Organization
-- **Absolute Imports**: Use absolute imports with `@` alias for better maintainability
-- **Import Order**: Group imports by type (React, external libraries, internal components, styles)
-- **Named Imports**: Use named imports instead of default imports when possible
-- **Barrel Exports**: Use barrel exports for better import organization in larger directories
+## 6. API conventions
 
-## 7. Areas for Improvement in Existing Codebase
+### 6.1 Layout
 
-### 7.1 File Extension Consistency
-- **Issue**: Mix of `.jsx`, `.js`, and `.tsx` files across the codebase
-- **Impact**: Inconsistent tooling support and potential type safety issues
-- **Recommendation**: Standardize on `.tsx` for all React components and `.ts` for TypeScript files
+- Contracts: `src/apis/types/*` (`Request` / `Response` naming; mirror LMS v2)
+- Calls: `src/apis/services/*`
+- Shared envelope: `ApiResponse` in `apis/types` — treat `code === "SUCCESS"` (string), not numeric HTTP-only success
+- Writes that the backend supports: send `Idempotency-Key` via the shared helper when the endpoint requires it
 
-### 7.2 Naming Convention Inconsistencies
-- **Issue**: Mixed case in filenames (e.g., `creategroupmodal.jsx` vs `AutoAssignModal.jsx`)
-- **Impact**: Reduced code readability and maintainability
-- **Recommendation**: Enforce consistent PascalCase for component files and camelCase for other files
+### 6.2 Client behavior
 
-### 7.3 TypeScript Adoption
-- **Issue**: Many pages still use JavaScript instead of TypeScript
-- **Impact**: Lack of type safety, increased potential for runtime errors
-- **Recommendation**: Migrate all components to TypeScript and define proper type interfaces
+- Use the shared `ApiClient` (token attach, refresh coalescing, session-expired callback).
+- Prefer relative `/api` in Dev so 8084 same-origin proxy works; do not hardcode secrets or long-lived tokens into the bundle.
+- Never log access tokens, refresh material, passwords, or full auth payloads.
+- Binary download/preview: use authenticated blob helpers — do not put Bearer tokens in URLs.
 
-### 7.4 Folder Organization
-- **Issue**: Some pages have components directly in the page directory without clear separation of concerns
-- **Impact**: Reduced code organization and maintainability
-- **Recommendation**: Adopt the folder structure defined in Section 4 for all pages
+### 6.3 Errors and empty states
 
-### 7.5 Styling Approach
-- **Issue**: Mix of SCSS modules, regular SCSS, and CSS files
-- **Impact**: Inconsistent styling methodology and potential style conflicts
-- **Recommendation**: Standardize on SCSS modules for all component styling
+- Distinguish transport failure vs domain codes (`NOT_FOUND`, empty submission, etc.).
+- UI must show recoverable error + retry where the user can act; do not blank the shell.
 
-### 7.6 Custom Hook Usage
-- **Issue**: Direct API calls in components instead of using custom hooks
-- **Impact**: Reduced code reusability and testability
-- **Recommendation**: Extract data fetching logic into custom hooks following the pattern in LmsHomePage
+---
 
-### 7.7 State Management Strategy
-- **Issue**: Inconsistent approach to state management across pages
-- **Impact**: Increased complexity and reduced maintainability
-- **Recommendation**: Adopt the state management approach defined in Section 5 consistently across all pages
+## 7. TypeScript
 
-### 7.8 Component Structure
-- **Issue**: Some components are large and handle multiple responsibilities
-- **Impact**: Reduced code readability and maintainability
-- **Recommendation**: Refactor large components into smaller, focused components following the widget-based approach
+- New files: `.ts` / `.tsx` only.
+- Prefer explicit types on public function params, API payloads, and component props.
+- Avoid new `any` and `as any`. If unavoidable at a boundary, narrow ASAP and comment why.
+- `tsconfig` is not fully `strict` yet — **new code should still aim for strict-null-safe types** (`strictNullChecks` is on).
+- Do not add `@ts-nocheck` to new files.
 
-## 8. Conclusion
+---
 
-The project standards defined in this document are based on the successful refactoring of the LmsHomePage directory, which demonstrates best practices for component organization, state management, and code style. By adopting these standards across the entire codebase, the project will benefit from improved consistency, maintainability, and scalability.
+## 8. Styling
 
-These standards should be used as a reference for all new development and as a guide for refactoring existing pages and components. Regular reviews should be conducted to ensure adherence to these standards and to identify opportunities for further improvement.
+- Default: SCSS modules next to the component.
+- Use design tokens via the injected `t` namespace / CSS variables — do not invent one-off brand colors.
+- Tailwind is allowed for layout utilities; do not mix three competing systems in one component without reason.
+- Keep interactive affordances keyboard-reachable; do not rely on color alone for state.
+
+---
+
+## 9. Testing
+
+- Colocate `*.test.ts(x)` with the unit under test.
+- Prefer Testing Library queries that reflect user behavior.
+- Cover: API mappers/clients, role gating, critical mutations, and regression bugs you fixed.
+- Run `npm run test:run` before pushing risky UI; keep `npm run build` / `build:dev` green for deployable work.
+- Mock network at the API/mock-server boundary for UI tests — do not hit shared Dev DB from unit tests.
+
+---
+
+## 10. Security and privacy
+
+- No credentials, PEM keys, or `.env` secrets in git.
+- No shipping hardcoded API tokens or demo passwords in client code.
+- Strip sensitive bodies from debug logs.
+- Course-scoped capabilities beat global role checks for teaching controls when both exist.
+
+---
+
+## 11. Git and source of truth
+
+- **Only** develop against `coursistant-lisa`. Do not treat `bink44/lms-frontend` or personal forks as upstream.
+- Prefer small, imperative commit subjects: `feat:`, `fix:`, `test:`, `chore:`.
+- Do not commit local QA screenshots (`local-*.png`, `dev-8084-*.png`) unless explicitly requested.
+
+---
+
+## 12. Dev 8084
+
+- Review UI is built with `npm run build:dev` and deployed as static assets to the Dev host’s `coursistant-review-8084` release layout.
+- 8084 is **not** auto-deployed from GitHub. After merge-worthy work, build from this repo and deploy deliberately.
+- `/api` on 8084 proxies to the Dev LMS API (8081). Keep the frontend pointed at same-origin `/api` for review builds.
+
+---
+
+## 13. Known gaps (improve when you touch the area)
+
+1. **Legacy JSX** — chat, profile, settings, old roster/notification sections still `.jsx`.
+2. **ESLint** — currently configured for `*.{js,jsx}` only; extend to TypeScript when adding lint CI.
+3. **Dead dependencies** — remove unused UI libraries once confirmed unused.
+4. **Repository-wide `tsc`** — still fails on legacy hotspots (e.g. ChatContent); fix or quarantine rather than widening `any`.
+5. **Docs drift** — update this file when a new vertical (e.g. another LMS module) establishes a better pattern than the references above.
+
+---
+
+## 14. PR / change checklist
+
+- [ ] New UI is `.tsx` with typed props
+- [ ] API goes through `apis/services` + typed `apis/types`
+- [ ] Loading / empty / error states handled
+- [ ] Role or course capability respected
+- [ ] Tests added or updated for the behavior change
+- [ ] No secrets in logs or bundle
+- [ ] Styles use modules/tokens (no new ad-hoc global CSS dumps)

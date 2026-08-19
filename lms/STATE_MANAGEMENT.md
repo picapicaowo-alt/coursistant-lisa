@@ -1,5 +1,8 @@
 ﻿# **Layered Zustand Store Framework**
 
+> **Status:** Historical design deep-dive.  
+> **Current practice:** follow [`PROJECT_STANDARDS.md`](./PROJECT_STANDARDS.md) §5 (Query for server state; Zustand for page/workspace UI).
+
 ## **Overview**
 
 A scalable, type-safe state management architecture for React applications built on Zustand and Immer. This framework
