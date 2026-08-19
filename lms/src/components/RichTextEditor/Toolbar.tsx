@@ -18,6 +18,8 @@ import {
   Video,
 } from 'lucide-react';
 import styles from './index.module.scss';
+import MediaInsertDialog from './MediaInsertDialog';
+import type {MediaInsertKind} from './media';
 import {normalizeSafeUrl} from './url';
 
 interface ToolbarProps {
@@ -75,6 +77,7 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = ({label, hint, active, onCli
 const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = true, toggleToolbar}) => {
   const colorMenuRef = React.useRef<HTMLDetailsElement>(null);
   const insertMenuRef = React.useRef<HTMLDetailsElement>(null);
+  const [insertKind, setInsertKind] = React.useState<MediaInsertKind | null>(null);
 
   if (!editor || disabled) return null;
 
@@ -87,14 +90,6 @@ const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = tru
 
   const closeMenu = (ref: React.RefObject<HTMLDetailsElement | null>) => {
     if (ref.current) ref.current.open = false;
-  };
-
-  const requestUrl = (message: string, mediaOnly = false) => {
-    const value = window.prompt(message);
-    if (value === null) return null;
-    const url = normalizeSafeUrl(value, {mediaOnly, allowRelative: !mediaOnly});
-    if (!url) window.alert(mediaOnly ? 'Enter a valid HTTP or HTTPS URL.' : 'Enter a valid HTTP, HTTPS, email, or relative link.');
-    return url;
   };
 
   const toggleLink = () => {
@@ -121,37 +116,30 @@ const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = tru
     closeMenu(colorMenuRef);
   };
 
-  const insertImage = () => {
+  const openInsertDialog = (kind: MediaInsertKind) => {
     closeMenu(insertMenuRef);
-    const src = requestUrl('Image URL', true);
-    if (!src) return;
-    const alt = window.prompt('Image description (for accessibility)', '') ?? '';
-    editor.chain().focus().insertContent([
-      {type: 'richImage', attrs: {src, alt}},
-      {type: 'paragraph'},
-    ]).run();
+    setInsertKind(kind);
   };
 
-  const insertVideo = () => {
-    closeMenu(insertMenuRef);
-    const src = requestUrl('Direct video file URL (HTTP or HTTPS)', true);
-    if (!src) return;
-    editor.chain().focus().insertContent([
-      {type: 'richVideo', attrs: {src}},
-      {type: 'paragraph'},
-    ]).run();
-  };
-
-  const insertFile = () => {
-    closeMenu(insertMenuRef);
-    const href = requestUrl('File URL');
-    if (!href) return;
-    const label = window.prompt('File name', 'Download file')?.trim() || 'Download file';
-    editor.chain().focus().insertContent({
-      type: 'text',
-      text: label,
-      marks: [{type: 'link', attrs: {href, target: '_blank', rel: 'noopener noreferrer'}}],
-    }).run();
+  const insertUploadedMedia = (kind: MediaInsertKind, payload: {url: string; name: string}) => {
+    if (kind === 'image') {
+      editor.chain().focus().insertContent([
+        {type: 'richImage', attrs: {src: payload.url, alt: payload.name}},
+        {type: 'paragraph'},
+      ]).run();
+    } else if (kind === 'video') {
+      editor.chain().focus().insertContent([
+        {type: 'richVideo', attrs: {src: payload.url}},
+        {type: 'paragraph'},
+      ]).run();
+    } else {
+      editor.chain().focus().insertContent({
+        type: 'text',
+        text: payload.name,
+        marks: [{type: 'link', attrs: {href: payload.url, target: '_blank', rel: 'noopener noreferrer'}}],
+      }).run();
+    }
+    setInsertKind(null);
   };
 
   const insertDivider = () => {
@@ -161,6 +149,13 @@ const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = tru
 
   return (
     <div className={styles.toolbarContainer} aria-label="Text formatting toolbar">
+      {insertKind ? (
+        <MediaInsertDialog
+          kind={insertKind}
+          onClose={() => setInsertKind(null)}
+          onInsert={payload => insertUploadedMedia(insertKind, payload)}
+        />
+      ) : null}
       {toolbarVisible ? (
         <>
           <div className={styles.toolbarGroup}>
@@ -251,9 +246,9 @@ const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = tru
             <details className={styles.toolbarMenu} ref={insertMenuRef}>
               <summary className={styles.insertButton}>Insert <ChevronDown size={14}/></summary>
               <div className={styles.insertMenu}>
-                <button type="button" onClick={insertImage}><ImagePlus size={16}/>Image</button>
-                <button type="button" onClick={insertVideo}><Video size={16}/>Video</button>
-                <button type="button" onClick={insertFile}><FilePlus2 size={16}/>File</button>
+                <button type="button" onClick={() => openInsertDialog('image')}><ImagePlus size={16}/>Image</button>
+                <button type="button" onClick={() => openInsertDialog('video')}><Video size={16}/>Video</button>
+                <button type="button" onClick={() => openInsertDialog('file')}><FilePlus2 size={16}/>File</button>
                 <button type="button" onClick={insertDivider}><Minus size={16}/>Divider</button>
               </div>
             </details>

@@ -1,3 +1,5 @@
+import {isSafeDataUrl} from './media';
+
 const HTTP_PROTOCOLS = new Set(['http:', 'https:']);
 const LINK_PROTOCOLS = new Set([...HTTP_PROTOCOLS, 'mailto:']);
 
@@ -13,6 +15,8 @@ export const normalizeSafeUrl = (
 ): string | null => {
   const prepared = prepareUrl(value);
   if (!prepared) return null;
+
+  if (isSafeDataUrl(prepared, options.mediaOnly)) return prepared;
 
   if (options.allowRelative && (/^\/(?!\/)/.test(prepared) || /^#[\w-]+$/.test(prepared))) {
     return prepared;

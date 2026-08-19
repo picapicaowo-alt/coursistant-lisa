@@ -1,0 +1,111 @@
+.backdrop {
+    position: fixed;
+    z-index: 1300;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: t.$modal-backdrop;
+    backdrop-filter: blur(t.$modal-backdrop-blur);
+}
+
+.dialog {
+    display: grid;
+    width: min(28rem, 100%);
+    gap: 0.85rem;
+    padding: 1.25rem 1.35rem 1.15rem;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-modal;
+    background: t.$card-bg;
+    box-shadow: t.$shadow-card;
+}
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.title {
+    color: t.$text;
+    font-size: t.$fs-item-title;
+    font-weight: t.$fw-bold;
+}
+
+.closeButton {
+    color: t.$text-muted;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.zones {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.zone {
+    display: grid;
+    min-height: 7.25rem;
+    place-items: center;
+    padding: 1rem;
+    border: 1.5px dashed t.$border;
+    border-radius: t.$radius-control;
+    background: t.$subcard-bg;
+    color: t.$text-muted;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+
+    &:hover,
+    &:focus-visible {
+        outline: none;
+        border-color: t.$brand;
+        background: t.$brand-subtle;
+        color: t.$text;
+    }
+
+    &:disabled {
+        cursor: wait;
+        opacity: 0.65;
+    }
+}
+
+.zoneDragging {
+    border-color: t.$brand;
+    border-style: solid;
+    background: t.$brand-subtle;
+    color: t.$text;
+}
+
+.zoneLabel {
+    margin-top: 0.45rem;
+    color: t.$text;
+    font-size: t.$fs-label;
+    font-weight: t.$fw-semibold;
+}
+
+.zoneHint {
+    margin-top: 0.2rem;
+    color: t.$text-muted;
+    font-size: t.$fs-caption;
+}
+
+.fileInput {
+    display: none;
+}
+
+.status {
+    min-height: 1.2rem;
+    color: t.$text-muted;
+    font-size: t.$fs-caption;
+}
+
+.error {
+    color: t.$danger;
+}
+
+.busy {
+    color: t.$brand;
+}

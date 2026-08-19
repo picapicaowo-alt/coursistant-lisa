@@ -4,6 +4,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import {Markdown} from 'tiptap-markdown';
 import {BlankNode} from './extensions/BlankNode';
 import {RichImage, RichVideo, TextColor} from './extensions/RichContent';
+import {isSafeDataUrl} from './media';
 import styles from './index.module.scss';
 
 // StarterKit binds Mod-* shortcuts for marks and headings but ships none for lists.
@@ -23,6 +24,11 @@ export const createEditorExtensions = (options: {placeholder: string; disabled: 
     heading: {levels: [1, 2, 3]},
     link: {
       openOnClick: options.disabled,
+      isAllowedUri: (url, ctx) => {
+        if (!url) return true;
+        if (isSafeDataUrl(url)) return true;
+        return ctx.defaultValidate(url);
+      },
       HTMLAttributes: {
         class: styles.link,
         rel: 'noopener noreferrer',
