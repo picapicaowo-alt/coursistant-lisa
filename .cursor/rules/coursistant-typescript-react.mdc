@@ -1,0 +1,43 @@
+---
+description: TypeScript and React patterns for maintained LMS modules
+globs: lms/src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# TypeScript + React (maintained code)
+
+## Structure
+
+- Page-local UI → `pages/PageName/components/`
+- Data fetching → custom hook or TanStack Query in `pages/PageName/hooks/`
+- API → `apis/services/*-api.ts` + `apis/types/*`
+
+## Types
+
+- Props and API payloads must be typed; avoid new `any`.
+- Use `unwrapData(response, 'context')` for LMS v2 envelopes (`code === "SUCCESS"`).
+- Send `Idempotency-Key` on writes when the backend contract requires it.
+
+## Examples
+
+```typescript
+// API call in a page hook — not in presentational components
+const {data} = useSuspenseQuery({
+  queryKey: ['course', courseId, 'weeks'],
+  queryFn: async () => unwrapData(await courseApiService.getWeeks(courseId), 'getWeeks'),
+});
+```
+
+```typescript
+// Component props
+interface MemberRowProps {
+  member: CourseMember;
+  canManage: boolean;
+  onPromote: (userId: number) => void;
+}
+```
+
+## Tests
+
+- Colocate `Component.test.tsx` next to `Component.tsx`.
+- Mock at the API client/service boundary, not axios inside components.

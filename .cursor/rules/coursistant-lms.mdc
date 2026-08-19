@@ -1,0 +1,36 @@
+---
+description: Coursistant LMS frontend — canonical repo, stack, and scope rules
+alwaysApply: true
+---
+
+# Coursistant LMS frontend
+
+- **Canonical repo:** https://github.com/picapicaowo-alt/coursistant-lisa
+- **App root:** `lms/`
+- **Standards doc:** `lms/PROJECT_STANDARDS.md` — read before editing frontend code.
+
+## Do
+
+- Use React 18 + TypeScript (`.ts` / `.tsx`) for all **new** code.
+- Route API calls through `src/apis/services/*` and types in `src/apis/types/*`.
+- Use TanStack Query for server state; Zustand only for page/workspace UI state.
+- Colocate `*.test.ts(x)` with the unit under test.
+- Run `npm run typecheck` and `npm run lint` in `lms/` before pushing.
+
+## Do not
+
+- Add new `.jsx` / `.js` source files.
+- Point remotes at `bink44/lms-frontend` or personal forks.
+- Introduce MUI or other new UI kits.
+- Commit QA screenshots (`local-*.png`, `dev-8084-*.png`) unless asked.
+- Rewrite legacy chat/profile JSX unless the task explicitly scopes that migration.
+
+## Legacy quarantine
+
+Do not “fix” these for style only — migrate or replace in a dedicated task:
+
+- `src/components/ChatContent.tsx`
+- `src/pages/DetailWorkspacePage/**` (v1 assignment shell)
+- `src/**/*.jsx` under chat, profile, settings, old roster
+
+Legacy `// @ts-nocheck` files are quarantined until migration — do not expand them.
