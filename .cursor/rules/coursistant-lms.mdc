@@ -1,36 +1,39 @@
 ---
-description: Coursistant LMS frontend — canonical repo, stack, and scope rules
+description: Coursistant LMS frontend — subfolder canonical repo, stack, and scope rules
 alwaysApply: true
 ---
 
-# Coursistant LMS frontend
+# Coursistant LMS Frontend (Subfolder Rules)
 
-- **Canonical repo:** https://github.com/picapicaowo-alt/coursistant-lisa
+- **Canonical repo:** `https://github.com/picapicaowo-alt/coursistant-lisa`
 - **App root:** `lms/`
 - **Standards doc:** `lms/PROJECT_STANDARDS.md` — read before editing frontend code.
 
-## Do
+## 1. Stack & Development Rules
+- **Language:** React 18 + TypeScript (`.ts` / `.tsx`) for all **new** code.
+- **Server State:** TanStack Query (`@tanstack/react-query`) + API services in `src/apis/services/*`.
+- **Client State:** Zustand only for complex page/workspace UI state.
+- **Styles:** SCSS modules with design tokens (`src/styles/_tokens.scss`).
+- **Tests:** Colocate `*.test.ts(x)` with unit under test using Vitest + Testing Library.
+- **Verification:** Run `npm run typecheck` and `npm run lint` in `lms/` before committing.
 
-- Use React 18 + TypeScript (`.ts` / `.tsx`) for all **new** code.
-- Route API calls through `src/apis/services/*` and types in `src/apis/types/*`.
-- Use TanStack Query for server state; Zustand only for page/workspace UI state.
-- Colocate `*.test.ts(x)` with the unit under test.
-- Run `npm run typecheck` and `npm run lint` in `lms/` before pushing.
+## 2. Strict Prohibitions
+- Do NOT add new `.jsx` / `.js` source files.
+- Do NOT point remotes at `bink44/lms-frontend` or personal forks.
+- Do NOT introduce MUI or other new UI kits.
+- Do NOT commit QA screenshots (`local-*.png`, `dev-8084-*.png`) unless asked.
+- Do NOT rewrite legacy chat/profile JSX unless explicitly scoped for migration.
 
-## Do not
-
-- Add new `.jsx` / `.js` source files.
-- Point remotes at `bink44/lms-frontend` or personal forks.
-- Introduce MUI or other new UI kits.
-- Commit QA screenshots (`local-*.png`, `dev-8084-*.png`) unless asked.
-- Rewrite legacy chat/profile JSX unless the task explicitly scopes that migration.
-
-## Legacy quarantine
-
-Do not “fix” these for style only — migrate or replace in a dedicated task:
-
+## 3. Legacy Quarantine
+Quarantined files — do not "fix" for style only; migrate in dedicated tasks:
 - `src/components/ChatContent.tsx`
 - `src/pages/DetailWorkspacePage/**` (v1 assignment shell)
 - `src/**/*.jsx` under chat, profile, settings, old roster
+- Legacy files with `// @ts-nocheck` are quarantined — do not expand them.
 
-Legacy `// @ts-nocheck` files are quarantined until migration — do not expand them.
+## 4. Security & PR Checklist
+- [ ] No secrets, credentials, or tokens in git.
+- [ ] New UI is `.tsx` with typed props.
+- [ ] API calls routed through `apis/services` + typed `apis/types`.
+- [ ] Loading, error, and empty states properly handled.
+- [ ] Unit tests added/updated and passing.

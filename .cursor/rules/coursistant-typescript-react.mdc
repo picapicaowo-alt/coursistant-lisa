@@ -1,35 +1,54 @@
 ---
-description: TypeScript and React patterns for maintained LMS modules
+description: TypeScript and React coding standards for maintained LMS modules
 globs: lms/src/**/*.{ts,tsx}
 alwaysApply: false
 ---
 
-# TypeScript + React (maintained code)
+# Coursistant TypeScript + React Standards
 
-## Structure
+## 1. Component Architecture & Organization
+- **Container vs Presentational split:** Logic in hooks/containers; pure UI in focused presentational components.
+- **Single Responsibility:** One responsibility per component; split when a file owns unrelated flows.
+- **Colocation:** Page-only UI in `pages/PageName/components/`, page hooks in `pages/PageName/hooks/`, page stores in `pages/PageName/stores/`.
+- **Shared Code:** Reusable pieces belong in `src/components/`, `src/hooks/`, `src/utils/`, `src/apis/`.
 
-- Page-local UI → `pages/PageName/components/`
-- Data fetching → custom hook or TanStack Query in `pages/PageName/hooks/`
-- API → `apis/services/*-api.ts` + `apis/types/*`
+## 2. Naming Conventions
+- **Components:** PascalCase `.tsx` (e.g. `MemberRow.tsx`)
+- **Hooks:** `use` + camelCase `.ts` (e.g. `useCourseAccess.ts`)
+- **Utils:** camelCase `.ts` (e.g. `submissionState.ts`)
+- **Styles:** `ComponentName.module.scss` or `index.module.scss`
+- **Tests:** `ComponentName.test.tsx` colocated next to source file
+- **API Services:** `*-api.ts` under `src/apis/services/`
+- **API Types:** `*.ts` under `src/apis/types/`
 
-## Types
+## 3. TypeScript Rules
+- All new files must be `.ts` / `.tsx`.
+- Type all component props with TypeScript `interface` or `type` (no PropTypes).
+- Avoid `any` or `as any`. When narrowing at boundaries, add clear comments.
+- Do not add `@ts-nocheck` to new files.
+- Ensure strict null safety (`strictNullChecks`).
 
-- Props and API payloads must be typed; avoid new `any`.
-- Use `unwrapData(response, 'context')` for LMS v2 envelopes (`code === "SUCCESS"`).
-- Send `Idempotency-Key` on writes when the backend contract requires it.
+## 4. State Management Guidelines
+- **Server Data:** TanStack Query (`@tanstack/react-query`) + `apis/services/*`. Invalidate/update cache on mutations.
+- **Global Auth:** `AuthContext` / `useAuth()`.
+- **Complex Page / Draft State:** Colocated Zustand store. Reset/re-key singleton stores when route parameters (like `courseId`) change.
+- **Local Ephemeral UI:** `useState` / `useReducer`.
+- Avoid duplicating server data in both Query and Zustand without clear draft/edit requirements.
 
-## Examples
+## 5. API & Data Flow
+- Request/Response types in `src/apis/types/*`.
+- Use shared envelope `ApiResponse<T>`: check `code === "SUCCESS"` via `unwrapData(res, 'context')`.
+- Send `Idempotency-Key` via shared helpers when supported/required by mutation endpoints.
+- UI must handle loading, empty, and error states gracefully with user-actionable retries.
 
 ```typescript
-// API call in a page hook — not in presentational components
-const {data} = useSuspenseQuery({
+// Example API query in custom hook
+const { data, isLoading } = useQuery({
   queryKey: ['course', courseId, 'weeks'],
   queryFn: async () => unwrapData(await courseApiService.getWeeks(courseId), 'getWeeks'),
 });
-```
 
-```typescript
-// Component props
+// Example typed component props
 interface MemberRowProps {
   member: CourseMember;
   canManage: boolean;
@@ -37,7 +56,13 @@ interface MemberRowProps {
 }
 ```
 
-## Tests
+## 6. Styling Standards
+- Default to SCSS modules next to the component (`styles.module.scss`).
+- Use design tokens (`src/styles/_tokens.scss`) or CSS variables (`var(--color-primary)`). Do NOT invent ad-hoc brand colors.
+- Ensure interactive elements are keyboard-accessible with visible `:focus-visible` rings.
 
-- Colocate `Component.test.tsx` next to `Component.tsx`.
-- Mock at the API client/service boundary, not axios inside components.
+## 7. Testing Requirements
+- Colocate `*.test.ts(x)` with the component or utility under test.
+- Use Testing Library queries simulating user interactions (`userEvent`).
+- Mock at the API client/service boundary, never raw Axios inside components.
+- Keep `npm run test:run` and `npm run typecheck` green.

@@ -1,6 +1,6 @@
 import {FormEvent, useEffect, useState} from 'react';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import {EyeSlash} from 'iconsax-react';
+import {Eye, EyeOff} from 'lucide-react';
 import styles from './styles.module.scss';
 import type {UpdateProfileRequest} from '@/apis';
 import {unwrapData} from '@/apis';
@@ -27,6 +27,7 @@ const SettingsPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [status, setStatus] = useState<StatusMessage | null>(null);
   const queryClient = useQueryClient();
   const {updateProfile} = useAuth();
@@ -168,61 +169,74 @@ const SettingsPage = () => {
           <h3 className={styles.generalTitle}>Password</h3>
           <p className={styles.generalSubtitle}>Use at least 8 characters with both a letter and a number.</p>
           <form className={styles.generalForm} onSubmit={submitPassword}>
-            <div className={styles.inputGroup}>
-              <label htmlFor="currentPassword">Current password</label>
-              <div className={styles.inputIconLeft}>
-                <button
-                  type="button"
-                  className={styles.passwordToggle}
-                  aria-label={showOldPassword ? 'Hide current password' : 'Show current password'}
-                  onClick={() => setShowOldPassword(value => !value)}
-                >
-                  <EyeSlash size={20}/>
-                </button>
-                <input
-                  id="currentPassword"
-                  type={showOldPassword ? 'text' : 'password'}
-                  value={currentPassword}
-                  onChange={event => setCurrentPassword(event.target.value)}
-                  required
-                  autoComplete="current-password"
-                />
+              <div className={styles.inputGroup}>
+                <label htmlFor="currentPassword">Current password</label>
+                <div className={styles.passwordInputWrapper}>
+                  <input
+                    id="currentPassword"
+                    type={showOldPassword ? 'text' : 'password'}
+                    value={currentPassword}
+                    onChange={event => setCurrentPassword(event.target.value)}
+                    required
+                    autoComplete="current-password"
+                    placeholder="Enter current password"
+                  />
+                  <button
+                    type="button"
+                    className={styles.passwordToggle}
+                    aria-label={showOldPassword ? 'Hide current password' : 'Show current password'}
+                    onClick={() => setShowOldPassword(value => !value)}
+                  >
+                    {showOldPassword ? <EyeOff size={18}/> : <Eye size={18}/>}
+                  </button>
+                </div>
               </div>
-            </div>
-            <div className={styles.inputGroup}>
-              <label htmlFor="newPassword">New password</label>
-              <div className={styles.inputIconLeft}>
-                <button
-                  type="button"
-                  className={styles.passwordToggle}
-                  aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
-                  onClick={() => setShowNewPassword(value => !value)}
-                >
-                  <EyeSlash size={20}/>
-                </button>
-                <input
-                  id="newPassword"
-                  type={showNewPassword ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={event => setNewPassword(event.target.value)}
-                  required
-                  minLength={8}
-                  autoComplete="new-password"
-                />
+              <div className={styles.inputGroup}>
+                <label htmlFor="newPassword">New password</label>
+                <div className={styles.passwordInputWrapper}>
+                  <input
+                    id="newPassword"
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={event => setNewPassword(event.target.value)}
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                    placeholder="Enter new password"
+                  />
+                  <button
+                    type="button"
+                    className={styles.passwordToggle}
+                    aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
+                    onClick={() => setShowNewPassword(value => !value)}
+                  >
+                    {showNewPassword ? <EyeOff size={18}/> : <Eye size={18}/>}
+                  </button>
+                </div>
               </div>
-            </div>
-            <div className={styles.inputGroup}>
-              <label htmlFor="confirmPassword">Confirm new password</label>
-              <input
-                id="confirmPassword"
-                type={showNewPassword ? 'text' : 'password'}
-                value={confirmPassword}
-                onChange={event => setConfirmPassword(event.target.value)}
-                required
-                minLength={8}
-                autoComplete="new-password"
-              />
-            </div>
+              <div className={styles.inputGroup}>
+                <label htmlFor="confirmPassword">Confirm new password</label>
+                <div className={styles.passwordInputWrapper}>
+                  <input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={event => setConfirmPassword(event.target.value)}
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                    placeholder="Confirm new password"
+                  />
+                  <button
+                    type="button"
+                    className={styles.passwordToggle}
+                    aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                    onClick={() => setShowConfirmPassword(value => !value)}
+                  >
+                    {showConfirmPassword ? <EyeOff size={18}/> : <Eye size={18}/>}
+                  </button>
+                </div>
+              </div>
             <button type="submit" className={styles.primaryButton} disabled={changePassword.isPending}>
               {changePassword.isPending ? 'Updating…' : 'Update password'}
             </button>

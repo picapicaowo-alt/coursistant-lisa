@@ -78,4 +78,37 @@ describe('SettingsPage', () => {
       });
     });
   });
+
+  it('toggles password visibility for all password fields', async () => {
+    renderPage();
+    await screen.findByLabelText('Display name');
+    await userEvent.click(screen.getByRole('tab', {name: 'Password'}));
+
+    const currentInput = screen.getByLabelText('Current password');
+    const newInput = screen.getByLabelText('New password');
+    const confirmInput = screen.getByLabelText('Confirm new password');
+
+    expect(currentInput).toHaveAttribute('type', 'password');
+    expect(newInput).toHaveAttribute('type', 'password');
+    expect(confirmInput).toHaveAttribute('type', 'password');
+
+    const toggleCurrent = screen.getByRole('button', {name: 'Show current password'});
+    const toggleNew = screen.getByRole('button', {name: 'Show new password'});
+    const toggleConfirm = screen.getByRole('button', {name: 'Show confirm password'});
+
+    await userEvent.click(toggleCurrent);
+    expect(currentInput).toHaveAttribute('type', 'text');
+    expect(screen.getByRole('button', {name: 'Hide current password'})).toBeInTheDocument();
+
+    await userEvent.click(toggleNew);
+    expect(newInput).toHaveAttribute('type', 'text');
+    expect(screen.getByRole('button', {name: 'Hide new password'})).toBeInTheDocument();
+
+    await userEvent.click(toggleConfirm);
+    expect(confirmInput).toHaveAttribute('type', 'text');
+    expect(screen.getByRole('button', {name: 'Hide confirm password'})).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', {name: 'Hide current password'}));
+    expect(currentInput).toHaveAttribute('type', 'password');
+  });
 });
