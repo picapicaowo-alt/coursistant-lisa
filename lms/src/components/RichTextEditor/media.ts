@@ -15,6 +15,8 @@ const FILE_EXTENSIONS = new Set([
   'xls',
   'xlsx',
   'zip',
+  'txt',
+  'csv',
 ]);
 
 const IMAGE_MIME = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp']);
@@ -31,47 +33,26 @@ const FILE_MIME = new Set([
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'application/zip',
   'application/x-zip-compressed',
+  'text/plain',
+  'text/csv',
 ]);
 
 export const SAFE_MEDIA_DATA_MIME = new Set([...IMAGE_MIME, ...VIDEO_MIME]);
 export const SAFE_FILE_DATA_MIME = new Set([...FILE_MIME]);
 
-export const MEDIA_INSERT_COPY: Record<MediaInsertKind, {
-  title: string;
-  accept: string;
-  chooseLabel: string;
-  chooseHint: string;
-  dropLabel: string;
-  dropHint: string;
-  typeError: string;
-}> = {
-  image: {
-    title: 'Insert image',
-    accept: 'image/png,image/jpeg,image/gif,image/webp,.png,.jpg,.jpeg,.gif,.webp',
-    chooseLabel: 'Choose files',
-    chooseHint: 'Opens a file picker so you can select an image from your computer.',
-    dropLabel: 'Drag files here',
-    dropHint: 'Drop an image into this box to insert it.',
-    typeError: 'Choose a PNG, JPEG, GIF, or WebP image.',
-  },
-  video: {
-    title: 'Insert video',
-    accept: 'video/mp4,video/webm,video/ogg,.mp4,.webm,.ogg',
-    chooseLabel: 'Choose files',
-    chooseHint: 'Opens a file picker so you can select a video from your computer.',
-    dropLabel: 'Drag files here',
-    dropHint: 'Drop a video into this box to insert it.',
-    typeError: 'Choose an MP4, WebM, or OGG video.',
-  },
-  file: {
-    title: 'Insert file',
-    accept: '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,image/png,image/jpeg,image/gif,image/webp',
-    chooseLabel: 'Choose files',
-    chooseHint: 'Opens a file picker so you can select a file from your computer.',
-    dropLabel: 'Drag files here',
-    dropHint: 'Drop a file into this box to insert a download link.',
-    typeError: 'Choose a PDF, Office document, ZIP, or image.',
-  },
+export const MEDIA_INSERT_COPY = {
+  title: 'Insert file',
+  accept: [
+    'image/png,image/jpeg,image/gif,image/webp',
+    'video/mp4,video/webm,video/ogg',
+    '.png,.jpg,.jpeg,.gif,.webp,.mp4,.webm,.ogg',
+    '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.txt,.csv',
+  ].join(','),
+  chooseLabel: 'Choose files',
+  chooseHint: 'Opens a file picker so you can select an image or file from your computer.',
+  dropLabel: 'Drag files here',
+  dropHint: 'Drop an image or file into this box to insert it.',
+  typeError: 'Choose an image, video, PDF, Office document, ZIP, or text file.',
 };
 
 export const extensionOf = (filename: string) => {
@@ -80,27 +61,17 @@ export const extensionOf = (filename: string) => {
   return filename.slice(dot + 1).toLowerCase();
 };
 
-const mimeForKind = (kind: MediaInsertKind) => {
-  if (kind === 'image') return IMAGE_MIME;
-  if (kind === 'video') return VIDEO_MIME;
-  return FILE_MIME;
-};
-
-const extensionForKind = (kind: MediaInsertKind) => {
-  if (kind === 'image') return IMAGE_EXTENSIONS;
-  if (kind === 'video') return VIDEO_EXTENSIONS;
-  return FILE_EXTENSIONS;
-};
-
-const inferredMime = (file: File, kind: MediaInsertKind): string | null => {
+const inferredMime = (file: File): string | null => {
   const type = file.type.toLowerCase();
-  if (mimeForKind(kind).has(type)) return type === 'image/jpg' ? 'image/jpeg' : type;
+  if (FILE_MIME.has(type)) return type === 'image/jpg' ? 'image/jpeg' : type;
   const extension = extensionOf(file.name);
-  if (!extensionForKind(kind).has(extension)) return null;
+  if (!FILE_EXTENSIONS.has(extension)) return null;
   if (IMAGE_EXTENSIONS.has(extension)) return extension === 'jpg' ? 'image/jpeg' : `image/${extension}`;
   if (VIDEO_EXTENSIONS.has(extension)) return `video/${extension}`;
   if (extension === 'pdf') return 'application/pdf';
   if (extension === 'zip') return 'application/zip';
+  if (extension === 'txt') return 'text/plain';
+  if (extension === 'csv') return 'text/csv';
   if (extension === 'docx') return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
   if (extension === 'pptx') return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
   if (extension === 'xlsx') return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -110,14 +81,21 @@ const inferredMime = (file: File, kind: MediaInsertKind): string | null => {
   return null;
 };
 
-export const validateEditorFile = (file: File, kind: MediaInsertKind): string | null => {
+export const insertKindFromMime = (mime: string): MediaInsertKind => {
+  const normalized = mime.toLowerCase();
+  if (IMAGE_MIME.has(normalized)) return 'image';
+  if (VIDEO_MIME.has(normalized)) return 'video';
+  return 'file';
+};
+
+export const validateEditorFile = (file: File): string | null => {
   if (file.size > MAX_EDITOR_FILE_BYTES) {
     return 'Choose a file smaller than 8 MB.';
   }
-  return inferredMime(file, kind) ? null : MEDIA_INSERT_COPY[kind].typeError;
+  return inferredMime(file) ? null : MEDIA_INSERT_COPY.typeError;
 };
 
-export const mimeForEditorFile = (file: File, kind: MediaInsertKind): string | null => inferredMime(file, kind);
+export const mimeForEditorFile = (file: File): string | null => inferredMime(file);
 
 export const isSafeDataUrl = (value: string, mediaOnly = false): boolean => {
   if (!value.startsWith('data:')) return false;

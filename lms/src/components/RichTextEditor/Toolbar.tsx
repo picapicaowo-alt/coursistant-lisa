@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import styles from './index.module.scss';
 import MediaInsertDialog from './MediaInsertDialog';
-import type {MediaInsertKind} from './media';
+import type {MediaInsertPayload} from './MediaInsertDialog';
 import {normalizeSafeUrl} from './url';
 
 interface ToolbarProps {
@@ -77,7 +77,7 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = ({label, hint, active, onCli
 const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = true, toggleToolbar}) => {
   const colorMenuRef = React.useRef<HTMLDetailsElement>(null);
   const insertMenuRef = React.useRef<HTMLDetailsElement>(null);
-  const [insertKind, setInsertKind] = React.useState<MediaInsertKind | null>(null);
+  const [insertOpen, setInsertOpen] = React.useState(false);
 
   if (!editor || disabled) return null;
 
@@ -116,18 +116,18 @@ const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = tru
     closeMenu(colorMenuRef);
   };
 
-  const openInsertDialog = (kind: MediaInsertKind) => {
+  const openInsertDialog = () => {
     closeMenu(insertMenuRef);
-    setInsertKind(kind);
+    setInsertOpen(true);
   };
 
-  const insertUploadedMedia = (kind: MediaInsertKind, payload: {url: string; name: string}) => {
-    if (kind === 'image') {
+  const insertUploadedMedia = (payload: MediaInsertPayload) => {
+    if (payload.kind === 'image') {
       editor.chain().focus().insertContent([
         {type: 'richImage', attrs: {src: payload.url, alt: payload.name}},
         {type: 'paragraph'},
       ]).run();
-    } else if (kind === 'video') {
+    } else if (payload.kind === 'video') {
       editor.chain().focus().insertContent([
         {type: 'richVideo', attrs: {src: payload.url}},
         {type: 'paragraph'},
@@ -139,7 +139,7 @@ const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = tru
         marks: [{type: 'link', attrs: {href: payload.url, target: '_blank', rel: 'noopener noreferrer'}}],
       }).run();
     }
-    setInsertKind(null);
+    setInsertOpen(false);
   };
 
   const insertDivider = () => {
@@ -149,11 +149,10 @@ const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = tru
 
   return (
     <div className={styles.toolbarContainer} aria-label="Text formatting toolbar">
-      {insertKind ? (
+      {insertOpen ? (
         <MediaInsertDialog
-          kind={insertKind}
-          onClose={() => setInsertKind(null)}
-          onInsert={payload => insertUploadedMedia(insertKind, payload)}
+          onClose={() => setInsertOpen(false)}
+          onInsert={insertUploadedMedia}
         />
       ) : null}
       {toolbarVisible ? (
@@ -246,9 +245,9 @@ const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = tru
             <details className={styles.toolbarMenu} ref={insertMenuRef}>
               <summary className={styles.insertButton}>Insert <ChevronDown size={14}/></summary>
               <div className={styles.insertMenu}>
-                <button type="button" onClick={() => openInsertDialog('image')}><ImagePlus size={16}/>Image</button>
-                <button type="button" onClick={() => openInsertDialog('video')}><Video size={16}/>Video</button>
-                <button type="button" onClick={() => openInsertDialog('file')}><FilePlus2 size={16}/>File</button>
+                <button type="button" onClick={openInsertDialog}><ImagePlus size={16}/>Image</button>
+                <button type="button" onClick={openInsertDialog}><Video size={16}/>Video</button>
+                <button type="button" onClick={openInsertDialog}><FilePlus2 size={16}/>File</button>
                 <button type="button" onClick={insertDivider}><Minus size={16}/>Divider</button>
               </div>
             </details>

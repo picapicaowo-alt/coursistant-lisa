@@ -20,15 +20,19 @@ afterEach(() => {
 });
 
 describe('RichTextEditor insert menu', () => {
-  it('opens the upload dialog instead of an Image URL prompt', async () => {
+  it('opens the shared file-and-image upload dialog from Image, Video, and File', async () => {
     const user = userEvent.setup();
     mountToolbar();
 
     await user.click(screen.getByText('Insert'));
     await user.click(screen.getByRole('button', {name: 'Image'}));
-
-    expect(screen.getByRole('dialog', {name: 'Insert image'})).not.toBeNull();
+    expect(screen.getByRole('dialog', {name: 'Insert file'})).not.toBeNull();
     expect(screen.getByRole('button', {name: /Choose files/})).not.toBeNull();
     expect(screen.getByRole('button', {name: /Drag files here/})).not.toBeNull();
+
+    await user.click(screen.getByRole('button', {name: 'Close'}));
+    await user.click(screen.getByText('Insert'));
+    await user.click(screen.getByRole('button', {name: 'File'}));
+    expect(screen.getByRole('dialog', {name: 'Insert file'})).not.toBeNull();
   });
 });

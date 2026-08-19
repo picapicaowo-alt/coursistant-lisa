@@ -4,6 +4,7 @@ import {FolderOpen, Upload, X} from 'lucide-react';
 import styles from './MediaInsertDialog.module.scss';
 import {
   fileToDataUrl,
+  insertKindFromMime,
   MEDIA_INSERT_COPY,
   mimeForEditorFile,
   type MediaInsertKind,
@@ -11,14 +12,19 @@ import {
 } from './media';
 import {normalizeSafeUrl} from './url';
 
-interface MediaInsertDialogProps {
+export interface MediaInsertPayload {
+  url: string;
+  name: string;
   kind: MediaInsertKind;
-  onClose: () => void;
-  onInsert: (payload: {url: string; name: string}) => void;
 }
 
-const MediaInsertDialog: React.FC<MediaInsertDialogProps> = ({kind, onClose, onInsert}) => {
-  const copy = MEDIA_INSERT_COPY[kind];
+interface MediaInsertDialogProps {
+  onClose: () => void;
+  onInsert: (payload: MediaInsertPayload) => void;
+}
+
+const MediaInsertDialog: React.FC<MediaInsertDialogProps> = ({onClose, onInsert}) => {
+  const copy = MEDIA_INSERT_COPY;
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const chooseRef = React.useRef<HTMLButtonElement>(null);
   const busyRef = React.useRef(false);
@@ -55,12 +61,12 @@ const MediaInsertDialog: React.FC<MediaInsertDialogProps> = ({kind, onClose, onI
 
   const applyFile = async (file: File | undefined) => {
     if (!file || busy) return;
-    const typeError = validateEditorFile(file, kind);
+    const typeError = validateEditorFile(file);
     if (typeError) {
       setError(typeError);
       return;
     }
-    const mime = mimeForEditorFile(file, kind);
+    const mime = mimeForEditorFile(file);
     if (!mime) {
       setError(copy.typeError);
       return;
@@ -69,13 +75,14 @@ const MediaInsertDialog: React.FC<MediaInsertDialogProps> = ({kind, onClose, onI
     setBusy(true);
     setError(null);
     try {
+      const kind = insertKindFromMime(mime);
       const dataUrl = await fileToDataUrl(file, mime);
-      const url = normalizeSafeUrl(dataUrl, {mediaOnly: kind !== 'file', allowRelative: kind === 'file'});
+      const url = normalizeSafeUrl(dataUrl, {mediaOnly: kind !== 'file'});
       if (!url) {
         setError(copy.typeError);
         return;
       }
-      onInsert({url, name: file.name});
+      onInsert({url, name: file.name, kind});
     } catch {
       setError('The file could not be read. Try another file.');
     } finally {

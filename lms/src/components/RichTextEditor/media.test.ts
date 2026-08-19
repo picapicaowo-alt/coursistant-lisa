@@ -1,25 +1,26 @@
 import {describe, expect, it} from 'vitest';
-import {fileToDataUrl, isSafeDataUrl, mimeForEditorFile, validateEditorFile} from './media';
+import {fileToDataUrl, insertKindFromMime, isSafeDataUrl, mimeForEditorFile, validateEditorFile} from './media';
 
 const png = new File(['png-bytes'], 'photo.png', {type: 'image/png'});
 const pdf = new File(['%PDF'], 'brief.pdf', {type: 'application/pdf'});
 const html = new File(['<script>'], 'page.html', {type: 'text/html'});
 
 describe('editor media files', () => {
-  it('accepts images for the image picker and rejects other types', () => {
-    expect(validateEditorFile(png, 'image')).toBeNull();
-    expect(mimeForEditorFile(png, 'image')).toBe('image/png');
-    expect(validateEditorFile(pdf, 'image')).toMatch(/PNG, JPEG, GIF, or WebP/i);
+  it('accepts images and documents in the shared uploader', () => {
+    expect(validateEditorFile(png)).toBeNull();
+    expect(validateEditorFile(pdf)).toBeNull();
+    expect(mimeForEditorFile(png)).toBe('image/png');
+    expect(insertKindFromMime('image/png')).toBe('image');
+    expect(insertKindFromMime('application/pdf')).toBe('file');
   });
 
   it('rejects oversized files', () => {
     const huge = new File([new Uint8Array(8 * 1024 * 1024 + 1)], 'big.png', {type: 'image/png'});
-    expect(validateEditorFile(huge, 'image')).toMatch(/8 MB/i);
+    expect(validateEditorFile(huge)).toMatch(/8 MB/i);
   });
 
-  it('allows documents in the file picker and blocks HTML', () => {
-    expect(validateEditorFile(pdf, 'file')).toBeNull();
-    expect(validateEditorFile(html, 'file')).toMatch(/PDF, Office document, ZIP, or image/i);
+  it('blocks HTML uploads', () => {
+    expect(validateEditorFile(html)).toMatch(/image, video, PDF, Office document, ZIP, or text file/i);
   });
 
   it('reads a file into a typed data URL', async () => {
