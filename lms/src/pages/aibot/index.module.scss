@@ -350,9 +350,40 @@
     border: 1px solid #dbe4f1;
     border-radius: 0.8rem;
     background: #f8faff;
+    color: #2f405d;
     line-height: 1.55;
-    white-space: pre-wrap;
     overflow-wrap: anywhere;
+
+    p {
+        margin: 0 0 0.5rem;
+    }
+
+    ul,
+    ol {
+        margin: 0 0 0.5rem;
+        padding-left: 1.2rem;
+    }
+
+    li {
+        margin: 0.15rem 0;
+    }
+
+    li > p {
+        margin: 0;
+    }
+
+    strong {
+        font-weight: 700;
+        color: #1a2740;
+    }
+
+    > *:first-child {
+        margin-top: 0;
+    }
+
+    > *:last-child {
+        margin-bottom: 0;
+    }
 }
 
 .modalWarning {

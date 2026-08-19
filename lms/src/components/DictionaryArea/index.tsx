@@ -16,7 +16,7 @@ export const DictionaryArea: React.FC<DictionaryAreaProps> = ({
   return (
     <div className={styles.container}>
       {keys.map(key => (
-        <div className={styles.dictionaryItem}>
+        <div key={key} className={styles.dictionaryItem}>
           <span className={styles.itemKey}>
             {key}
           </span>

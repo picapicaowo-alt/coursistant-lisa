@@ -171,7 +171,7 @@ export class ApiClient {
 
     const canRetry = shouldAttemptTokenRefresh(this.config.refreshPath, original);
 
-    if (canRetry) {
+    if (canRetry && original) {
       try {
         await this.refreshAccessToken();
         original.isRetryAfterRefresh = true;

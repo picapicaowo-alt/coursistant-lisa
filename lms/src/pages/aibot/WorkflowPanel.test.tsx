@@ -134,4 +134,94 @@ describe('WorkflowPanel', () => {
     expect(within(dialog).getByRole('button', {name: 'Reject'})).toBeEnabled();
     expect(screen.getByRole('dialog', {name: 'Deadline change approval'})).toBeInTheDocument();
   });
+
+  it('asks for a Confirm click instead of a yes reply, then opens the deadline dialog', async () => {
+    agentApi.chat
+      .mockResolvedValueOnce({
+        reply: 'Please confirm the course code, assignment title, and the new date.\nIs everything correct?',
+        pendingAction: null,
+      })
+      .mockResolvedValueOnce({
+        reply: 'Change Assignment 0 from August 26 to August 25 at 1:00 PM?',
+        pendingAction: {actionId: 'action-789', type: 'ASSIGNMENT_DEADLINE_CHANGE'},
+      });
+    const user = userEvent.setup();
+    render(<WorkflowPanel/>);
+
+    await user.type(
+      screen.getByLabelText('Tell Workflow what to do'),
+      'change the due date of Assignment 0 to August 25, 1:00 pm',
+    );
+    await user.click(screen.getByRole('button', {name: 'Run'}));
+
+    const detailsDialog = await screen.findByRole('dialog', {name: 'Confirm assignment details'});
+    expect(screen.getByLabelText('Tell Workflow what to do')).toBeDisabled();
+    expect(within(detailsDialog).getByText(/Is everything correct/)).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', {name: 'Deadline change approval'})).not.toBeInTheDocument();
+
+    await user.click(within(detailsDialog).getByRole('button', {name: 'Confirm'}));
+
+    await waitFor(() => expect(agentApi.chat).toHaveBeenCalledTimes(2));
+    expect(agentApi.chat).toHaveBeenLastCalledWith({
+      message: expect.stringContaining('Original request: change the due date of Assignment 0 to August 25, 1:00 pm'),
+      role: 'INSTRUCTOR',
+      history: [
+        {role: 'user', content: 'change the due date of Assignment 0 to August 25, 1:00 pm'},
+        {
+          role: 'assistant',
+          content: 'Please confirm the course code, assignment title, and the new date.\nIs everything correct?',
+        },
+      ],
+    });
+    expect(agentApi.chat.mock.calls[1][0].message).not.toMatch(/^yes$/i);
+
+    const deadlineDialog = await screen.findByRole('dialog', {name: 'Deadline change approval'});
+    expect(within(deadlineDialog).getByRole('button', {name: 'Allow'})).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', {name: 'Confirm assignment details'})).not.toBeInTheDocument();
+    expect(agentApi.decideDeadlineChange).not.toHaveBeenCalled();
+  });
+
+  it('cancels a details confirmation without sending yes or applying a deadline change', async () => {
+    agentApi.chat.mockResolvedValue({
+      reply: "Could you please confirm that you would like to change the deadline for 'Testing' to August 31, 1 PM?",
+      pendingAction: null,
+    });
+    const user = userEvent.setup();
+    render(<WorkflowPanel/>);
+
+    await user.type(screen.getByLabelText('Tell Workflow what to do'), 'change Testing Quiz to August 31, 1 PM');
+    await user.click(screen.getByRole('button', {name: 'Run'}));
+
+    const detailsDialog = await screen.findByRole('dialog', {name: 'Confirm assignment details'});
+    await user.click(within(detailsDialog).getByRole('button', {name: 'Cancel'}));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByText('The deadline change was cancelled. Send a new request when you are ready.'))
+      .toBeInTheDocument();
+    expect(agentApi.chat).toHaveBeenCalledTimes(1);
+    expect(agentApi.decideDeadlineChange).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('Tell Workflow what to do')).toBeEnabled();
+  });
+
+  it('does not treat a greeting after Confirm as the next step', async () => {
+    agentApi.chat
+      .mockResolvedValueOnce({
+        reply: 'Please confirm the course code, assignment title, and the new date.\nIs everything correct?',
+        pendingAction: null,
+      })
+      .mockResolvedValueOnce({
+        reply: 'Hello! How can I assist you today?',
+        pendingAction: null,
+      });
+    const user = userEvent.setup();
+    render(<WorkflowPanel/>);
+
+    await user.type(screen.getByLabelText('Tell Workflow what to do'), 'change Assignment 0 to August 25, 1:00 pm');
+    await user.click(screen.getByRole('button', {name: 'Run'}));
+    await user.click(within(await screen.findByRole('dialog', {name: 'Confirm assignment details'})).getByRole('button', {name: 'Confirm'}));
+
+    expect(await screen.findByText(/The next step is the deadline approval dialog/)).toBeInTheDocument();
+    expect(screen.queryByText('Hello! How can I assist you today?')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
 });

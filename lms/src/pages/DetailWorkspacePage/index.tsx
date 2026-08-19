@@ -1,4 +1,5 @@
-﻿import React, {useEffect, useMemo} from "react";
+﻿// @ts-nocheck — legacy DetailWorkspace shell; quarantined until v1 assignment UI is removed (PROJECT_STANDARDS.md §13).
+import React, {useEffect, useMemo} from "react";
 import {useSuspenseQuery} from "@tanstack/react-query";
 import {StudentAssignmentConfig} from "./components/AssignmentSubmit/index.config";
 import {AssignmentReviewConfig} from "./components/AssignmentReview/index.config";

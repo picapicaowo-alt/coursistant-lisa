@@ -1,5 +1,6 @@
 import type {QuizResponse} from '@/apis';
 import {Link} from 'react-router-dom';
+import {formatQuizInstant, quizWindowStatus, quizWindowStatusLabel} from '@/utils/quizAvailability';
 import styles from './index.module.scss';
 
 interface Props {
@@ -9,11 +10,28 @@ interface Props {
   canCreate?: boolean;
 }
 
-const formatWindow = (quiz: QuizResponse) => {
-  const close = new Date(quiz.closesAtUtc);
-  return Number.isNaN(close.getTime())
-    ? quiz.closesAtLocal
-    : new Intl.DateTimeFormat('en-US', {month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'}).format(close);
+const QuizWindowMeta = ({quiz}: {quiz: QuizResponse}) => {
+  const status = quizWindowStatus(quiz);
+  const opens = formatQuizInstant(quiz.opensAtLocal, quiz.timezone);
+  const closes = formatQuizInstant(quiz.closesAtLocal, quiz.timezone);
+
+  if (status === 'closed') {
+    return (
+      <span className={styles.quizWindow}>
+        <span className={styles.quizWindowLabel}>Closed</span>
+        <span className={styles.quizWindowValue}>{closes}</span>
+      </span>
+    );
+  }
+
+  return (
+    <span className={styles.quizWindow}>
+      <span className={styles.quizWindowLabel}>Opens</span>
+      <span className={styles.quizWindowValue}>{opens}</span>
+      <span className={styles.quizWindowLabel}>Closes</span>
+      <span className={styles.quizWindowValue}>{closes}</span>
+    </span>
+  );
 };
 
 export const QuizzesCard = ({courseId, quizzes, failed, canCreate = false}: Props) => (
@@ -29,15 +47,18 @@ export const QuizzesCard = ({courseId, quizzes, failed, canCreate = false}: Prop
       <p className={styles.cardEmpty}>No quizzes in this course yet.</p>
     ) : (
       <ul className={styles.rowList}>
-        {quizzes.map(quiz => (
-          <li key={quiz.id} className={styles.row}>
-            <Link to={`/course/${courseId}/quizzes/${quiz.id}`} className={styles.rowLink}>
-              <span className={styles.stateTag}>{quiz.state}</span>
-              <span className={styles.rowTitle}>{quiz.title}</span>
-              <span className={styles.rowMeta}>Closes {formatWindow(quiz)}</span>
-            </Link>
-          </li>
-        ))}
+        {quizzes.map(quiz => {
+          const status = quizWindowStatus(quiz);
+          return (
+            <li key={quiz.id} className={styles.row}>
+              <Link to={`/course/${courseId}/quizzes/${quiz.id}`} className={styles.rowLink}>
+                <span className={styles.stateTag} data-status={status}>{quizWindowStatusLabel(status)}</span>
+                <span className={styles.rowTitle}>{quiz.title}</span>
+                <QuizWindowMeta quiz={quiz}/>
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     )}
   </section>

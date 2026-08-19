@@ -10,7 +10,7 @@ const generateDate = (offsetDays = 0) => {
 
 // Mock files
 // noinspection SpellCheckingInspection
-let mockFiles: FileDto[] = [
+const mockFiles: FileDto[] = [
   {
     id: 'file-1',
     filename: 'assignment-instructions.pdf',
@@ -28,7 +28,7 @@ let mockFiles: FileDto[] = [
 ];
 
 // Mock assignment settings
-let mockAssignmentSettings = {
+const mockAssignmentSettings = {
   allowLateSubmission: true,
   allowedResubmissionCount: 3,
 };

@@ -4,17 +4,20 @@ import {useRequiredAuth} from '@/contexts/RequiredAuthContext';
 import {
   aiAgentApiService,
   type AiAgentPendingAction,
+  type AiAgentResponse,
   type AiAgentRole,
   type DeadlineDecision,
 } from '@/apis/services/ai-agent-api';
 import DeadlineDecisionModal from './DeadlineDecisionModal';
+import {
+  buildDetailsConfirmationMessage,
+  isDetailsConfirmationReply,
+  isGenericAssistantReset,
+  lastOriginalUserRequest,
+  toChatHistory,
+  type WorkflowChatMessage,
+} from './workflowConversation';
 import styles from './index.module.scss';
-
-interface WorkflowMessage {
-  id: number;
-  sender: 'user' | 'agent';
-  text: string;
-}
 
 const READ_ONLY_QUICK_PROMPTS = [
   'What assignments are due in the next 14 days?',
@@ -59,10 +62,13 @@ const WorkflowPanel = () => {
   const conversationEndRef = useRef<HTMLDivElement | null>(null);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<AiAgentPendingAction | null>(null);
   const [pendingConfirmation, setPendingConfirmation] = useState('');
+  const [awaitingDetailsConfirmation, setAwaitingDetailsConfirmation] = useState(false);
+  const [detailsConfirmation, setDetailsConfirmation] = useState('');
   const [decisionError, setDecisionError] = useState<string | null>(null);
-  const [messages, setMessages] = useState<WorkflowMessage[]>([
+  const [messages, setMessages] = useState<WorkflowChatMessage[]>([
     {
       id: 0,
       sender: 'agent',
@@ -73,39 +79,94 @@ const WorkflowPanel = () => {
   ]);
 
   const roleLabel = role === 'INSTRUCTOR' ? 'Instructor workflow' : 'Student workflow';
+  const blockingDecision = Boolean(pendingAction) || awaitingDetailsConfirmation;
 
   useEffect(() => {
     conversationEndRef.current?.scrollIntoView({behavior: 'smooth', block: 'nearest'});
-  }, [isSending, messages, pendingAction]);
+  }, [isSending, messages, pendingAction, awaitingDetailsConfirmation]);
 
-  const addMessage = (sender: WorkflowMessage['sender'], text: string) => {
+  const addMessage = (sender: WorkflowChatMessage['sender'], text: string) => {
     setMessages(current => [
       ...current,
       {id: nextMessageId.current++, sender, text},
     ]);
   };
 
-  const sendMessage = async (message: string) => {
+  const applyAgentResponse = (response: AiAgentResponse, options?: {afterDetailsConfirm?: boolean}) => {
+    if (response.conversationId) {
+      setConversationId(response.conversationId);
+    }
+
+    if (response.pendingAction && !canChangeDeadlines) {
+      addMessage('agent', 'Students can view assignment deadlines, but only instructors can change them.');
+      setAwaitingDetailsConfirmation(false);
+      setDetailsConfirmation('');
+      return;
+    }
+
+    if (response.pendingAction) {
+      setPendingAction(response.pendingAction);
+      setPendingConfirmation(response.reply);
+      setAwaitingDetailsConfirmation(false);
+      setDetailsConfirmation('');
+      setDecisionError(null);
+      return;
+    }
+
+    const needsDetailsConfirmation = canChangeDeadlines && (
+      response.confirmationRequired || isDetailsConfirmationReply(response.reply)
+    );
+
+    if (needsDetailsConfirmation) {
+      addMessage('agent', response.reply);
+      setAwaitingDetailsConfirmation(true);
+      setDetailsConfirmation(response.reply);
+      setDecisionError(null);
+      return;
+    }
+
+    if (options?.afterDetailsConfirm && isGenericAssistantReset(response.reply)) {
+      addMessage(
+        'agent',
+        'Those details were confirmed. The next step is the deadline approval dialog, but the agent reset instead of continuing. Please send the full deadline change again.',
+      );
+      setAwaitingDetailsConfirmation(false);
+      setDetailsConfirmation('');
+      return;
+    }
+
+    addMessage('agent', response.reply);
+    setAwaitingDetailsConfirmation(false);
+    setDetailsConfirmation('');
+  };
+
+  const sendMessage = async (
+    message: string,
+    options?: {displayText?: string; afterDetailsConfirm?: boolean},
+  ) => {
     const trimmedMessage = message.trim();
     if (!trimmedMessage || isSending || pendingAction) return;
+    if (awaitingDetailsConfirmation && !options?.afterDetailsConfirm) return;
 
-    addMessage('user', trimmedMessage);
+    addMessage('user', options?.displayText ?? trimmedMessage);
     setInput('');
+    setDecisionError(null);
     setIsSending(true);
 
     try {
-      const response = await aiAgentApiService.chat({message: trimmedMessage, role});
-      if (response.pendingAction && !canChangeDeadlines) {
-        addMessage('agent', 'Students can view assignment deadlines, but only instructors can change them.');
-      } else if (response.pendingAction) {
-        setPendingAction(response.pendingAction);
-        setPendingConfirmation(response.reply);
-        setDecisionError(null);
-      } else {
-        addMessage('agent', response.reply);
-      }
+      const history = toChatHistory(messages);
+      const response = await aiAgentApiService.chat({
+        message: trimmedMessage,
+        role,
+        ...(conversationId ? {conversationId} : {}),
+        ...(history.length ? {history} : {}),
+      });
+      applyAgentResponse(response, {afterDetailsConfirm: options?.afterDetailsConfirm});
     } catch (error) {
       addMessage('agent', getErrorMessage(error));
+      if (options?.afterDetailsConfirm) {
+        setDecisionError(getErrorMessage(error));
+      }
     } finally {
       setIsSending(false);
     }
@@ -121,6 +182,22 @@ const WorkflowPanel = () => {
       event.preventDefault();
       void sendMessage(input);
     }
+  };
+
+  const handleConfirmDetails = () => {
+    if (!canChangeDeadlines || !awaitingDetailsConfirmation || isSending) return;
+    void sendMessage(
+      buildDetailsConfirmationMessage(lastOriginalUserRequest(messages)),
+      {displayText: 'Confirm', afterDetailsConfirm: true},
+    );
+  };
+
+  const handleCancelDetails = () => {
+    if (isSending) return;
+    setAwaitingDetailsConfirmation(false);
+    setDetailsConfirmation('');
+    addMessage('user', 'Cancel');
+    addMessage('agent', 'The deadline change was cancelled. Send a new request when you are ready.');
   };
 
   const handleDecision = async (decision: DeadlineDecision) => {
@@ -139,6 +216,9 @@ const WorkflowPanel = () => {
           ? 'The deadline change was approved.'
           : 'The deadline change was rejected.'),
       );
+      if (response.conversationId) {
+        setConversationId(response.conversationId);
+      }
       setPendingAction(response.pendingAction);
       setPendingConfirmation(response.pendingAction ? response.reply : '');
     } catch (error) {
@@ -147,6 +227,12 @@ const WorkflowPanel = () => {
       setIsSending(false);
     }
   };
+
+  const inputPlaceholder = pendingAction
+    ? 'Approve or reject the pending change above.'
+    : awaitingDetailsConfirmation
+      ? 'Confirm or cancel the details above.'
+      : 'Tell Workflow what to do…';
 
   return (
     <section className={styles.toolCard} aria-labelledby="workflow-title">
@@ -169,7 +255,7 @@ const WorkflowPanel = () => {
             type="button"
             key={prompt}
             onClick={() => void sendMessage(prompt)}
-            disabled={isSending || Boolean(pendingAction)}
+            disabled={isSending || blockingDecision}
           >
             {prompt}
           </button>
@@ -198,17 +284,34 @@ const WorkflowPanel = () => {
           value={input}
           onChange={event => setInput(event.target.value)}
           onKeyDown={handleInputKeyDown}
-          placeholder={pendingAction ? 'Approve or reject the pending change above.' : 'Tell Workflow what to do…'}
-          disabled={isSending || Boolean(pendingAction)}
+          placeholder={inputPlaceholder}
+          disabled={isSending || blockingDecision}
           rows={3}
         />
         <div className={styles.inputFooter}>
           <span>Enter to send · Shift+Enter for a new line</span>
-          <button type="submit" disabled={isSending || Boolean(pendingAction) || !input.trim()}>
+          <button type="submit" disabled={isSending || blockingDecision || !input.trim()}>
             Run
           </button>
         </div>
       </form>
+
+      {canChangeDeadlines && awaitingDetailsConfirmation && !pendingAction ? (
+        <DeadlineDecisionModal
+          title="Confirm assignment details"
+          eyebrow="Review details"
+          confirmationText={detailsConfirmation}
+          warningText="Confirming continues to the deadline approval step. The due date has not changed yet."
+          confirmLabel="Confirm"
+          cancelLabel="Cancel"
+          errorMessage={decisionError}
+          isSubmitting={isSending}
+          onDecision={decision => {
+            if (decision === 'ALLOW') handleConfirmDetails();
+            else handleCancelDetails();
+          }}
+        />
+      ) : null}
 
       {canChangeDeadlines && pendingAction ? (
         <DeadlineDecisionModal

@@ -6,14 +6,23 @@ export interface AiAgentPendingAction {
   type: 'ASSIGNMENT_DEADLINE_CHANGE' | string;
 }
 
+export interface AiAgentChatHistoryTurn {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export interface AiAgentResponse {
   reply: string;
   pendingAction: AiAgentPendingAction | null;
+  conversationId: string | null;
+  confirmationRequired: boolean;
 }
 
 export interface AiAgentChatRequest {
   message: string;
   role: AiAgentRole;
+  conversationId?: string;
+  history?: AiAgentChatHistoryTurn[];
 }
 
 export interface DeadlineDecisionRequest {
@@ -21,12 +30,55 @@ export interface DeadlineDecisionRequest {
   decision: DeadlineDecision;
 }
 
-interface AgentErrorBody {
-  message?: unknown;
-}
-
 const AGENT_API_BASE = (import.meta.env.VITE_AI_AGENT_API_DOMAIN_NAME || '/ai-agent').replace(/\/$/, '');
 const REQUEST_TIMEOUT_MS = 60_000;
+
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+
+const firstString = (...values: unknown[]): string | null => {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) return value;
+    if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  }
+  return null;
+};
+
+const readFlag = (...values: unknown[]): boolean =>
+  values.some(value => value === true || value === 'true');
+
+const unwrapPayload = (body: unknown): Record<string, unknown> => {
+  const root = asRecord(body);
+  if (!root) {
+    throw new Error('The AI Agent returned an invalid response.');
+  }
+
+  const nested = asRecord(root.data);
+  if (nested && (
+    'reply' in nested
+    || 'message' in nested
+    || 'pendingAction' in nested
+    || 'pending_action' in nested
+  )) {
+    return nested;
+  }
+
+  return root;
+};
+
+const parsePendingAction = (value: unknown): AiAgentPendingAction | null => {
+  const action = asRecord(value);
+  if (!action) return null;
+
+  const actionId = firstString(action.actionId, action.action_id, action.id);
+  if (!actionId) return null;
+
+  const type = firstString(action.type, action.actionType, action.action_type)
+    ?? 'ASSIGNMENT_DEADLINE_CHANGE';
+  return {actionId, type};
+};
 
 const getAccessToken = (): string => {
   const directToken = localStorage.getItem('accToken');
@@ -47,34 +99,34 @@ const getAccessToken = (): string => {
 };
 
 const normalizeResponse = (body: unknown): AiAgentResponse => {
-  if (!body || typeof body !== 'object') {
-    throw new Error('The AI Agent returned an invalid response.');
-  }
-
-  const candidate = body as {
-    reply?: unknown;
-    message?: unknown;
-    pendingAction?: unknown;
-  };
-  const reply = typeof candidate.reply === 'string'
-    ? candidate.reply
-    : typeof candidate.message === 'string'
-      ? candidate.message
-      : '';
-
-  let pendingAction: AiAgentPendingAction | null = null;
-  if (candidate.pendingAction !== null && typeof candidate.pendingAction === 'object') {
-    const action = candidate.pendingAction as {actionId?: unknown; type?: unknown};
-    if (typeof action.actionId === 'string' && typeof action.type === 'string') {
-      pendingAction = {actionId: action.actionId, type: action.type};
-    }
-  }
+  const candidate = unwrapPayload(body);
+  const reply = firstString(candidate.reply, candidate.message) ?? '';
+  const pendingAction = parsePendingAction(
+    candidate.pendingAction ?? candidate.pending_action,
+  );
+  const conversationId = firstString(
+    candidate.conversationId,
+    candidate.conversation_id,
+    candidate.sessionId,
+    candidate.session_id,
+  );
+  const confirmationRequired = readFlag(
+    candidate.confirmationRequired,
+    candidate.confirmation_required,
+    candidate.requiresConfirmation,
+    candidate.requires_confirmation,
+  );
 
   if (!reply && !pendingAction) {
     throw new Error('The AI Agent returned an empty response.');
   }
 
-  return {reply, pendingAction};
+  return {
+    reply,
+    pendingAction,
+    conversationId,
+    confirmationRequired,
+  };
 };
 
 const parseBody = async (response: Response): Promise<unknown> => {
@@ -105,7 +157,7 @@ const request = async (
     const responseBody = await parseBody(response);
 
     if (!response.ok) {
-      const detail = (responseBody as AgentErrorBody)?.message;
+      const detail = asRecord(responseBody)?.message;
       if (response.status === 401) {
         throw new Error('Your session expired. Please sign in again.');
       }

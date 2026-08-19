@@ -86,10 +86,12 @@ const CoursesList: React.FC<{state: CourseState}> = ({state}) => {
         page: currentPage - 1,
         size: PAGE_SIZE,
       } as const;
-      const response = isUserAccount
-        ? await dashboardApiService.getMyCourses(params)
-        : await courseApiService.browseCourses(params);
-      return unwrapData(response, isUserAccount ? 'getMyCourses' : 'browseCourses');
+      if (isUserAccount) {
+        const response = await dashboardApiService.getMyCourses(params);
+        return unwrapData(response, 'getMyCourses');
+      }
+      const response = await courseApiService.browseCourses(params);
+      return unwrapData(response, 'browseCourses');
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 5 * 60 * 1000,

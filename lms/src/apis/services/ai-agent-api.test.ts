@@ -6,14 +6,27 @@ const jsonResponse = (body: unknown, status = 200) => new Response(JSON.stringif
   headers: {'Content-Type': 'application/json'},
 });
 
+const memory = new Map<string, string>();
+const localStorageStub = {
+  clear: () => memory.clear(),
+  getItem: (key: string) => memory.get(key) ?? null,
+  setItem: (key: string, value: string) => {
+    memory.set(key, value);
+  },
+  removeItem: (key: string) => {
+    memory.delete(key);
+  },
+};
+
 describe('AiAgentApiService', () => {
   let aiAgentApiService: AiAgentApiService;
 
   beforeEach(() => {
-    aiAgentApiService = new AiAgentApiService();
-    localStorage.clear();
-    localStorage.setItem('accToken', 'test-access-token');
     vi.restoreAllMocks();
+    memory.clear();
+    vi.stubGlobal('localStorage', localStorageStub);
+    aiAgentApiService = new AiAgentApiService();
+    localStorage.setItem('accToken', 'test-access-token');
   });
 
   it('sends chat through the same-origin agent proxy with the LMS bearer token', async () => {
@@ -29,6 +42,8 @@ describe('AiAgentApiService', () => {
     })).resolves.toEqual({
       reply: 'You have two upcoming assignments.',
       pendingAction: null,
+      conversationId: null,
+      confirmationRequired: false,
     });
 
     expect(fetchMock).toHaveBeenCalledWith('/ai-agent/chat', expect.objectContaining({
@@ -88,5 +103,28 @@ describe('AiAgentApiService', () => {
       actionId: 'expired-action',
       decision: 'ALLOW',
     })).rejects.toThrow('No matching pending deadline change');
+  });
+
+  it('normalizes snake_case pending actions and conversation ids', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({
+      data: {
+        reply: 'Allow this deadline change?',
+        pending_action: {action_id: 456, action_type: 'ASSIGNMENT_DEADLINE_CHANGE'},
+        conversation_id: 'conv-9',
+        confirmation_required: true,
+      },
+    }));
+
+    await expect(aiAgentApiService.chat({
+      message: 'Move Assignment A',
+      role: 'INSTRUCTOR',
+      conversationId: 'conv-8',
+      history: [{role: 'user', content: 'List my courses.'}],
+    })).resolves.toEqual({
+      reply: 'Allow this deadline change?',
+      pendingAction: {actionId: '456', type: 'ASSIGNMENT_DEADLINE_CHANGE'},
+      conversationId: 'conv-9',
+      confirmationRequired: true,
+    });
   });
 });

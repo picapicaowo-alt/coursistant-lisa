@@ -1,4 +1,5 @@
-﻿import {DetailWorkspaceConfig} from "../../types";
+﻿// @ts-nocheck — legacy DetailWorkspace config; quarantined with DetailWorkspacePage (PROJECT_STANDARDS.md §13).
+import {DetailWorkspaceConfig} from "../../types";
 import {AssignmentEdit} from "./index";
 import {useAssignmentEditStore} from "../../stores/useAssignmentEditStore";
 import {assignmentApiService} from "@/apis/services/assignment-api";

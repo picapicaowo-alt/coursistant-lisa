@@ -208,10 +208,11 @@ Historical normalized-store designs in `STATE_MANAGEMENT.md` / `ARCHITECTURE.md`
 ## 13. Known gaps (improve when you touch the area)
 
 1. **Legacy JSX** — chat, profile, settings, old roster/notification sections still `.jsx`.
-2. **ESLint** — currently configured for `*.{js,jsx}` only; extend to TypeScript when adding lint CI.
-3. **Dead dependencies** — remove unused UI libraries once confirmed unused.
-4. **Repository-wide `tsc`** — still fails on legacy hotspots (e.g. ChatContent); fix or quarantine rather than widening `any`.
-5. **Docs drift** — update this file when a new vertical (e.g. another LMS module) establishes a better pattern than the references above.
+2. **Legacy type quarantine** — these files carry `// @ts-nocheck` until migration: `ChatContent.tsx`, `RichTextEditor/extensions/BlankNode.ts`, `DetailWorkspacePage/index.tsx`, `DetailWorkspacePage/components/AssignmentEdit/index.config.ts`, `stores/core/AggregateRootGenerator.test.ts`.
+3. **ESLint** — now covers `*.{ts,tsx}` and `*.{js,jsx}`; run `npm run lint` before pushing.
+4. **Typecheck** — run `npm run typecheck` in `lms/`; must pass on all non-quarantined files.
+5. **Dead dependencies** — remove unused UI libraries once confirmed unused.
+6. **Docs drift** — update this file when a new vertical establishes a better pattern than the references above.
 
 ---
 

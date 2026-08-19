@@ -1,5 +1,5 @@
 import styles from "./ChatComponent.module.scss";
-import ChatContent from '@/components/ChatContent.js';
+import ChatContent from '@/components/ChatContent';
 
 const ChatComponent = () => {
   return (

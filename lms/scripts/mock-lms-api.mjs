@@ -246,6 +246,16 @@ let previewQuizzes = [{
   updatedAt: '2026-08-17T18:00:00Z',
 }];
 
+const withQuizWindow = (quiz) => {
+  const nowMs = Date.now();
+  const opens = Date.parse(quiz.opensAtUtc);
+  const closes = Date.parse(quiz.closesAtUtc);
+  return {
+    ...quiz,
+    windowOpen: Number.isFinite(opens) && Number.isFinite(closes) && nowMs >= opens && nowMs < closes,
+  };
+};
+
 const quizQuestions = new Map([[3, [
   {
     id: 101, quizId: 3, type: 'SingleChoice', stem: 'Which organelle contains most of a eukaryotic cell’s DNA?',
@@ -1031,7 +1041,7 @@ const server = createServer(async (request, response) => {
 
   if (url.pathname === '/api/v2/courses/4/quizzes' && request.method === 'GET') {
     const isInstructor = request.headers.authorization === 'Bearer local-instructor-token';
-    send(response, 200, previewQuizzes.filter(quiz => isInstructor || quiz.state === 'Published'));
+    send(response, 200, previewQuizzes.filter(quiz => isInstructor || quiz.state === 'Published').map(withQuizWindow));
     return;
   }
 
@@ -1048,7 +1058,7 @@ const server = createServer(async (request, response) => {
     };
     previewQuizzes.push(created);
     quizQuestions.set(created.id, []);
-    send(response, 200, created);
+    send(response, 200, withQuizWindow(created));
     return;
   }
 
@@ -1056,7 +1066,7 @@ const server = createServer(async (request, response) => {
   if (quizMatch && request.method === 'GET') {
     const quiz = previewQuizzes.find(item => item.id === Number(quizMatch[1]));
     if (!quiz) send(response, 404, null, 'QUIZ_NOT_FOUND', 'Quiz not found');
-    else send(response, 200, quiz);
+    else send(response, 200, withQuizWindow(quiz));
     return;
   }
   if (quizMatch && request.method === 'PATCH') {
@@ -1072,7 +1082,7 @@ const server = createServer(async (request, response) => {
       version: quiz.version + 1,
       updatedAt: now(),
     } : quiz);
-    send(response, 200, previewQuizzes.find(quiz => quiz.id === quizId));
+    send(response, 200, withQuizWindow(previewQuizzes.find(quiz => quiz.id === quizId)));
     return;
   }
   if (quizMatch && request.method === 'DELETE') {
@@ -1090,7 +1100,7 @@ const server = createServer(async (request, response) => {
     previewQuizzes = previewQuizzes.map(quiz => quiz.id === quizId
       ? {...quiz, state, version: quiz.version + 1, updatedAt: now()}
       : quiz);
-    send(response, 200, previewQuizzes.find(quiz => quiz.id === quizId));
+    send(response, 200, withQuizWindow(previewQuizzes.find(quiz => quiz.id === quizId)));
     return;
   }
 

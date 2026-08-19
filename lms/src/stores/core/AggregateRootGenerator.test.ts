@@ -1,3 +1,4 @@
+// @ts-nocheck — legacy aggregate store tests; quarantined until store migration (PROJECT_STANDARDS.md §13).
 // noinspection DuplicatedCode
 
 import {describe, it, expect, vi} from 'vitest';

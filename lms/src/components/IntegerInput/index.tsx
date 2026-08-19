@@ -24,8 +24,9 @@ export const IntegerInput: React.FC<IntegerInputProps> = ({
         className={styles.button}
         type="button"
         onClick={() => {
-          setInnerValue(innerValue - 1);
-          onUpdate && onUpdate(innerValue);
+          const next = innerValue - 1;
+          setInnerValue(next);
+          onUpdate?.(next);
         }}
         disabled={disabled}
       >
@@ -36,8 +37,9 @@ export const IntegerInput: React.FC<IntegerInputProps> = ({
         type="number"
         value={innerValue}
         onChange={(e) => {
-          setInnerValue(parseInt(e.target.value) || 0);
-          onUpdate && onUpdate(innerValue);
+          const next = parseInt(e.target.value, 10) || 0;
+          setInnerValue(next);
+          onUpdate?.(next);
         }}
         min={minValue}
         max={maxValue}
@@ -47,8 +49,9 @@ export const IntegerInput: React.FC<IntegerInputProps> = ({
         className={styles.button}
         type="button"
         onClick={() => {
-          setInnerValue(innerValue + 1);
-          onUpdate && onUpdate(innerValue);
+          const next = innerValue + 1;
+          setInnerValue(next);
+          onUpdate?.(next);
         }}
         disabled={disabled}
       >

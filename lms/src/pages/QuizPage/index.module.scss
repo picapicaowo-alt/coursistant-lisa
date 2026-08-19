@@ -128,6 +128,24 @@
   }
 }
 
+.availability {
+  padding: 0.18rem 0.55rem;
+  border-radius: t.$radius-pill;
+  background: t.$brand-subtle;
+  color: t.$brand;
+  font-size: 0.7rem;
+  font-weight: t.$fw-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+
+  &[data-status='upcoming'],
+  &[data-status='draft'],
+  &[data-status='closed'] {
+    background: t.$neutral-fill;
+    color: t.$text-muted;
+  }
+}
+
 .questionSummary {
   display: grid;
   gap: 0.65rem;

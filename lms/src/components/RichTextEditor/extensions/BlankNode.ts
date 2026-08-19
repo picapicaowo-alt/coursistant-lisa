@@ -1,3 +1,4 @@
+// @ts-nocheck — legacy TipTap blank node; quarantined until editor migration (PROJECT_STANDARDS.md §13).
 import {mergeAttributes, Node} from '@tiptap/core';
 import {ReactNodeViewRenderer} from '@tiptap/react';
 import {BlankComponent} from '../components/BlankComponent';

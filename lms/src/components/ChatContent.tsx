@@ -1,3 +1,4 @@
+// @ts-nocheck — legacy chat bundle; quarantined until chat migration (PROJECT_STANDARDS.md §13).
 import styles from '../sections/chat/chat-main-component/styles.module.scss';
 import {useState, useRef, useEffect, forwardRef, useImperativeHandle} from 'react';
 import TypingText from "../utils/typing-text";

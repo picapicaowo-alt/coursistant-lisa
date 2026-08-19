@@ -214,7 +214,7 @@ describe('CourseApiService announcements, sessions, and lifecycle', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('creates, edits, lists, and deletes announcements', async () => {
-    const payload = {title: 'Office hours', content: '<p>Friday</p>'};
+    const payload = {title: 'Office hours', body: '<p>Friday</p>'};
     client.get.mockResolvedValue({status: 200, data: []});
     client.post.mockResolvedValue({status: 200, data: {id: 5}});
     client.patch.mockResolvedValue({status: 200, data: {id: 5}});
@@ -230,7 +230,7 @@ describe('CourseApiService announcements, sessions, and lifecycle', () => {
   });
 
   it('writes recurring sessions and supports archive restoration and hard deletion', async () => {
-    const session = {dayOfWeek: 'MON' as const, startTime: '09:00', endTime: '10:00', type: 'Lecture', location: 'Room 1'};
+    const session = {dayOfWeek: 'MON' as const, startTime: '09:00', endTime: '10:00', type: 'Lecture' as const, location: 'Room 1'};
     client.post.mockResolvedValue({status: 200, data: {}});
     client.put.mockResolvedValue({status: 200, data: {}});
     client.delete.mockResolvedValue({status: 200});

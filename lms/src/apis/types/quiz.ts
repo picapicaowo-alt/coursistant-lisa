@@ -16,6 +16,8 @@ export interface QuizResponse {
   attemptsAllowed: number;
   resultVisibility: QuizResultVisibility;
   state: QuizState;
+  /** True when server now is within [opensAt, closesAt). Independent of Draft/Published. */
+  windowOpen?: boolean;
   version: number;
   totalPoints: number;
   questionCount: number;

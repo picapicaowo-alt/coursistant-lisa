@@ -1,12 +1,19 @@
 import {useEffect, useState} from 'react';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import axios from 'axios';
-import {ArrowLeft, CheckCircle2, Clock3, History, Pencil, RotateCcw, ShieldCheck} from 'lucide-react';
+import {ArrowLeft, CalendarClock, CheckCircle2, Clock3, History, Pencil, RotateCcw, ShieldCheck} from 'lucide-react';
 import {Link, useParams} from 'react-router-dom';
 import type {QuizAttempt, QuizQuestion} from '@/apis';
 import {unwrapData} from '@/apis';
 import {quizApiService} from '@/apis/services/quiz-api';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
+import {
+  formatQuizInstant,
+  isMissingCurrentAttempt,
+  isMissingQuizResult,
+  quizWindowStatus,
+  quizWindowStatusLabel,
+  startAttemptErrorMessage,
+} from '@/utils/quizAvailability';
 import styles from './index.module.scss';
 
 interface AnswerDraft {
@@ -21,10 +28,6 @@ const toDrafts = (attempt: QuizAttempt | null): Record<number, AnswerDraft> =>
     selectedOptionIds: answer.selectedOptionIds ?? [],
     textAnswer: answer.textAnswer ?? '',
   }]));
-
-const isNotFound = (error: unknown) =>
-  (axios.isAxiosError(error) && error.response?.status === 404)
-  || (typeof error === 'object' && error !== null && 'code' in error && error.code === 404);
 
 const QuizPage = () => {
   const {courseId: courseIdParam, quizId: quizIdParam} = useParams();
@@ -57,7 +60,7 @@ const QuizPage = () => {
       try {
         return unwrapData(await quizApiService.getCurrentAttempt(courseId, quizId), 'getCurrentAttempt');
       } catch (error) {
-        if (isNotFound(error)) return null;
+        if (isMissingCurrentAttempt(error)) return null;
         throw error;
       }
     },
@@ -70,7 +73,7 @@ const QuizPage = () => {
       try {
         return unwrapData(await quizApiService.getMyResult(courseId, quizId), 'getMyResult');
       } catch (error) {
-        if (isNotFound(error)) return null;
+        if (isMissingQuizResult(error)) return null;
         throw error;
       }
     },
@@ -170,13 +173,26 @@ const QuizPage = () => {
   const result = resultQuery.data;
   const attempts = attemptsQuery.data ?? [];
   const attemptsRemaining = Math.max(0, (quiz?.attemptsAllowed ?? 0) - attempts.length);
+  const windowStatus = quiz ? quizWindowStatus(quiz) : 'draft';
+  const canStart = windowStatus === 'open';
+  const startLabel = startAttempt.isPending
+    ? 'Starting…'
+    : windowStatus === 'upcoming' && quiz
+      ? `Opens ${formatQuizInstant(quiz.opensAtLocal, quiz.timezone)}`
+      : windowStatus === 'closed'
+        ? 'Quiz closed'
+        : windowStatus !== 'open'
+          ? 'Quiz is not open'
+          : 'Start attempt';
 
   return (
     <main className={styles.page}>
       <div className={styles.header}>
         <Link to={`/course/${courseId}`} className={styles.backLink} aria-label="Back to course"><ArrowLeft size={22}/></Link>
         <div className={styles.headerText}>
-          <p className={styles.eyebrow}>{quiz?.state || 'Quiz'}</p>
+          <p className={styles.eyebrow}>
+            {quiz ? (isStaff ? `${quiz.state} · ${quizWindowStatusLabel(windowStatus)}` : quizWindowStatusLabel(windowStatus)) : 'Quiz'}
+          </p>
           <h1>{quiz?.title || 'Loading quiz…'}</h1>
         </div>
         {quiz && isStaff ? (
@@ -197,7 +213,9 @@ const QuizPage = () => {
             <span><Clock3 size={17}/> {quiz.timeLimitSeconds ? `${Math.round(quiz.timeLimitSeconds / 60)} minutes` : 'No time limit'}</span>
             <span>{quiz.attemptsAllowed} attempt{quiz.attemptsAllowed === 1 ? '' : 's'}</span>
             <span>{quiz.totalPoints} points</span>
-            <span>Closes {new Date(quiz.closesAtUtc).toLocaleString('en-US')}</span>
+            <span><CalendarClock size={17}/> Opens {formatQuizInstant(quiz.opensAtLocal, quiz.timezone)}</span>
+            <span>Closes {formatQuizInstant(quiz.closesAtLocal, quiz.timezone)}</span>
+            <span className={styles.availability} data-status={windowStatus}>{quizWindowStatusLabel(windowStatus)}</span>
           </div>
         </section>
       ) : null}
@@ -290,19 +308,26 @@ const QuizPage = () => {
           {attemptsRemaining > 0 ? (
             <div className={styles.retakeRow}>
               <p>{attemptsRemaining} attempt{attemptsRemaining === 1 ? '' : 's'} remaining.</p>
-              <button type="button" className={styles.primaryButton} onClick={() => startAttempt.mutate()} disabled={startAttempt.isPending || quiz?.state !== 'Published'}><RotateCcw size={16}/> {startAttempt.isPending ? 'Starting…' : 'Start another attempt'}</button>
+              <button type="button" className={styles.primaryButton} onClick={() => startAttempt.mutate()} disabled={startAttempt.isPending || !canStart}><RotateCcw size={16}/> {startAttempt.isPending ? 'Starting…' : canStart ? 'Start another attempt' : startLabel}</button>
             </div>
           ) : <p className={styles.muted}>You have used all available attempts.</p>}
-          {startAttempt.isError ? <p className={styles.error} role="alert">A new attempt could not be started. The quiz window may have closed.</p> : null}
+          {startAttempt.isError ? <p className={styles.error} role="alert">{startAttemptErrorMessage(startAttempt.error, quiz)}</p> : null}
         </section>
       ) : (
         <section className={styles.card}>
           <h2>Ready to begin?</h2>
-          <p className={styles.muted}>Starting creates an attempt and begins the quiz timer, if one is configured.</p>
-          <button type="button" className={styles.primaryButton} onClick={() => startAttempt.mutate()} disabled={startAttempt.isPending || quiz?.state !== 'Published'}>
-            {startAttempt.isPending ? 'Starting…' : quiz?.state === 'Published' ? 'Start attempt' : 'Quiz is not open'}
+          <p className={styles.muted}>
+            {windowStatus === 'upcoming' && quiz
+              ? `This quiz opens ${formatQuizInstant(quiz.opensAtLocal, quiz.timezone)}. Starting will create an attempt and begin the timer, if one is configured.`
+              : windowStatus === 'closed' && quiz
+                ? `This quiz closed ${formatQuizInstant(quiz.closesAtLocal, quiz.timezone)}.`
+                : 'Starting creates an attempt and begins the quiz timer, if one is configured.'}
+          </p>
+          <button type="button" className={styles.primaryButton} onClick={() => startAttempt.mutate()} disabled={startAttempt.isPending || !canStart}>
+            {startLabel}
           </button>
-          {startAttempt.isError || attemptQuery.isError ? <p className={styles.error} role="alert">The attempt could not be started. Check the quiz window and try again.</p> : null}
+          {startAttempt.isError ? <p className={styles.error} role="alert">{startAttemptErrorMessage(startAttempt.error, quiz)}</p> : null}
+          {attemptQuery.isError ? <p className={styles.error} role="alert">Your current attempt could not be loaded.</p> : null}
           {resultQuery.isError ? <p className={styles.error} role="alert">Your latest result could not be loaded.</p> : null}
         </section>
       )}

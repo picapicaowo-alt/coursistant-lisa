@@ -1,17 +1,31 @@
 import {useEffect, useRef} from 'react';
 import {createPortal} from 'react-dom';
+import ReactMarkdown from 'react-markdown';
 import type {DeadlineDecision} from '@/apis/services/ai-agent-api';
 import styles from './index.module.scss';
 
 interface DeadlineDecisionModalProps {
+  title?: string;
+  eyebrow?: string;
   confirmationText: string;
+  warningText?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
   errorMessage: string | null;
   isSubmitting: boolean;
   onDecision: (decision: DeadlineDecision) => void;
 }
 
+const withMarkdownLineBreaks = (text: string) =>
+  text.replace(/\r\n/g, '\n').replace(/([^\n])\n(?!\n)/g, '$1  \n');
+
 const DeadlineDecisionModal = ({
+  title = 'Deadline change approval',
+  eyebrow = 'Action required',
   confirmationText,
+  warningText = 'The deadline has not changed yet.',
+  confirmLabel = 'Allow',
+  cancelLabel = 'Reject',
   errorMessage,
   isSubmitting,
   onDecision,
@@ -60,16 +74,24 @@ const DeadlineDecisionModal = ({
         <div className={styles.modalHeader}>
           <span className={styles.modalIcon} aria-hidden="true">!</span>
           <div>
-            <span className={styles.modalEyebrow}>Action required</span>
-            <h3 id="deadline-decision-title">Deadline change approval</h3>
+            <span className={styles.modalEyebrow}>{eyebrow}</span>
+            <h3 id="deadline-decision-title">{title}</h3>
           </div>
         </div>
 
-        <p id="deadline-decision-copy" className={styles.modalCopy}>
-          {confirmationText}
-        </p>
+        <div id="deadline-decision-copy" className={styles.modalCopy}>
+          <ReactMarkdown
+            components={{
+              a: ({href, children}) => (
+                <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>
+              ),
+            }}
+          >
+            {withMarkdownLineBreaks(confirmationText)}
+          </ReactMarkdown>
+        </div>
         <p id="deadline-decision-warning" className={styles.modalWarning}>
-          The deadline has not changed yet.
+          {warningText}
         </p>
 
         {errorMessage ? <p className={styles.modalError} role="alert">{errorMessage}</p> : null}
@@ -81,7 +103,7 @@ const DeadlineDecisionModal = ({
             onClick={() => onDecision('REJECT')}
             disabled={isSubmitting}
           >
-            Reject
+            {cancelLabel}
           </button>
           <button
             type="button"
@@ -89,7 +111,7 @@ const DeadlineDecisionModal = ({
             onClick={() => onDecision('ALLOW')}
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Working…' : 'Allow'}
+            {isSubmitting ? 'Working…' : confirmLabel}
           </button>
         </div>
       </section>
