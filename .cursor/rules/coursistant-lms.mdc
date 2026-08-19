@@ -16,6 +16,7 @@ alwaysApply: true
 - **Styles:** SCSS modules with design tokens (`src/styles/_tokens.scss`).
 - **Tests:** Colocate `*.test.ts(x)` with unit under test using Vitest + Testing Library.
 - **Verification:** Run `npm run typecheck` and `npm run lint` in `lms/` before committing.
+- **自测要求**：每次有任何改动，你都要先自测（类型检查、单元测试等），自测完全没问题之后，再告诉用户。
 
 ## 2. Strict Prohibitions
 - Do NOT add new `.jsx` / `.js` source files.
