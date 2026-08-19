@@ -77,19 +77,24 @@ const PostComponent: React.FC = () => {
           >
             <div className="post-item-content">
               <div className="post-item-content-header">
-                <h2 className="text-primary-color font-semibold">{announcement.title}</h2>
-                <span className="brand-color ml-2 px-3 py-0.5 rounded-md font-medium text-[0.8rem]">
-                  {announcement.courseCode}
-                </span>
-                {announcement.unread && (
-                  <span
-                    className="ml-2 w-2 h-2 rounded-full"
-                    style={{backgroundColor: "var(--xl-danger)"}}
-                    aria-label="Unread"
-                  />
-                )}
-                <div className="spacer"/>
-                <p>{dayjs(announcement.postedAt).fromNow()}</p>
+                <h2 className="post-item-title text-primary-color font-semibold">
+                  {announcement.title}
+                </h2>
+                <div className="post-item-metadata">
+                  <span className="post-item-course brand-color px-3 py-0.5 rounded-md font-medium text-[0.8rem]">
+                    {announcement.courseCode}
+                  </span>
+                  <span className="post-item-unread-slot">
+                    {announcement.unread ? (
+                      <span
+                        className="post-item-unread w-2 h-2 rounded-full"
+                        style={{backgroundColor: "var(--xl-danger)"}}
+                        aria-label="Unread"
+                      />
+                    ) : null}
+                  </span>
+                  <p className="post-item-time">{dayjs(announcement.postedAt).fromNow()}</p>
+                </div>
               </div>
               <div className="post-item-content-body">
                 <span className="text-brand-primary whitespace-nowrap">Open announcement</span>

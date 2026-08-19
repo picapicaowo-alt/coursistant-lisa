@@ -1,9 +1,22 @@
+import {Extension} from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import {Markdown} from 'tiptap-markdown';
 import {BlankNode} from './extensions/BlankNode';
 import {RichImage, RichVideo, TextColor} from './extensions/RichContent';
 import styles from './index.module.scss';
+
+// StarterKit binds Mod-* shortcuts for marks and headings but ships none for lists.
+export const ListShortcuts = Extension.create({
+  name: 'listShortcuts',
+
+  addKeyboardShortcuts() {
+    return {
+      'Mod-Shift-8': () => this.editor.commands.toggleBulletList(),
+      'Mod-Shift-7': () => this.editor.commands.toggleOrderedList(),
+    };
+  },
+});
 
 export const createEditorExtensions = (options: {placeholder: string; disabled: boolean}) => [
   StarterKit.configure({
@@ -28,6 +41,7 @@ export const createEditorExtensions = (options: {placeholder: string; disabled: 
     linkify: true,
     breaks: true,
   }),
+  ListShortcuts,
   TextColor,
   RichImage,
   RichVideo,

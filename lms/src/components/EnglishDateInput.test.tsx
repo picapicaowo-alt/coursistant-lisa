@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {fireEvent, render, screen} from '@testing-library/react';
+import {fireEvent, render, screen, within} from '@testing-library/react';
 import {describe, expect, it, vi} from 'vitest';
 import {EnglishDateInput, EnglishDateTimeInput, EnglishTimeInput} from './EnglishDateInput';
 
@@ -36,5 +36,40 @@ describe('English date inputs', () => {
     expect(dateChange).toHaveBeenLastCalledWith('2027-02-28');
     expect(timeChange).toHaveBeenLastCalledWith('00:05');
     expect((screen.getByLabelText('Start date') as HTMLInputElement).placeholder).toBe('MM/DD/YYYY');
+  });
+
+  it('opens a floating calendar on focus and selects a date directly', () => {
+    const Harness = () => {
+      const [value, setValue] = useState('2026-08-03');
+      return <><label>Event date<EnglishDateInput value={value} onChangeValue={setValue}/></label><output>{value}</output></>;
+    };
+    render(<Harness/>);
+
+    fireEvent.focus(screen.getByLabelText('Event date'));
+    const dialog = screen.getByRole('dialog', {name: 'Select date'});
+    fireEvent.click(within(dialog).getByRole('button', {name: 'Monday, August 17, 2026'}));
+
+    expect(screen.queryByRole('dialog', {name: 'Select date'})).toBeNull();
+    expect(screen.getByText('2026-08-17').textContent).toBe('2026-08-17');
+    expect((screen.getByLabelText('Event date') as HTMLInputElement).value).toBe('08/17/2026');
+  });
+
+  it('sets both calendar date and time from the floating picker', () => {
+    const Harness = () => {
+      const [value, setValue] = useState('2026-08-03T10:19');
+      return <><label>Quiz closes<EnglishDateTimeInput value={value} onChangeValue={setValue}/></label><output>{value}</output></>;
+    };
+    render(<Harness/>);
+
+    fireEvent.focus(screen.getByLabelText('Quiz closes'));
+    const dialog = screen.getByRole('dialog', {name: 'Select date & time'});
+    fireEvent.click(within(dialog).getByRole('button', {name: 'Monday, August 17, 2026'}));
+    fireEvent.change(within(dialog).getByLabelText('Hour'), {target: {value: '11'}});
+    fireEvent.change(within(dialog).getByLabelText('Minute'), {target: {value: '45'}});
+    fireEvent.change(within(dialog).getByLabelText('AM or PM'), {target: {value: 'PM'}});
+    fireEvent.click(within(dialog).getByRole('button', {name: 'Set date & time'}));
+
+    expect(screen.getByText('2026-08-17T23:45').textContent).toBe('2026-08-17T23:45');
+    expect((screen.getByLabelText('Quiz closes') as HTMLInputElement).value).toBe('08/17/2026, 11:45 PM');
   });
 });

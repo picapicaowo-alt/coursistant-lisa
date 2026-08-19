@@ -21,6 +21,7 @@ $spacing-xl: 1.25rem;
 .fileBlock {
     width: 100%;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: $spacing-md;
     border: 1px solid $border-color;
@@ -113,6 +114,13 @@ $spacing-xl: 1.25rem;
     display: flex;
     align-items: center;
     gap: $spacing-sm;
+}
+
+.deleteError {
+    width: 100%;
+    flex-basis: 100%;
+    color: $red-medium;
+    font-size: 0.75rem;
 }
 
 .deleteButton {

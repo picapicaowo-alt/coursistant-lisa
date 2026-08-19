@@ -15,37 +15,59 @@ interface FileSectionProps {
   files: FileView[];
   uploadFunction: (file: File, abortSignal: AbortSignal) => Promise<string>;
   onUploaded: (file: FileView) => void;
+  onDelete?: (file: FileView) => Promise<void>;
   disabled?: boolean;
   accept?: string;
 }
+
+const fileId = (file: FileView) => String(file.id);
 
 export const FileSection: React.FC<FileSectionProps> = ({
                                                           files,
                                                           uploadFunction,
                                                           onUploaded,
+                                                          onDelete,
                                                           disabled = false,
                                                           accept,
                                                         }) => {
   const [pendingFiles, setPendingFiles] = React.useState<FileView[]>([]);
+  const [deletedFileIds, setDeletedFileIds] = React.useState<Set<string>>(() => new Set());
   const pendingFilesRef = React.useRef(new Map<string | number, FileView>());
 
   const displayedFiles = React.useMemo(() => {
-    const persistedIds = new Set(files.map(file => file.id));
+    const persistedIds = new Set(files.map(fileId));
     return [
-      ...files,
-      ...pendingFiles.filter(file => !persistedIds.has(file.id)),
+      ...files.filter(file => !deletedFileIds.has(fileId(file))),
+      ...pendingFiles.filter(file => (
+        !persistedIds.has(fileId(file)) && !deletedFileIds.has(fileId(file))
+      )),
     ];
-  }, [files, pendingFiles]);
+  }, [deletedFileIds, files, pendingFiles]);
 
   React.useEffect(() => {
-    const persistedIds = new Set(files.map(file => file.id));
-    if (persistedIds.size === 0) return;
+    const persistedIds = new Set(files.map(fileId));
+    if (persistedIds.size > 0) {
+      setPendingFiles(prev => {
+        const next = prev.filter(file => !persistedIds.has(fileId(file)));
+        return next.length === prev.length ? prev : next;
+      });
+    }
 
-    setPendingFiles(prev => {
-      const next = prev.filter(file => !persistedIds.has(file.id));
-      return next.length === prev.length ? prev : next;
+    setDeletedFileIds(prev => {
+      const next = new Set([...prev].filter(id => persistedIds.has(id)));
+      return next.size === prev.size ? prev : next;
     });
   }, [files]);
+
+  const deleteFile = onDelete
+    ? async (file: FileView) => {
+      await onDelete(file);
+      const deletedId = fileId(file);
+      setDeletedFileIds(prev => new Set(prev).add(deletedId));
+      pendingFilesRef.current.delete(file.id);
+      setPendingFiles(prev => prev.filter(pending => fileId(pending) !== deletedId));
+    }
+    : undefined;
   
   /**
    * Called when a file upload starts
@@ -124,7 +146,12 @@ export const FileSection: React.FC<FileSectionProps> = ({
       
       <div className={styles.fileList}>
         {displayedFiles.map((fileBlock) => (
-          <FileBlock key={fileBlock.id} block={fileBlock} disabled={disabled}/>
+          <FileBlock
+            key={fileBlock.id}
+            block={fileBlock}
+            disabled={disabled}
+            onDelete={deleteFile}
+          />
         ))}
       </div>
     </React.Fragment>

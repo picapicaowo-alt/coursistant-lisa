@@ -7,12 +7,13 @@ const agentApi = vi.hoisted(() => ({
   chat: vi.fn(),
   decideDeadlineChange: vi.fn(),
 }));
+const auth = vi.hoisted(() => ({
+  user: {id: 42, name: 'Teacher', level: 'INSTRUCTOR'},
+}));
 
 vi.mock('@/apis/services/ai-agent-api', () => ({aiAgentApiService: agentApi}));
 vi.mock('@/contexts/RequiredAuthContext', () => ({
-  useRequiredAuth: () => ({
-    user: {id: 42, name: 'Teacher', level: 'INSTRUCTOR'},
-  }),
+  useRequiredAuth: () => ({user: auth.user}),
 }));
 
 import WorkflowPanel from './WorkflowPanel';
@@ -20,7 +21,34 @@ import WorkflowPanel from './WorkflowPanel';
 describe('WorkflowPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    auth.user = {id: 42, name: 'Teacher', level: 'INSTRUCTOR'};
     Element.prototype.scrollIntoView = vi.fn();
+  });
+
+  it('keeps deadline changes out of the student workflow', async () => {
+    auth.user = {id: 43, name: 'Student', level: 'STUDENT'};
+    agentApi.chat.mockResolvedValue({
+      reply: 'Allow this deadline change?',
+      pendingAction: {actionId: 'action-student', type: 'ASSIGNMENT_DEADLINE_CHANGE'},
+    });
+    const user = userEvent.setup();
+    render(<WorkflowPanel/>);
+
+    expect(screen.queryByRole('button', {name: 'Help me change an assignment deadline.'}))
+      .not.toBeInTheDocument();
+    expect(screen.getByText('Student workflow')).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Tell Workflow what to do'), 'Change the assignment deadline');
+    await user.click(screen.getByRole('button', {name: 'Run'}));
+
+    await waitFor(() => expect(agentApi.chat).toHaveBeenCalledWith({
+      message: 'Change the assignment deadline',
+      role: 'STUDENT',
+    }));
+    expect(await screen.findByText('Students can view assignment deadlines, but only instructors can change them.'))
+      .toBeInTheDocument();
+    expect(screen.queryByRole('dialog', {name: 'Deadline change approval'})).not.toBeInTheDocument();
+    expect(agentApi.decideDeadlineChange).not.toHaveBeenCalled();
   });
 
   it('sends instructor prompts to the AI Agent', async () => {
@@ -35,6 +63,28 @@ describe('WorkflowPanel', () => {
       role: 'INSTRUCTOR',
     }));
     expect(await screen.findByText('You teach two courses.')).toBeInTheDocument();
+  });
+
+  it('renders markdown in agent replies instead of showing asterisks', async () => {
+    agentApi.chat.mockResolvedValue({
+      reply: '**Active**\nCSCI-310 — Applied Database Systems\n\n- **Pending:** None\n- **Submitted:** 1',
+      pendingAction: null,
+    });
+    const user = userEvent.setup();
+    render(<WorkflowPanel/>);
+
+    await user.click(screen.getByRole('button', {name: 'List my courses.'}));
+
+    const activeHeading = await screen.findByText('Active');
+    expect(activeHeading.tagName).toBe('STRONG');
+    expect(screen.queryByText('**Active**')).not.toBeInTheDocument();
+    expect(screen.getByText(/CSCI-310/)).toBeInTheDocument();
+
+    const pendingLabel = screen.getByText('Pending:');
+    expect(pendingLabel.tagName).toBe('STRONG');
+    expect(pendingLabel.closest('li')).toHaveTextContent('Pending: None');
+    expect(screen.getByText('Submitted:').closest('li')).toHaveTextContent('Submitted: 1');
+    expect(screen.queryByText(/\*\*Pending:\*\*/)).not.toBeInTheDocument();
   });
 
   it('requires an explicit Allow or Reject decision for a pending change', async () => {

@@ -1,7 +1,7 @@
 // noinspection DuplicatedCode
 
 import {describe, it, expect, vi, beforeEach} from 'vitest';
-import {render, screen} from '@testing-library/react';
+import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import '@testing-library/jest-dom';
 import {FileBlock} from './FileBlock';
 import {FileView} from '@/types';
@@ -147,6 +147,8 @@ describe('FileBlock', () => {
   });
   
   describe('Action Buttons', () => {
+    const onDelete = vi.fn().mockResolvedValue(undefined);
+
     it('shows retry button when in error state', () => {
       const errorFile: FileView = {
         ...baseFile,
@@ -179,7 +181,7 @@ describe('FileBlock', () => {
         uploadProgress: 30
       };
       
-      render(<FileBlock block={uploadingFile}/>);
+      render(<FileBlock block={uploadingFile} onDelete={onDelete}/>);
       
       const deleteButton = screen.getByTitle('Delete file');
       expect(deleteButton).toBeDisabled();
@@ -191,7 +193,7 @@ describe('FileBlock', () => {
         uploadStatus: 'success'
       };
       
-      render(<FileBlock block={successFile}/>);
+      render(<FileBlock block={successFile} onDelete={onDelete}/>);
       
       const deleteButton = screen.getByTitle('Delete file');
       expect(deleteButton).not.toBeDisabled();
@@ -211,17 +213,17 @@ describe('FileBlock', () => {
       expect(screen.getByTitle('Retry')).toBeInTheDocument();
     });
     
-    it('handles delete button click', () => {
+    it('handles delete button click', async () => {
       const successFile: FileView = {
         ...baseFile,
         uploadStatus: 'success'
       };
       
-      render(<FileBlock block={successFile}/>);
+      render(<FileBlock block={successFile} onDelete={onDelete}/>);
       
-      // We can't easily test the click handler since it's internal to the component
-      // But we can at least verify the button exists and is accessible
-      expect(screen.getByTitle('Delete file')).toBeInTheDocument();
+      fireEvent.click(screen.getByTitle('Delete file'));
+
+      await waitFor(() => expect(onDelete).toHaveBeenCalledWith(successFile));
     });
   });
 });

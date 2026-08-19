@@ -2,6 +2,7 @@ import React from 'react';
 import {Editor} from '@tiptap/react';
 import {Level} from '@tiptap/extension-heading';
 import {
+  Check,
   ChevronDown,
   CodeXml,
   FilePlus2,
@@ -26,17 +27,55 @@ interface ToolbarProps {
   toggleToolbar?: () => void;
 }
 
+const isApplePlatform = () => {
+  if (typeof navigator === 'undefined') return false;
+  return /Mac|iPad|iPhone|iPod/i.test(navigator.platform || navigator.userAgent);
+};
+
+const shortcut = (key: string, {shift = false, alt = false} = {}) => {
+  if (isApplePlatform()) return `${alt ? '⌥' : ''}${shift ? '⇧' : ''}⌘${key}`;
+  return `Ctrl+${alt ? 'Alt+' : ''}${shift ? 'Shift+' : ''}${key}`;
+};
+
 const TEXT_COLORS = [
   {name: 'Default', value: ''},
-  {name: 'Slate', value: '#2D3748'},
-  {name: 'Blue', value: '#435BD4'},
-  {name: 'Teal', value: '#0F766E'},
-  {name: 'Orange', value: '#B45309'},
-  {name: 'Red', value: '#BE123C'},
-  {name: 'Purple', value: '#7C3AED'},
+  {name: 'Black', value: '#000000'},
+  {name: 'Gray', value: '#64748B'},
+  {name: 'Red', value: '#DC2626'},
+  {name: 'Orange', value: '#EA580C'},
+  {name: 'Yellow', value: '#EAB308'},
+  {name: 'Green', value: '#16A34A'},
+  {name: 'Teal', value: '#0D9488'},
+  {name: 'Blue', value: '#2563EB'},
+  {name: 'Purple', value: '#9333EA'},
+  {name: 'Pink', value: '#DB2777'},
 ];
 
+interface ToolbarButtonProps {
+  label: string;
+  hint?: string;
+  active?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}
+
+const ToolbarButton: React.FC<ToolbarButtonProps> = ({label, hint, active, onClick, children}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    aria-label={label}
+    aria-pressed={active}
+    data-tooltip={hint ? `${label} · ${hint}` : label}
+    className={`${styles.toolbarButton} ${styles.tooltipHost} ${active ? styles.active : ''}`}
+  >
+    {children}
+  </button>
+);
+
 const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = true, toggleToolbar}) => {
+  const colorMenuRef = React.useRef<HTMLDetailsElement>(null);
+  const insertMenuRef = React.useRef<HTMLDetailsElement>(null);
+
   if (!editor || disabled) return null;
 
   const headings = [
@@ -45,6 +84,10 @@ const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = tru
     {level: 2, label: 'Heading 2'},
     {level: 3, label: 'Heading 3'},
   ];
+
+  const closeMenu = (ref: React.RefObject<HTMLDetailsElement | null>) => {
+    if (ref.current) ref.current.open = false;
+  };
 
   const requestUrl = (message: string, mediaOnly = false) => {
     const value = window.prompt(message);
@@ -70,7 +113,16 @@ const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = tru
     editor.chain().focus().extendMarkRange('link').setLink({href: url}).run();
   };
 
+  const activeColor = String(editor.getAttributes('textColor').color ?? '').toLowerCase();
+
+  const applyColor = (value: string) => {
+    if (value) editor.chain().focus().setMark('textColor', {color: value}).run();
+    else editor.chain().focus().unsetMark('textColor').run();
+    closeMenu(colorMenuRef);
+  };
+
   const insertImage = () => {
+    closeMenu(insertMenuRef);
     const src = requestUrl('Image URL', true);
     if (!src) return;
     const alt = window.prompt('Image description (for accessibility)', '') ?? '';
@@ -81,6 +133,7 @@ const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = tru
   };
 
   const insertVideo = () => {
+    closeMenu(insertMenuRef);
     const src = requestUrl('Direct video file URL (HTTP or HTTPS)', true);
     if (!src) return;
     editor.chain().focus().insertContent([
@@ -90,6 +143,7 @@ const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = tru
   };
 
   const insertFile = () => {
+    closeMenu(insertMenuRef);
     const href = requestUrl('File URL');
     if (!href) return;
     const label = window.prompt('File name', 'Download file')?.trim() || 'Download file';
@@ -100,6 +154,11 @@ const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = tru
     }).run();
   };
 
+  const insertDivider = () => {
+    closeMenu(insertMenuRef);
+    editor.chain().focus().setHorizontalRule().run();
+  };
+
   return (
     <div className={styles.toolbarContainer} aria-label="Text formatting toolbar">
       {toolbarVisible ? (
@@ -107,6 +166,7 @@ const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = tru
           <div className={styles.toolbarGroup}>
             <select
               aria-label="Text style"
+              title="Text style"
               value={editor.isActive('heading') ? editor.getAttributes('heading').level : 0}
               onChange={event => {
                 const level = Number(event.target.value);
@@ -120,48 +180,81 @@ const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = tru
           </div>
 
           <div className={styles.toolbarGroup}>
-            <button onClick={() => editor.chain().focus().toggleBold().run()} className={`${styles.toolbarButton} ${editor.isActive('bold') ? styles.active : ''}`} type="button" aria-label="Bold" title="Bold (Ctrl+B)"><strong>B</strong></button>
-            <button onClick={() => editor.chain().focus().toggleItalic().run()} className={`${styles.toolbarButton} ${editor.isActive('italic') ? styles.active : ''}`} type="button" aria-label="Italic" title="Italic (Ctrl+I)"><em>I</em></button>
-            <button onClick={() => editor.chain().focus().toggleUnderline().run()} className={`${styles.toolbarButton} ${editor.isActive('underline') ? styles.active : ''}`} type="button" aria-label="Underline" title="Underline (Ctrl+U)"><u>U</u></button>
-            <button onClick={() => editor.chain().focus().toggleStrike().run()} className={`${styles.toolbarButton} ${editor.isActive('strike') ? styles.active : ''}`} type="button" aria-label="Strikethrough" title="Strikethrough"><s>S</s></button>
+            <ToolbarButton label="Bold" hint={shortcut('B')} active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
+              <strong>B</strong>
+            </ToolbarButton>
+            <ToolbarButton label="Italic" hint={shortcut('I')} active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}>
+              <em>I</em>
+            </ToolbarButton>
+            <ToolbarButton label="Underline" hint={shortcut('U')} active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}>
+              <u>U</u>
+            </ToolbarButton>
+            <ToolbarButton label="Strikethrough" hint={shortcut('S', {shift: true})} active={editor.isActive('strike')} onClick={() => editor.chain().focus().toggleStrike().run()}>
+              <s>S</s>
+            </ToolbarButton>
           </div>
 
           <div className={styles.toolbarGroup}>
-            <button onClick={() => editor.chain().focus().toggleBulletList().run()} className={`${styles.toolbarButton} ${editor.isActive('bulletList') ? styles.active : ''}`} type="button" aria-label="Bulleted list" title="Bulleted list"><List size={17}/></button>
-            <button onClick={() => editor.chain().focus().toggleOrderedList().run()} className={`${styles.toolbarButton} ${editor.isActive('orderedList') ? styles.active : ''}`} type="button" aria-label="Numbered list" title="Numbered list"><ListOrdered size={17}/></button>
+            <ToolbarButton label="Bullet list" hint={shortcut('8', {shift: true})} active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
+              <List size={17}/>
+            </ToolbarButton>
+            <ToolbarButton label="Numbered list" hint={shortcut('7', {shift: true})} active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
+              <ListOrdered size={17}/>
+            </ToolbarButton>
           </div>
 
           <div className={styles.toolbarGroup}>
-            <details className={styles.toolbarMenu}>
-              <summary className={styles.toolbarButton} aria-label="Text color" title="Text color"><Palette size={16}/><ChevronDown size={13}/></summary>
+            <details className={styles.toolbarMenu} ref={colorMenuRef}>
+              <summary className={`${styles.toolbarButton} ${styles.tooltipHost}`} aria-label="Text color" data-tooltip="Text color">
+                <Palette size={16} color={activeColor || undefined}/><ChevronDown size={13}/>
+              </summary>
               <div className={styles.colorMenu}>
-                {TEXT_COLORS.map(color => (
-                  <button
-                    key={color.name}
-                    type="button"
-                    className={styles.colorOption}
-                    onClick={() => color.value
-                      ? editor.chain().focus().setMark('textColor', {color: color.value}).run()
-                      : editor.chain().focus().unsetMark('textColor').run()}
-                  >
-                    <span style={{backgroundColor: color.value || '#FFFFFF'}} aria-hidden="true"/>{color.name}
-                  </button>
-                ))}
+                <p className={styles.menuLabel}>Text color</p>
+                <div className={styles.colorGrid}>
+                  {TEXT_COLORS.map(color => {
+                    const selected = activeColor === color.value.toLowerCase();
+                    return (
+                      <button
+                        key={color.name}
+                        type="button"
+                        aria-label={color.name}
+                        aria-pressed={selected}
+                        data-tooltip={color.name}
+                        className={`${styles.colorSwatch} ${styles.tooltipHost} ${selected ? styles.colorSwatchSelected : ''}`}
+                        onClick={() => applyColor(color.value)}
+                      >
+                        <span
+                          className={color.value ? styles.swatchDot : `${styles.swatchDot} ${styles.swatchDotDefault}`}
+                          style={color.value ? {backgroundColor: color.value} : undefined}
+                          aria-hidden="true"
+                        >
+                          {selected ? <Check size={12} strokeWidth={3}/> : null}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </details>
-            <button onClick={toggleLink} className={`${styles.toolbarButton} ${editor.isActive('link') ? styles.active : ''}`} type="button" aria-label="Insert link" title="Insert link (Ctrl+K)"><Link2 size={16}/></button>
-            <button onClick={() => editor.chain().focus().toggleBlockquote().run()} className={`${styles.toolbarButton} ${editor.isActive('blockquote') ? styles.active : ''}`} type="button" aria-label="Blockquote" title="Blockquote"><Quote size={16}/></button>
-            <button onClick={() => editor.chain().focus().toggleCode().run()} className={`${styles.toolbarButton} ${editor.isActive('code') ? styles.active : ''}`} type="button" aria-label="Inline code" title="Inline code"><CodeXml size={17}/></button>
+            <ToolbarButton label="Insert link" hint={shortcut('K')} active={editor.isActive('link')} onClick={toggleLink}>
+              <Link2 size={16}/>
+            </ToolbarButton>
+            <ToolbarButton label="Blockquote" hint={shortcut('B', {shift: true})} active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}>
+              <Quote size={16}/>
+            </ToolbarButton>
+            <ToolbarButton label="Inline code" hint={shortcut('E')} active={editor.isActive('code')} onClick={() => editor.chain().focus().toggleCode().run()}>
+              <CodeXml size={17}/>
+            </ToolbarButton>
           </div>
 
           <div className={styles.toolbarGroup}>
-            <details className={styles.toolbarMenu}>
+            <details className={styles.toolbarMenu} ref={insertMenuRef}>
               <summary className={styles.insertButton}>Insert <ChevronDown size={14}/></summary>
               <div className={styles.insertMenu}>
                 <button type="button" onClick={insertImage}><ImagePlus size={16}/>Image</button>
                 <button type="button" onClick={insertVideo}><Video size={16}/>Video</button>
                 <button type="button" onClick={insertFile}><FilePlus2 size={16}/>File</button>
-                <button type="button" onClick={() => editor.chain().focus().setHorizontalRule().run()}><Minus size={16}/>Divider</button>
+                <button type="button" onClick={insertDivider}><Minus size={16}/>Divider</button>
               </div>
             </details>
           </div>
@@ -169,9 +262,13 @@ const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = tru
       ) : null}
 
       <div className={styles.toolbarGroup}>
-        <button onClick={toggleToolbar} className={styles.toolbarButton} type="button" aria-label={toolbarVisible ? 'Collapse toolbar' : 'Expand toolbar'} title={toolbarVisible ? 'Collapse toolbar' : 'Expand toolbar'}>
-          {toolbarVisible ? <PanelTopClose size={17}/> : <PanelTopOpen size={17}/>}<span className={styles.visuallyHidden}>{toolbarVisible ? 'Hide' : 'Format'}</span>
-        </button>
+        <ToolbarButton
+          label={toolbarVisible ? 'Collapse toolbar' : 'Expand toolbar'}
+          onClick={() => toggleToolbar?.()}
+        >
+          {toolbarVisible ? <PanelTopClose size={17}/> : <PanelTopOpen size={17}/>}
+          <span className={styles.visuallyHidden}>{toolbarVisible ? 'Hide' : 'Format'}</span>
+        </ToolbarButton>
       </div>
     </div>
   );

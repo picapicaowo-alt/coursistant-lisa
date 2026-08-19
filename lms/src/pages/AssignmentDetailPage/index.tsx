@@ -1,7 +1,20 @@
 import {useRef, useState} from 'react';
 import {Link, useNavigate, useParams} from 'react-router-dom';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import {ArrowLeft, CalendarClock, Download, Eye, FileText, RotateCcw, Trash2, Upload, UsersRound} from 'lucide-react';
+import {
+  ArrowLeft,
+  CalendarClock,
+  CheckCircle2,
+  Clock3,
+  Download,
+  Eye,
+  FileText,
+  MessageSquareText,
+  RotateCcw,
+  Trash2,
+  Upload,
+  UsersRound,
+} from 'lucide-react';
 import {assignmentApiService} from '@/apis/services/assignment-api';
 import type {ApiError, AssignmentAttachment} from '@/apis';
 import {unwrapData} from '@/apis';
@@ -11,6 +24,7 @@ import {RichTextEditor} from '@/components/RichTextEditor';
 import {formatDeadline} from '@/utils/datetime';
 import {isPreviewableFile, openPreviewWindow, saveBlob, showBlobInPreviewWindow} from '@/utils/downloadBlob';
 import {SubmitAssignmentDialog} from './SubmitAssignmentDialog';
+import {StudentSubmissionHistory} from './StudentSubmissionHistory';
 import {
   buildEmptySubmissionState,
   formatSubmissionStatus,
@@ -129,6 +143,91 @@ export const InstructorAttachmentRow = ({courseId, assignmentId, attachment}: {
   );
 };
 
+const formatGradeNumber = (value: number) => new Intl.NumberFormat('en-US', {
+  maximumFractionDigits: 2,
+}).format(value);
+
+const feedbackToPlainText = (feedback?: string) => {
+  const trimmed = feedback?.trim();
+  if (!trimmed) return null;
+  if (!trimmed.includes('<')) return trimmed;
+
+  if (typeof DOMParser === 'undefined') {
+    return trimmed.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || null;
+  }
+
+  const document = new DOMParser().parseFromString(trimmed, 'text/html');
+  document.body.querySelectorAll('br').forEach(node => node.replaceWith('\n'));
+  document.body.querySelectorAll('p, div, li, blockquote').forEach(node => node.append('\n'));
+  return document.body.textContent?.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim() || null;
+};
+
+export const StudentGradeSummary = ({
+  gradeReleased,
+  score,
+  pointsPossible,
+  gradeDisplay,
+  feedback,
+}: {
+  gradeReleased?: boolean;
+  score?: number;
+  pointsPossible?: number;
+  gradeDisplay?: string;
+  feedback?: string;
+}) => {
+  const feedbackText = feedbackToPlainText(feedback);
+  const numericScore = Number.isFinite(score) && Number.isFinite(pointsPossible)
+    ? `${formatGradeNumber(score!)} / ${formatGradeNumber(pointsPossible!)}`
+    : null;
+  const releasedScore = numericScore
+    ?? (gradeDisplay && gradeDisplay !== 'NotGradedYet' ? gradeDisplay : 'Grade released');
+
+  return (
+    <section className={styles.summaryCard} aria-labelledby="student-grade-title">
+      <div className={styles.gradeSummaryHeader}>
+        <h2 id="student-grade-title">Grade</h2>
+        <span className={styles.gradeStatus} data-status={gradeReleased ? 'released' : 'pending'}>
+          {gradeReleased ? 'Released' : 'Pending'}
+        </span>
+      </div>
+
+      {gradeReleased ? (
+        <>
+          <div className={styles.summaryRow}>
+            <CheckCircle2 size={20} aria-hidden="true"/>
+            <div>
+              <span>Score</span>
+              <strong className={styles.gradeScoreValue} aria-label={`Score ${releasedScore}`}>
+                {releasedScore}
+              </strong>
+            </div>
+          </div>
+          <div className={styles.gradeSummaryFeedback}>
+            <div className={styles.gradeFeedbackTitle}>
+              <MessageSquareText size={18} aria-hidden="true"/>
+              <span>Instructor feedback</span>
+            </div>
+            <p>{feedbackText ?? 'No feedback was provided.'}</p>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className={styles.summaryRow}>
+            <Clock3 size={20} aria-hidden="true"/>
+            <div>
+              <span>Status</span>
+              <strong>Grade pending release</strong>
+            </div>
+          </div>
+          <p className={styles.gradeSummaryHint}>
+            Your score and feedback will appear here after your instructor releases the grade.
+          </p>
+        </>
+      )}
+    </section>
+  );
+};
+
 const AssignmentDetailPage = () => {
   const {courseId: courseIdParam, assignmentId: assignmentIdParam} = useParams();
   const {user} = useAuth();
@@ -183,6 +282,16 @@ const AssignmentDetailPage = () => {
         return buildEmptySubmissionState(assignment, user.id, stagingFiles);
       }
     },
+  });
+
+  const submissionId = submissionQuery.data?.submissionId;
+  const versionsQuery = useQuery({
+    queryKey: ['assignment-submission-versions', courseId, assignmentId, submissionId],
+    enabled: submissionId !== undefined && courseId !== null && assignmentId !== null,
+    queryFn: async () => unwrapData(
+      await assignmentApiService.listSubmissionVersions(courseId!, assignmentId!, submissionId!),
+      'listSubmissionVersions',
+    ),
   });
 
   const rubricQuery = useQuery({
@@ -273,6 +382,11 @@ const AssignmentDetailPage = () => {
 
   const assignment = assignmentQuery.data;
   const deadline = formatDeadline(assignment.dueAtLocal, assignment.timezone);
+  const submissionVersions = versionsQuery.data
+    ?? (submissionQuery.data?.currentVersion ? [submissionQuery.data.currentVersion] : []);
+  const studentSubmissionStatus = submissionQuery.data?.submissionStatus ?? assignment.submissionStatus;
+  const showStudentGrade = isStudent
+    && (assignment.gradeReleased || studentSubmissionStatus?.startsWith('Submitted'));
 
   return (
     <div className={styles.page}>
@@ -382,50 +496,71 @@ const AssignmentDetailPage = () => {
                 </div>
               )}
 
-              {submissionQuery.data?.currentVersion && (
-                <div className={styles.versionSummary}>
-                  <strong>Version {submissionQuery.data.currentVersion.versionNo}</strong>
-                  <span>{submissionQuery.data.currentVersion.fileCount} file(s)</span>
+              {submissionId && submissionVersions.length > 0 ? (
+                <StudentSubmissionHistory
+                  courseId={courseId}
+                  assignmentId={assignmentId}
+                  submissionId={submissionId}
+                  versions={submissionVersions}
+                />
+              ) : null}
+
+              {versionsQuery.isError ? (
+                <div className={styles.error} role="alert">
+                  <span>Previous submission files couldn&apos;t be loaded.</span>{' '}
+                  <button type="button" onClick={() => void versionsQuery.refetch()}>Try again</button>
                 </div>
-              )}
+              ) : null}
             </section>
           )}
         </main>
 
-        <aside className={styles.summaryCard}>
-          <h2>Summary</h2>
-          <div className={styles.summaryRow}>
-            <CalendarClock size={20}/>
-            <div>
-              <span>Due</span>
-              <strong>{deadline}</strong>
+        <aside className={styles.sidebarColumn}>
+          <section className={styles.summaryCard}>
+            <h2>Summary</h2>
+            <div className={styles.summaryRow}>
+              <CalendarClock size={20}/>
+              <div>
+                <span>Due</span>
+                <strong>{deadline}</strong>
+              </div>
             </div>
-          </div>
-          <div className={styles.summaryRow}>
-            <UsersRound size={20}/>
-            <div>
-              <span>Submission type</span>
-              <strong>{assignment.submissionType}</strong>
+            <div className={styles.summaryRow}>
+              <UsersRound size={20}/>
+              <div>
+                <span>Submission type</span>
+                <strong>{assignment.submissionType}</strong>
+              </div>
             </div>
-          </div>
-          <div className={styles.summaryRow}>
-            <span className={styles.pointsIcon}>#</span>
-            <div>
-              <span>Points</span>
-              <strong>{assignment.pointsPossible ?? 'Not set'}</strong>
+            <div className={styles.summaryRow}>
+              <span className={styles.pointsIcon}>#</span>
+              <div>
+                <span>Points</span>
+                <strong>{assignment.pointsPossible ?? 'Not set'}</strong>
+              </div>
             </div>
-          </div>
 
-          {!isStudent && (
-            <div className={styles.staffMetrics}>
-              <span>{assignment.submissionCount ?? 0} submitted</span>
-              <span>{assignment.gradedCount ?? 0} graded</span>
-              <span>{assignment.releasedCount ?? 0} released</span>
-            </div>
-          )}
-          {access.canConfigureAssignments ? <div className={styles.dangerZone}><button type="button" className={styles.dangerButton} disabled={removeAssignment.isPending} onClick={() => {
-            if (window.confirm(`Permanently delete “${assignment.title}”? This only succeeds when no protected submission or grade data depends on it.`)) removeAssignment.mutate();
-          }}><Trash2 size={16}/>{removeAssignment.isPending ? 'Deleting…' : 'Delete assignment'}</button></div> : null}
+            {!isStudent && (
+              <div className={styles.staffMetrics}>
+                <span>{assignment.submissionCount ?? 0} submitted</span>
+                <span>{assignment.gradedCount ?? 0} graded</span>
+                <span>{assignment.releasedCount ?? 0} released</span>
+              </div>
+            )}
+            {access.canConfigureAssignments ? <div className={styles.dangerZone}><button type="button" className={styles.dangerButton} disabled={removeAssignment.isPending} onClick={() => {
+              if (window.confirm(`Permanently delete “${assignment.title}”? This only succeeds when no protected submission or grade data depends on it.`)) removeAssignment.mutate();
+            }}><Trash2 size={16}/>{removeAssignment.isPending ? 'Deleting…' : 'Delete assignment'}</button></div> : null}
+          </section>
+
+          {showStudentGrade ? (
+            <StudentGradeSummary
+              gradeReleased={assignment.gradeReleased}
+              score={assignment.score}
+              pointsPossible={assignment.pointsPossible}
+              gradeDisplay={assignment.gradeDisplay}
+              feedback={assignment.feedback}
+            />
+          ) : null}
         </aside>
       </div>
 
@@ -440,6 +575,9 @@ const AssignmentDetailPage = () => {
           }}
           onSubmitted={async () => {
             await Promise.all([assignmentQuery.refetch(), submissionQuery.refetch()]);
+            await queryClient.invalidateQueries({
+              queryKey: ['assignment-submission-versions', courseId, assignmentId],
+            });
           }}
         />
       )}

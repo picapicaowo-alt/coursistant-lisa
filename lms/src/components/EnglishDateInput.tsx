@@ -1,5 +1,7 @@
-import {useEffect, useRef, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import type {InputHTMLAttributes} from 'react';
+import {DateTimePickerPopover} from './DateTimePickerPopover';
+import type {DateTimePickerKind} from './DateTimePickerPopover';
 
 type BaseProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'value' | 'onChange'> & {
   value: string;
@@ -116,57 +118,114 @@ const commonProps = {
   lang: 'en-US',
 };
 
-export const EnglishDateInput = ({value, onChangeValue, ...props}: BaseProps) => {
-  const input = useEnglishInput(value, formatDate, parseDate, onChangeValue);
+interface PickerInputProps extends BaseProps {
+  kind: DateTimePickerKind;
+  format: (value: string) => string;
+  parse: (displayValue: string) => string | null;
+  defaultPlaceholder: string;
+  pattern: string;
+  title: string;
+}
+
+const PickerInput = ({
+  value,
+  onChangeValue,
+  kind,
+  format,
+  parse,
+  defaultPlaceholder,
+  pattern,
+  title,
+  onFocus,
+  onClick,
+  ...props
+}: PickerInputProps) => {
+  const input = useEnglishInput(value, format, parse, onChangeValue);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const closePicker = useCallback(() => setPickerOpen(false), []);
+
   return (
-    <input
+    <>
+      <input
+        {...props}
+        {...commonProps}
+        ref={inputRef}
+        type="text"
+        value={input.displayValue}
+        placeholder={props.placeholder ?? defaultPlaceholder}
+        pattern={pattern}
+        title={title}
+        aria-haspopup="dialog"
+        aria-expanded={pickerOpen}
+        onInput={event => event.currentTarget.setCustomValidity('')}
+        onInvalid={event => event.currentTarget.setCustomValidity(`${title}.`)}
+        onChange={event => input.onChange(event.target.value)}
+        onFocus={event => {
+          setPickerOpen(true);
+          onFocus?.(event);
+        }}
+        onClick={event => {
+          setPickerOpen(true);
+          onClick?.(event);
+        }}
+      />
+      <DateTimePickerPopover
+        anchorRef={inputRef}
+        kind={kind}
+        open={pickerOpen}
+        value={value}
+        onChangeValue={onChangeValue}
+        onClose={closePicker}
+      />
+    </>
+  );
+};
+
+export const EnglishDateInput = ({value, onChangeValue, ...props}: BaseProps) => {
+  return (
+    <PickerInput
       {...props}
-      {...commonProps}
-      type="text"
-      value={input.displayValue}
-      placeholder={props.placeholder ?? 'MM/DD/YYYY'}
+      kind="date"
+      value={value}
+      onChangeValue={onChangeValue}
+      format={formatDate}
+      parse={parseDate}
+      defaultPlaceholder="MM/DD/YYYY"
       pattern="\d{1,2}/\d{1,2}/\d{4}"
       title="Use MM/DD/YYYY"
-      onInput={event => event.currentTarget.setCustomValidity('')}
-      onInvalid={event => event.currentTarget.setCustomValidity('Use MM/DD/YYYY.')}
-      onChange={event => input.onChange(event.target.value)}
     />
   );
 };
 
 export const EnglishTimeInput = ({value, onChangeValue, ...props}: BaseProps) => {
-  const input = useEnglishInput(value, formatTime, parseTime, onChangeValue);
   return (
-    <input
+    <PickerInput
       {...props}
-      {...commonProps}
-      type="text"
-      value={input.displayValue}
-      placeholder={props.placeholder ?? 'hh:mm AM/PM'}
+      kind="time"
+      value={value}
+      onChangeValue={onChangeValue}
+      format={formatTime}
+      parse={parseTime}
+      defaultPlaceholder="hh:mm AM/PM"
       pattern="\d{1,2}:\d{2}\s*(AM|PM|am|pm)"
       title="Use hh:mm AM/PM"
-      onInput={event => event.currentTarget.setCustomValidity('')}
-      onInvalid={event => event.currentTarget.setCustomValidity('Use hh:mm AM/PM.')}
-      onChange={event => input.onChange(event.target.value)}
     />
   );
 };
 
 export const EnglishDateTimeInput = ({value, onChangeValue, ...props}: BaseProps) => {
-  const input = useEnglishInput(value, formatDateTime, parseDateTime, onChangeValue);
-
   return (
-    <input
+    <PickerInput
       {...props}
-      {...commonProps}
-      type="text"
-      value={input.displayValue}
-      placeholder={props.placeholder ?? 'MM/DD/YYYY, hh:mm AM/PM'}
+      kind="datetime"
+      value={value}
+      onChangeValue={onChangeValue}
+      format={formatDateTime}
+      parse={parseDateTime}
+      defaultPlaceholder="MM/DD/YYYY, hh:mm AM/PM"
       pattern="\d{1,2}/\d{1,2}/\d{4},\s*\d{1,2}:\d{2}\s*(AM|PM|am|pm)"
       title="Use MM/DD/YYYY, hh:mm AM/PM"
-      onInput={event => event.currentTarget.setCustomValidity('')}
-      onInvalid={event => event.currentTarget.setCustomValidity('Use MM/DD/YYYY, hh:mm AM/PM.')}
-      onChange={event => input.onChange(event.target.value)}
     />
   );
 };

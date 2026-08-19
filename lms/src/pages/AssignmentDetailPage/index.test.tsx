@@ -3,7 +3,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import type {AssignmentAttachment} from '@/apis';
 import {assignmentApiService} from '@/apis/services/assignment-api';
 import {openPreviewWindow, saveBlob, showBlobInPreviewWindow} from '@/utils/downloadBlob';
-import {InstructorAttachmentRow, uploadRubricWithReplaceConfirmation} from './index';
+import {InstructorAttachmentRow, StudentGradeSummary, uploadRubricWithReplaceConfirmation} from './index';
 
 vi.mock('@/apis/services/assignment-api', () => ({
   assignmentApiService: {
@@ -113,5 +113,47 @@ describe('uploadRubricWithReplaceConfirmation', () => {
 
     await expect(uploadRubricWithReplaceConfirmation(4, 9, file, false)).rejects.toBe(error);
     expect(assignmentApiService.uploadRubric).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('StudentGradeSummary', () => {
+  it('keeps the score and feedback private before release', () => {
+    render(
+      <StudentGradeSummary
+        gradeReleased={false}
+        score={19}
+        pointsPossible={20}
+        feedback="<p>Excellent database verification.</p>"
+      />,
+    );
+
+    expect(screen.getByRole('heading', {name: 'Grade'})).toBeTruthy();
+    expect(screen.getByText('Grade pending release')).toBeTruthy();
+    expect(screen.getByText('Pending')).toBeTruthy();
+    expect(screen.queryByLabelText('Score 19 / 20')).toBeNull();
+    expect(screen.queryByText('Excellent database verification.')).toBeNull();
+  });
+
+  it('shows the released score and safely rendered feedback', () => {
+    render(
+      <StudentGradeSummary
+        gradeReleased
+        score={19}
+        pointsPossible={20}
+        feedback="<p>Excellent database verification.</p><p>Clear screenshots.</p>"
+      />,
+    );
+
+    expect(screen.getByRole('heading', {name: 'Grade'})).toBeTruthy();
+    expect(screen.getByText('Released')).toBeTruthy();
+    expect(screen.getByLabelText('Score 19 / 20').textContent).toBe('19 / 20');
+    expect(screen.getByText(/Excellent database verification/).textContent).toBe(
+      'Excellent database verification.\nClear screenshots.',
+    );
+  });
+
+  it('uses an explicit empty feedback state for released grades', () => {
+    render(<StudentGradeSummary gradeReleased score={19} pointsPossible={20}/>);
+    expect(screen.getByText('No feedback was provided.')).toBeTruthy();
   });
 });

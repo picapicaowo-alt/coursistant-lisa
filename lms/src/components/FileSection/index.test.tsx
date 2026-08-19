@@ -1,5 +1,6 @@
 // noinspection DuplicatedCode
 
+import React from 'react';
 import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {render, screen, fireEvent, waitFor} from '@testing-library/react';
 import {act} from 'react-dom/test-utils';
@@ -110,6 +111,23 @@ describe('FileSection', () => {
       
       expect(screen.getByText(/file1.pdf/)).toBeInTheDocument();
       expect(screen.getByText(/file2.docx/)).toBeInTheDocument();
+    });
+
+    it('deletes a persisted file through the provided callback', async () => {
+      const onDelete = vi.fn().mockResolvedValue(undefined);
+      render(
+        <FileSection
+          files={initialFiles}
+          uploadFunction={mockUploadFunction}
+          onUploaded={mockOnUploaded}
+          onDelete={onDelete}
+        />
+      );
+
+      fireEvent.click(screen.getByRole('button', {name: 'Delete test-file.pdf'}));
+
+      await waitFor(() => expect(onDelete).toHaveBeenCalledWith(initialFiles[0]));
+      expect(screen.queryByText(/test-file.pdf/)).not.toBeInTheDocument();
     });
   });
   
@@ -262,6 +280,30 @@ describe('FileSection', () => {
         uploadStatus: 'success',
         uploadProgress: 100
       }));
+    });
+
+    it('does not duplicate an uploaded file when the API changes its ID from string to number', async () => {
+      const mockFile = createTestFile();
+      mockUploadFunction.mockResolvedValue('42');
+
+      const Harness = () => {
+        const [files, setFiles] = React.useState<FileView[]>([]);
+        return (
+          <FileSection
+            files={files}
+            uploadFunction={mockUploadFunction}
+            onUploaded={(file) => setFiles([{...file, id: Number(file.id)}])}
+          />
+        );
+      };
+
+      const {container} = render(<Harness/>);
+      const input = await simulateFileInputChange(container, mockFile);
+      fireEvent.change(input);
+
+      await waitFor(() => {
+        expect(screen.getAllByText(/test.pdf/)).toHaveLength(1);
+      });
     });
   });
 });

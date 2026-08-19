@@ -126,36 +126,28 @@ const RichTextEditorClient: React.FC<TextBlockProps> = ({
   useEffect(() => {
     if (!editor) return;
     
+    // Bold/italic/underline/strike already have Mod-* bindings in StarterKit's keymap, which
+    // runs on this same element before this listener. Re-handling them here would toggle each
+    // mark twice per keypress and cancel it out, so only unbound shortcuts belong below.
     const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.key === 'b') {
-        event.preventDefault();
-        editor.chain().focus().toggleBold().run();
+      if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
+      if (event.key.toLowerCase() !== 'k') return;
+      
+      event.preventDefault();
+      const previousUrl = editor.getAttributes('link').href as string | undefined;
+      const url = window.prompt('Link URL', previousUrl ?? '');
+      
+      if (url === null) return;
+      if (url.trim() === '') {
+        editor.chain().focus().extendMarkRange('link').unsetLink().run();
+        return;
       }
-      if ((event.ctrlKey || event.metaKey) && event.key === 'i') {
-        event.preventDefault();
-        editor.chain().focus().toggleItalic().run();
+      const safeUrl = normalizeSafeUrl(url, {allowRelative: true});
+      if (!safeUrl) {
+        window.alert('Enter a valid HTTP, HTTPS, email, or relative link.');
+        return;
       }
-      if ((event.ctrlKey || event.metaKey) && event.key === 'u') {
-        event.preventDefault();
-        editor.chain().focus().toggleUnderline().run();
-      }
-      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
-        event.preventDefault();
-        const previousUrl = editor.getAttributes('link').href;
-        const url = window.prompt('Input Link', previousUrl);
-        
-        if (url === null) return;
-        if (url === '') {
-          editor.chain().focus().extendMarkRange('link').unsetLink().run();
-          return;
-        }
-        const safeUrl = normalizeSafeUrl(url, {allowRelative: true});
-        if (!safeUrl) {
-          window.alert('Enter a valid HTTP, HTTPS, email, or relative link.');
-          return;
-        }
-        editor.chain().focus().extendMarkRange('link').setLink({href: safeUrl}).run();
-      }
+      editor.chain().focus().extendMarkRange('link').setLink({href: safeUrl}).run();
     };
     
     editor.view.dom.addEventListener('keydown', handleKeyDown);

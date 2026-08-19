@@ -7,6 +7,7 @@ import {unwrapData} from '@/apis';
 import {assignmentApiService} from '@/apis/services/assignment-api';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
 import {saveBlob} from '@/utils/downloadBlob';
+import {StudentSubmissionHistory} from '@/pages/AssignmentDetailPage/StudentSubmissionHistory';
 import styles from './index.module.scss';
 
 type RosterFilter = 'All' | 'Ungraded' | 'Graded';
@@ -58,6 +59,8 @@ const escapeHtml = (value: string) => value
   .replace(/'/g, '&#039;');
 
 interface GradeDialogProps {
+  courseId: number;
+  assignmentId: number;
   row: GradingRosterItem;
   pointsPossible?: number;
   isSaving: boolean;
@@ -66,10 +69,29 @@ interface GradeDialogProps {
   onSave: (payload: UpsertGradePayload, annotatedFile?: File) => void;
 }
 
-const GradeDialog = ({row, pointsPossible, isSaving, error, onClose, onSave}: GradeDialogProps) => {
+export const GradeDialog = ({
+  courseId,
+  assignmentId,
+  row,
+  pointsPossible,
+  isSaving,
+  error,
+  onClose,
+  onSave,
+}: GradeDialogProps) => {
   const [score, setScore] = useState(row.score === undefined ? '' : String(row.score));
   const [feedback, setFeedback] = useState('');
   const [annotatedFile, setAnnotatedFile] = useState<File | undefined>();
+  const submissionVersionsQuery = useQuery({
+    queryKey: ['assignment-submission-versions', courseId, assignmentId, row.submissionId],
+    enabled: row.submissionId !== undefined,
+    queryFn: async () => unwrapData(
+      await assignmentApiService.listSubmissionVersions(
+        courseId, assignmentId, row.submissionId!,
+      ),
+      'listSubmissionVersionsForGrading',
+    ),
+  });
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -97,6 +119,36 @@ const GradeDialog = ({row, pointsPossible, isSaving, error, onClose, onSave}: Gr
             <X size={20}/>
           </button>
         </header>
+
+        <section className={styles.submittedFiles} aria-labelledby="submitted-files-title">
+          <div className={styles.submittedFilesHeader}>
+            <div>
+              <h3 id="submitted-files-title">Submitted files</h3>
+              <p>Review the learner&apos;s files before entering a grade.</p>
+            </div>
+            {row.fileCount ? <span>{row.fileCount} file(s)</span> : null}
+          </div>
+
+          {row.submissionId === undefined ? (
+            <p className={styles.noSubmittedFiles}>This learner has not submitted files.</p>
+          ) : submissionVersionsQuery.isPending ? (
+            <p className={styles.noSubmittedFiles}>Loading submitted files…</p>
+          ) : submissionVersionsQuery.isError ? (
+            <div className={styles.submissionFilesError} role="alert">
+              <span>Submitted files couldn&apos;t be loaded.</span>
+              <button type="button" onClick={() => void submissionVersionsQuery.refetch()}>Try again</button>
+            </div>
+          ) : submissionVersionsQuery.data.length > 0 ? (
+            <StudentSubmissionHistory
+              courseId={courseId}
+              assignmentId={assignmentId}
+              submissionId={row.submissionId}
+              versions={submissionVersionsQuery.data}
+            />
+          ) : (
+            <p className={styles.noSubmittedFiles}>No submitted versions were found.</p>
+          )}
+        </section>
 
         <label className={styles.scoreField}>
           <span>Score</span>
@@ -357,7 +409,12 @@ const AssignmentGradingPage = () => {
                         <span><strong>{name}</strong><small>{getDisplayEmail(row)}</small></span>
                       </div>
                     </td>
-                    <td><span className={styles.submissionBadge} data-status={row.submissionStatus}>{getSubmissionLabel(row.submissionStatus)}</span></td>
+                    <td>
+                      <span className={styles.submissionCell}>
+                        <span className={styles.submissionBadge} data-status={row.submissionStatus}>{getSubmissionLabel(row.submissionStatus)}</span>
+                        {row.fileCount ? <small>{row.fileCount} file(s)</small> : null}
+                      </span>
+                    </td>
                     <td>{formatSubmissionTime(row.submittedAt)}</td>
                     <td className={styles.score}>{row.score ?? '—'} / {roster.pointsPossible ?? '—'}</td>
                     <td><span className={styles.gradeBadge} data-status={row.gradeStatus}>{row.gradeStatus}</span></td>
@@ -370,10 +427,12 @@ const AssignmentGradingPage = () => {
                           setSelectedRow(row);
                         }}
                         disabled={!roster.gradingWritable}
-                        aria-label={`Grade ${name}`}
+                        aria-label={row.submissionId
+                          ? `View submission files and grade ${name}`
+                          : `Grade ${name}`}
                       >
                         <MessageSquare size={18}/>
-                        <span>{row.gradeStatus === 'Ungraded' ? 'Grade' : 'Edit'}</span>
+                        <span>{row.submissionId ? 'View & grade' : row.gradeStatus === 'Ungraded' ? 'Grade' : 'Edit'}</span>
                       </button></div>
                     </td>
                   </tr>
@@ -391,6 +450,8 @@ const AssignmentGradingPage = () => {
 
       {selectedRow ? (
         <GradeDialog
+          courseId={courseId}
+          assignmentId={assignmentId}
           row={selectedRow}
           pointsPossible={roster.pointsPossible}
           isSaving={isSaving}

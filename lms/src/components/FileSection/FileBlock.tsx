@@ -12,13 +12,17 @@ import {getFileIcon} from "@/utils/file-utils";
 interface FileBlockProps {
   block: FileView;
   disabled?: boolean;
+  onDelete?: (file: FileView) => Promise<void>;
 }
 
 export const FileBlock: React.FC<FileBlockProps> = ({
                                                       block,
                                                       disabled = false,
+                                                      onDelete,
                                                     }) => {
   const {t} = useTranslation("course");
+  const [isDeleting, setDeleting] = React.useState(false);
+  const [deleteError, setDeleteError] = React.useState<string | null>(null);
   
   const ext = block.filename?.split('.').pop()?.toUpperCase() || '';
   const fileSize = `${(block.fileSize / 1024).toFixed(1)} MB`;
@@ -35,8 +39,17 @@ export const FileBlock: React.FC<FileBlockProps> = ({
     
   };
   
-  const handleDelete = () => {
-    
+  const handleDelete = async () => {
+    if (!onDelete || isDeleting) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await onDelete(block);
+    } catch {
+      setDeleteError('Could not delete this file. Please try again.');
+    } finally {
+      setDeleting(false);
+    }
   };
   
   return (
@@ -97,15 +110,17 @@ export const FileBlock: React.FC<FileBlockProps> = ({
             </svg>
           </button>
         )}
-        {!disabled &&
+        {!disabled && onDelete &&
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
-              handleDelete();
+              void handleDelete();
             }}
             className={styles.deleteButton}
-            title={t("blockEditor.deleteFileTitle")}
-            disabled={isUploading}
+            title={isDeleting ? 'Deleting file' : t("blockEditor.deleteFileTitle")}
+            aria-label={isDeleting ? `Deleting ${block.filename}` : `Delete ${block.filename}`}
+            disabled={isUploading || isDeleting}
           >
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -118,6 +133,7 @@ export const FileBlock: React.FC<FileBlockProps> = ({
           </button>
         }
       </div>
+      {deleteError ? <span className={styles.deleteError} role="alert">{deleteError}</span> : null}
     </div>
   );
 };

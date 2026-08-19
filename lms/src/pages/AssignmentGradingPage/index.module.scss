@@ -269,6 +269,17 @@ table {
     font-weight: t.$fw-semibold;
 }
 
+.submissionCell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    small {
+        color: t.$text-muted;
+        font-size: 0.68rem;
+    }
+}
+
 .submissionBadge[data-status='Submitted'] {
     background: t.$type-green-subtle;
     color: t.$type-green;
@@ -332,7 +343,9 @@ table {
 }
 
 .gradeDialog {
-    width: min(520px, 100%);
+    width: min(720px, 100%);
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
     padding: 1.5rem;
     border-radius: t.$radius-modal;
     background: t.$card-bg;
@@ -371,6 +384,64 @@ table {
         justify-content: flex-end;
         gap: 0.75rem;
         margin-top: 1.25rem;
+    }
+}
+
+.submittedFiles {
+    margin-top: 1.25rem;
+    padding: 1rem;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-control;
+    background: t.$subcard-bg;
+}
+
+.submittedFilesHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+
+    h3 {
+        color: t.$text;
+        font-size: t.$fs-label;
+        font-weight: t.$fw-semibold;
+    }
+
+    p {
+        margin-top: 0.2rem;
+        color: t.$text-muted;
+        font-size: 0.72rem;
+    }
+
+    > span {
+        flex: 0 0 auto;
+        padding: 0.2rem 0.55rem;
+        border-radius: t.$radius-pill;
+        background: t.$brand-subtle;
+        color: t.$brand;
+        font-size: 0.68rem;
+        font-weight: t.$fw-semibold;
+    }
+}
+
+.noSubmittedFiles,
+.submissionFilesError {
+    margin: 0.8rem 0 0;
+    color: t.$text-muted;
+    font-size: t.$fs-caption;
+}
+
+.submissionFilesError {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    color: t.$danger;
+
+    button {
+        color: t.$brand;
+        font-weight: t.$fw-semibold;
+        cursor: pointer;
     }
 }
 

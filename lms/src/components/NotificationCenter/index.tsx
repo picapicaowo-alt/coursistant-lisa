@@ -123,6 +123,7 @@ const NotificationCenter = () => {
       await Promise.all([
         queryClient.invalidateQueries({queryKey: ['notification-unread-count']}),
         queryClient.invalidateQueries({queryKey: ['notifications']}),
+        queryClient.invalidateQueries({queryKey: ['dashboard', 'announcements']}),
       ]);
     },
   });
@@ -192,8 +193,10 @@ const NotificationCenter = () => {
               <button
                 type="button"
                 className={styles.markAllButton}
-                onClick={() => markAllMutation.mutate()}
-                disabled={unreadCount === 0 || markAllMutation.isPending}
+                onClick={() => {
+                  if (!markAllMutation.isPending) markAllMutation.mutate();
+                }}
+                aria-busy={markAllMutation.isPending}
               >
                 <CheckCheck size={17}/>
                 <span>{markAllMutation.isPending ? 'Marking…' : 'Mark all read'}</span>

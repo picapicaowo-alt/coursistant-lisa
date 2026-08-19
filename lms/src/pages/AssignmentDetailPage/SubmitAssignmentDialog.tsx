@@ -77,6 +77,19 @@ export const SubmitAssignmentDialog = ({
     return String(staged.id);
   };
 
+  const deleteFile = async (file: FileView) => {
+    const stagingFileId = Number(file.id);
+    if (!Number.isInteger(stagingFileId) || stagingFileId <= 0) {
+      throw new Error('The staged file ID is invalid.');
+    }
+
+    setSubmitError(null);
+    await assignmentApiService.deleteStagingFile(courseId, assignment.id, stagingFileId);
+    void onStaged().catch(() => {
+      setSubmitError('The file was deleted, but the upload list could not be refreshed.');
+    });
+  };
+
   const downloadInstructorAttachment = async () => {
     if (!instructorAttachment) return;
     setAttachmentAction('download');
@@ -194,6 +207,7 @@ export const SubmitAssignmentDialog = ({
           accept={accept}
           uploadFunction={uploadFile}
           onUploaded={() => void onStaged()}
+          onDelete={deleteFile}
         />
 
         <p className={styles.fileHint}>

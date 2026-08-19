@@ -1,4 +1,5 @@
-import {useQuery} from '@tanstack/react-query';
+import {useEffect} from 'react';
+import {useQuery, useQueryClient} from '@tanstack/react-query';
 import {ArrowLeft, CalendarDays, Clock3, MapPin, Users} from 'lucide-react';
 import {Link, useParams} from 'react-router-dom';
 import {courseApiService} from '@/apis/services/course-api';
@@ -109,6 +110,7 @@ const NotificationSubjectPage = ({kind}: Props) => {
   const subjectId = Number(subjectIdParam);
   const validParams = Number.isInteger(courseId) && courseId > 0
     && Number.isInteger(subjectId) && subjectId > 0;
+  const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: ['notification-subject', kind, courseId, subjectId],
@@ -116,6 +118,15 @@ const NotificationSubjectPage = ({kind}: Props) => {
     enabled: validParams,
     retry: 1,
   });
+
+  useEffect(() => {
+    if (!query.isSuccess || kind !== 'announcement') return;
+    void Promise.all([
+      queryClient.invalidateQueries({queryKey: ['dashboard', 'announcements']}),
+      queryClient.invalidateQueries({queryKey: ['notification-unread-count']}),
+      queryClient.invalidateQueries({queryKey: ['notifications']}),
+    ]);
+  }, [kind, query.isSuccess, queryClient, courseId, subjectId]);
 
   return (
     <main className={styles.page}>

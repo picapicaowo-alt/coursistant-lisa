@@ -273,28 +273,175 @@
     }
 }
 
+.gradeSummaryHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.gradeStatus {
+    flex: 0 0 auto;
+    padding: 0.3rem 0.7rem;
+    border-radius: t.$radius-pill;
+    font-size: t.$fs-caption;
+    font-weight: t.$fw-semibold;
+
+    &[data-status='pending'] {
+        background: rgba(245, 158, 11, 0.12);
+        color: #92400E;
+    }
+
+    &[data-status='released'] {
+        background: t.$type-green-subtle;
+        color: t.$type-green;
+    }
+}
+
+.gradeScoreValue {
+    color: t.$brand !important;
+    font-size: 1.5rem !important;
+    font-weight: t.$fw-extrabold !important;
+    letter-spacing: -0.03em;
+}
+
+.gradeSummaryHint {
+    margin: 0.8rem 0 0 2rem;
+    color: t.$text-muted;
+    font-size: t.$fs-caption;
+    line-height: 1.6;
+}
+
+.gradeSummaryFeedback {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid t.$border;
+
+    > p {
+        margin-top: 0.6rem;
+        color: t.$text-muted;
+        font-size: t.$fs-caption;
+        line-height: 1.65;
+        white-space: pre-line;
+    }
+}
+
+.gradeFeedbackTitle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: t.$brand;
+
+    span {
+        color: t.$text-muted;
+        font-size: t.$fs-caption;
+        font-weight: t.$fw-semibold;
+    }
+}
+
 .error {
     margin-top: 1rem;
     color: t.$danger;
     font-size: t.$fs-caption;
 }
 
-.versionSummary {
-    display: flex;
-    gap: 1rem;
+.submissionVersions {
+    display: grid;
+    gap: 0.75rem;
     margin-top: 1.25rem;
-    padding: 0.9rem 1rem;
+}
+
+.submissionVersion {
+    overflow: hidden;
+    border: 1px solid t.$border;
     border-radius: t.$radius-control;
     background: t.$subcard-bg;
+}
+
+.versionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.8rem 1rem;
     color: t.$text-muted;
     font-size: t.$fs-caption;
 
+    > div {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    strong { color: t.$text; }
+    > span { color: t.$brand; font-weight: t.$fw-semibold; }
+}
+
+.submissionFiles {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid t.$border;
+    background: t.$card-bg;
+    list-style: none;
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        min-width: 0;
+        padding: 0.8rem 1rem;
+        color: t.$brand;
+    }
+
+    li + li { border-top: 1px solid t.$border; }
+}
+
+.submissionFileName {
+    display: grid;
+    min-width: 0;
+    flex: 1;
+
     strong {
+        overflow: hidden;
         color: t.$text;
+        font-size: t.$fs-caption;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    small { margin-top: 0.1rem; color: t.$text-muted; }
+}
+
+.submissionFileActions {
+    display: flex;
+    gap: 0.4rem;
+
+    button {
+        display: inline-flex;
+        min-height: 2.15rem;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        padding: 0 0.65rem;
+        border: 1px solid t.$border;
+        border-radius: t.$radius-control-sm;
+        background: t.$card-bg;
+        color: t.$brand;
+        font-size: t.$fs-caption;
+        font-weight: t.$fw-semibold;
+        cursor: pointer;
+
+        &:hover:not(:disabled) { border-color: t.$brand; background: t.$brand-subtle; }
+        &:disabled { cursor: wait; opacity: 0.55; }
+        &:focus-visible { outline: 3px solid t.$brand-subtle; outline-offset: 2px; }
     }
 }
 
-.summaryCard {
+.sidebarColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
     position: sticky;
     top: 1.5rem;
 }
@@ -362,7 +509,7 @@
         grid-template-columns: minmax(0, 1fr);
     }
 
-    .summaryCard {
+    .sidebarColumn {
         position: static;
     }
 }
@@ -397,5 +544,18 @@
 
     .attachmentError {
         grid-column: 2;
+    }
+
+    .versionHeader,
+    .submissionFiles li {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .submissionFileActions {
+        width: 100%;
+        padding-left: 2rem;
+
+        button { flex: 1; }
     }
 }

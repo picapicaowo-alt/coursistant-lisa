@@ -1,4 +1,5 @@
 import {FormEvent, KeyboardEvent, useEffect, useRef, useState} from 'react';
+import ReactMarkdown from 'react-markdown';
 import {useRequiredAuth} from '@/contexts/RequiredAuthContext';
 import {
   aiAgentApiService,
@@ -15,9 +16,13 @@ interface WorkflowMessage {
   text: string;
 }
 
-const QUICK_PROMPTS = [
+const READ_ONLY_QUICK_PROMPTS = [
   'What assignments are due in the next 14 days?',
   'List my courses.',
+];
+
+const INSTRUCTOR_QUICK_PROMPTS = [
+  ...READ_ONLY_QUICK_PROMPTS,
   'Help me change an assignment deadline.',
 ];
 
@@ -29,9 +34,27 @@ const getErrorMessage = (error: unknown): string => {
   return 'Workflow is temporarily unavailable. Please try again.';
 };
 
+/** CommonMark treats a single newline as a space; keep the agent's line breaks. */
+const withMarkdownLineBreaks = (text: string) =>
+  text.replace(/\r\n/g, '\n').replace(/([^\n])\n(?!\n)/g, '$1  \n');
+
+const AgentMarkdown = ({text}: {text: string}) => (
+  <ReactMarkdown
+    components={{
+      a: ({href, children}) => (
+        <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>
+      ),
+    }}
+  >
+    {withMarkdownLineBreaks(text)}
+  </ReactMarkdown>
+);
+
 const WorkflowPanel = () => {
   const {user} = useRequiredAuth();
   const role = getAgentRole(user.level);
+  const canChangeDeadlines = role === 'INSTRUCTOR';
+  const quickPrompts = canChangeDeadlines ? INSTRUCTOR_QUICK_PROMPTS : READ_ONLY_QUICK_PROMPTS;
   const nextMessageId = useRef(1);
   const conversationEndRef = useRef<HTMLDivElement | null>(null);
   const [input, setInput] = useState('');
@@ -72,7 +95,9 @@ const WorkflowPanel = () => {
 
     try {
       const response = await aiAgentApiService.chat({message: trimmedMessage, role});
-      if (response.pendingAction) {
+      if (response.pendingAction && !canChangeDeadlines) {
+        addMessage('agent', 'Students can view assignment deadlines, but only instructors can change them.');
+      } else if (response.pendingAction) {
         setPendingAction(response.pendingAction);
         setPendingConfirmation(response.reply);
         setDecisionError(null);
@@ -99,7 +124,7 @@ const WorkflowPanel = () => {
   };
 
   const handleDecision = async (decision: DeadlineDecision) => {
-    if (!pendingAction || isSending) return;
+    if (!canChangeDeadlines || !pendingAction || isSending) return;
     setDecisionError(null);
     setIsSending(true);
 
@@ -139,7 +164,7 @@ const WorkflowPanel = () => {
 
       <div className={styles.quickPrompts} aria-label="Suggested workflow prompts">
         <p>Try asking</p>
-        {QUICK_PROMPTS.map(prompt => (
+        {quickPrompts.map(prompt => (
           <button
             type="button"
             key={prompt}
@@ -158,7 +183,7 @@ const WorkflowPanel = () => {
             key={message.id}
             className={`${styles.message} ${message.sender === 'user' ? styles.userMessage : styles.agentMessage} ${index === messages.length - 1 ? styles.lastMessage : ''}`}
           >
-            {message.text}
+            {message.sender === 'agent' ? <AgentMarkdown text={message.text}/> : message.text}
           </div>
         ))}
 
@@ -185,7 +210,7 @@ const WorkflowPanel = () => {
         </div>
       </form>
 
-      {pendingAction ? (
+      {canChangeDeadlines && pendingAction ? (
         <DeadlineDecisionModal
           confirmationText={pendingConfirmation}
           errorMessage={decisionError}
