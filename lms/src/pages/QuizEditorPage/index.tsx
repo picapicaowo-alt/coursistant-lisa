@@ -169,6 +169,8 @@ const QuizEditorPage = () => {
     setTimeLimitMinutes(quiz.timeLimitSeconds ? String(Math.round(quiz.timeLimitSeconds / 60)) : '');
     setAttemptsAllowed(quiz.attemptsAllowed);
     setResultVisibility(quiz.resultVisibility);
+    // Rehydrate only when the quiz identity/version changes, not on every refetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quizQuery.data?.id, quizQuery.data?.version]);
 
   const settingsPayload = useMemo(() => ({

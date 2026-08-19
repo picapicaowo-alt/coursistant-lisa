@@ -11,6 +11,8 @@ vi.mock('@/apis/services/assignment-api', () => ({
     listSubmissionVersions: vi.fn(),
     downloadSubmissionFile: vi.fn(),
     previewSubmissionFile: vi.fn(),
+    getStudentGradingView: vi.fn(),
+    getGroupGradingView: vi.fn(),
   },
 }));
 
@@ -64,6 +66,10 @@ describe('GradeDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(assignmentApiService.listSubmissionVersions).mockResolvedValue(response(versions));
+    vi.mocked(assignmentApiService.getStudentGradingView).mockResolvedValue(response({
+      assignmentId: 48,
+      grade: {id: 1, assignmentId: 48, studentUserId: 389, score: 16, feedbackHtml: '<p>Clearer thesis.</p>', status: 'Entered'},
+    }));
   });
 
   it('loads and shows the learner submission files before grading', async () => {
@@ -87,6 +93,30 @@ describe('GradeDialog', () => {
     await waitFor(() => {
       expect(assignmentApiService.listSubmissionVersions).toHaveBeenCalledWith(34, 48, 30);
       expect(screen.getByText('regtest5-postgresql-setup-report.pdf')).toBeInTheDocument();
+    });
+  });
+
+  it('prefills existing feedback from the grading view', async () => {
+    const gradedRow: GradingRosterItem = {...row, gradeStatus: 'Entered', score: 16};
+    const queryClient = new QueryClient({defaultOptions: {queries: {retry: false}}});
+    render(
+      <QueryClientProvider client={queryClient}>
+        <GradeDialog
+          courseId={34}
+          assignmentId={48}
+          row={gradedRow}
+          pointsPossible={20}
+          isSaving={false}
+          error={null}
+          onClose={vi.fn()}
+          onSave={vi.fn()}
+        />
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(assignmentApiService.getStudentGradingView).toHaveBeenCalledWith(34, 48, 389);
+      expect(screen.getByPlaceholderText('Add clear, actionable feedback…')).toHaveValue('Clearer thesis.');
     });
   });
 });

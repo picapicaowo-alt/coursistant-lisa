@@ -21,4 +21,9 @@ describe('shouldAttemptTokenRefresh', () => {
       isRetryAfterRefresh: true,
     })).toBe(false);
   });
+
+  it('allows a client without refreshPath to reuse the LMS session rotation', () => {
+    expect(shouldAttemptTokenRefresh(undefined, {url: '/chat'}, {hasRefreshDelegate: true})).toBe(true);
+    expect(shouldAttemptTokenRefresh(undefined, {url: '/chat'})).toBe(false);
+  });
 });

@@ -3,8 +3,9 @@ import {useNavigate} from 'react-router-dom';
 import {Icon} from '@iconify/react';
 import {useAuth} from "@/contexts/AuthContext";
 import {useTranslation} from 'react-i18next';
-import {ApiError, AUTH_ERROR_CODES, LoginAccountType, V2ApiClient} from "@/apis";
+import {LoginAccountType, V2ApiClient} from "@/apis";
 import {authApiService} from "@/apis/services/auth-api";
+import {getLoginErrorKind} from './loginErrors';
 
 type ResolvableLoginRole = Extract<LoginAccountType, 'USER' | 'ADMIN'>;
 
@@ -15,21 +16,6 @@ const getLoginRoleOrder = (): ResolvableLoginRole[] => {
   const preferredRole = localStorage.getItem(LOGIN_ROLE_STORAGE_KEY) as ResolvableLoginRole | null;
   if (!preferredRole || !LOGIN_ROLES.includes(preferredRole)) return LOGIN_ROLES;
   return [preferredRole, ...LOGIN_ROLES.filter((role) => role !== preferredRole)];
-};
-
-export const getLoginErrorKind = (error: unknown): 'credentials' | 'unavailable' | 'unexpected' => {
-  const apiError = error as ApiError | undefined;
-  const responseCode = apiError?.details?.code;
-
-  if (responseCode === AUTH_ERROR_CODES.invalidCredentials) return 'credentials';
-  if (
-    responseCode === AUTH_ERROR_CODES.serviceUnavailable
-    || apiError?.code === 0
-    || (typeof apiError?.code === 'number' && apiError.code >= 500)
-  ) {
-    return 'unavailable';
-  }
-  return 'unexpected';
 };
 
 const LoginPage: React.FC = () => {
@@ -45,7 +31,7 @@ const LoginPage: React.FC = () => {
   const {t} = useTranslation("auth");
   
   useEffect(() => {
-    const handleMessage = (event: MessageEvent<any>) => {
+    const handleMessage = (event: MessageEvent<{redirectUrl?: string}>) => {
       if (event.data && event.data.redirectUrl) {
         navigate(event.data.redirectUrl);
       }

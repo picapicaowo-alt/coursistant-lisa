@@ -1,9 +1,9 @@
-import React, {PropsWithChildren} from "react";
+import {PropsWithChildren} from "react";
 
-const WidgetWrapper: React.FC<PropsWithChildren> = (props: { children: React.ReactNode }) => {
+const WidgetWrapper = ({children}: PropsWithChildren) => {
   return (
     <div className="relative w-full h-full overflow-auto">
-      {props.children}
+      {children}
     </div>
   );
 }

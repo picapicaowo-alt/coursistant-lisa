@@ -57,7 +57,8 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({t: (key: string) => copy[key] ?? key}),
 }));
 
-import LoginPage, {getLoginErrorKind} from './index';
+import LoginPage from './index';
+import {getLoginErrorKind} from './loginErrors';
 
 const response = (data: Record<string, unknown>) => ({
   status: 200,

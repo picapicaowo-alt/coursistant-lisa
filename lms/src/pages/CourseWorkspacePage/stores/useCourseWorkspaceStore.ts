@@ -10,7 +10,7 @@ import {
   CourseUnitEntity,
   FileEntity,
   fileEntityConfig
-} from "@/pages/DetailWorkspacePage/config";
+} from "../workspaceEntities";
 import {AggregateRootGenerator} from "@/stores/core/AggregateRootGenerator";
 
 const relationsConfig: RelationConfig[] = [{
@@ -50,11 +50,12 @@ const config: DataSliceConfig<AggregateRoot> = {
 export type CourseWorkspaceStore = AggregateRootSlice<AggregateRoot> & ContextSlice & CourseDataSlice;
 
 export const createCourseWorkspaceStore = () => {
+  const createRoot = AggregateRootGenerator.createAggregateRoot(config);
   return create<CourseWorkspaceStore>()(
-    immer((...args) => ({
-      ...AggregateRootGenerator.createAggregateRoot(config)(...args),
-      ...createContextSlice(...args),
-      ...createCourseDataSlice(...args),
+    immer((set, get, store) => ({
+      ...createRoot(set as never, get as never, store as never),
+      ...createContextSlice(set, get, store),
+      ...createCourseDataSlice(set, get, store),
     })));
 };
 

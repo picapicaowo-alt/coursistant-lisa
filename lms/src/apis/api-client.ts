@@ -1,5 +1,6 @@
 ﻿import axios, {AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig} from 'axios';
 import {ApiError, ApiResponse} from './types';
+import {isRecord} from '@/utils/apiError';
 
 export interface ApiClientConfig {
   baseURL: string;
@@ -12,6 +13,11 @@ export interface ApiClientConfig {
    * is simply reported to the caller.
    */
   refreshPath?: string;
+  /**
+   * Used when this client cannot refresh on its own (different origin than
+   * `/v1/auth/refresh-token`) but should reuse the LMS session rotation.
+   */
+  refreshDelegate?: () => Promise<void>;
   /** Called when the session cannot be recovered and the user must log in. */
   onSessionExpired?: () => void;
 }
@@ -33,8 +39,9 @@ interface RefreshCandidate {
 export const shouldAttemptTokenRefresh = (
   refreshPath: string | undefined,
   request: RefreshCandidate | undefined,
+  options?: {hasRefreshDelegate?: boolean},
 ): boolean => Boolean(
-  refreshPath
+  (Boolean(refreshPath) || options?.hasRefreshDelegate)
   && request
   && !request.isRetryAfterRefresh
   && !request.skipAuth
@@ -125,7 +132,7 @@ export class ApiClient {
     return config;
   }
   
-  private handleRequestError(error: any): Promise<never> {
+  private handleRequestError(error: unknown): Promise<never> {
     return Promise.reject(error);
   }
   
@@ -144,7 +151,7 @@ export class ApiClient {
     const apiError: ApiError = {
       code: error.response?.status || 0,
       message: error.message,
-      details: error.response?.data as any
+      details: isRecord(error.response?.data) ? error.response.data : undefined,
     };
     
     if (error.response?.status === 401) {
@@ -169,11 +176,15 @@ export class ApiClient {
   private async handleAuthError(error: AxiosError): Promise<never> {
     const original = error.config as (InternalAxiosRequestConfig & RequestConfig) | undefined;
 
-    const canRetry = shouldAttemptTokenRefresh(this.config.refreshPath, original);
+    const canRetry = shouldAttemptTokenRefresh(this.config.refreshPath, original, {
+      hasRefreshDelegate: Boolean(this.config.refreshDelegate),
+    });
 
     if (canRetry && original) {
       try {
-        await this.refreshAccessToken();
+        await this.recoverSession();
+        const token = localStorage.getItem('accToken');
+        if (token) this.setAccessToken(token);
         original.isRetryAfterRefresh = true;
         original.headers.Authorization = `Bearer ${this.accessToken}`;
         return await this.client.request(original) as never;
@@ -185,8 +196,14 @@ export class ApiClient {
     return Promise.reject({
       code: 401,
       message: 'Authentication required',
-      details: error.response?.data
+      details: isRecord(error.response?.data) ? error.response.data : undefined,
     });
+  }
+
+  /** Rotates the LMS access token, including for clients that share this session. */
+  public recoverSession(): Promise<void> {
+    if (this.config.refreshDelegate) return this.config.refreshDelegate();
+    return this.refreshAccessToken();
   }
 
   /**
@@ -245,41 +262,41 @@ export class ApiClient {
     return config;
   }
   
-  public async get<T = any>(url: string, config?: RequestConfig): Promise<ApiResponse<T>> {
+  public async get<T = unknown>(url: string, config?: RequestConfig): Promise<ApiResponse<T>> {
     const mergedConfig = this.mergeRequestConfig(config);
     const response = await this.client.get<ApiResponse<T>>(url, mergedConfig);
     return response.data;
   }
   
-  public async post<T = any>(url: string, data?: any, config?: RequestConfig): Promise<ApiResponse<T>> {
+  public async post<T = unknown>(url: string, data?: unknown, config?: RequestConfig): Promise<ApiResponse<T>> {
     const mergedConfig = this.mergeRequestConfig(config);
     const response = await this.client.post<ApiResponse<T>>(url, data, mergedConfig);
     return response.data;
   }
   
-  public async put<T = any>(url: string, data?: any, config?: RequestConfig): Promise<ApiResponse<T>> {
+  public async put<T = unknown>(url: string, data?: unknown, config?: RequestConfig): Promise<ApiResponse<T>> {
     const mergedConfig = this.mergeRequestConfig(config);
     const response = await this.client.put<ApiResponse<T>>(url, data, mergedConfig);
     return response.data;
   }
   
-  public async patch<T = any>(url: string, data?: any, config?: RequestConfig): Promise<ApiResponse<T>> {
+  public async patch<T = unknown>(url: string, data?: unknown, config?: RequestConfig): Promise<ApiResponse<T>> {
     const mergedConfig = this.mergeRequestConfig(config);
     const response = await this.client.patch<ApiResponse<T>>(url, data, mergedConfig);
     return response.data;
   }
   
-  public async delete<T = any>(url: string, config?: RequestConfig): Promise<ApiResponse<T>> {
+  public async delete<T = unknown>(url: string, config?: RequestConfig): Promise<ApiResponse<T>> {
     const mergedConfig = this.mergeRequestConfig(config);
     const response = await this.client.delete<ApiResponse<T>>(url, mergedConfig);
     return response.data;
   }
   
-  public async uploadFile<T = any>(
+  public async uploadFile<T = unknown>(
     url: string,
     file: File,
     fieldName = 'file',
-    additionalData?: Record<string, any>
+    additionalData?: Record<string, string | Blob>
   ): Promise<ApiResponse<T>> {
     const formData = new FormData();
     formData.append(fieldName, file);

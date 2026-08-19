@@ -3,23 +3,17 @@ import {Icon} from '@iconify/react';
 import {Link, useNavigate} from 'react-router-dom';
 import {useTranslation} from 'react-i18next';
 
-import {ApiError, AUTH_ERROR_CODES, V2ApiClient} from '@/apis';
+import {AUTH_ERROR_CODES, V2ApiClient} from '@/apis';
 import {authApiService} from '@/apis/services/auth-api';
 import {useAuth} from '@/contexts/AuthContext';
+import {getApiErrorCode, isTransportOrServerFailure} from '@/utils/apiError';
+import {isValidPassword} from '@/utils/passwordRules';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
 const VERIFICATION_CODE_PATTERN = /^\d{6}$/;
 
 type SignupField = 'name' | 'email' | 'password' | 'verificationCode';
 type SignupFieldErrors = Partial<Record<SignupField, string>>;
-
-const getApiErrorCode = (error: unknown): string | undefined => {
-  const details = (error as ApiError | undefined)?.details;
-  return details && typeof details === 'object' && typeof details.code === 'string'
-    ? details.code
-    : undefined;
-};
 
 const formatCountdown = (seconds: number) => {
   const minutes = Math.floor(seconds / 60);
@@ -68,7 +62,7 @@ export default function SignUpView() {
     if (!email.trim()) errors.email = t('signupErrors.emailRequired');
     else if (!EMAIL_PATTERN.test(email.trim())) errors.email = t('signupErrors.emailInvalid');
     if (!password) errors.password = t('signupErrors.passwordRequired');
-    else if (!PASSWORD_PATTERN.test(password)) errors.password = t('signupErrors.passwordFormat');
+    else if (!isValidPassword(password)) errors.password = t('signupErrors.passwordFormat');
     if (!verificationCode.trim()) errors.verificationCode = t('signupErrors.verificationRequired');
     else if (!VERIFICATION_CODE_PATTERN.test(verificationCode.trim())) {
       errors.verificationCode = t('signupErrors.verificationCodeFormat');
@@ -119,7 +113,6 @@ export default function SignUpView() {
         email: email.trim().toLowerCase(),
         password,
         verificationCode: verificationCode.trim(),
-        tenantId: 1,
       });
 
       if (response.status !== 200 || !response.data) {
@@ -144,8 +137,7 @@ export default function SignUpView() {
       } else if (code === AUTH_ERROR_CODES.verificationAttemptsExceeded) {
         setFieldErrors({verificationCode: t('signupErrors.verificationAttemptsExceeded')});
       } else {
-        const apiError = error as ApiError | undefined;
-        const unavailable = apiError?.code === 0 || (typeof apiError?.code === 'number' && apiError.code >= 500);
+        const unavailable = isTransportOrServerFailure(error);
         setFormError(unavailable ? t('signupErrors.serviceUnavailable') : t('signupErrors.signupFailed'));
       }
     } finally {

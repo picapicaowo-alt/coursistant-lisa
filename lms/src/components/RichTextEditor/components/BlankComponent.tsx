@@ -1,7 +1,13 @@
 import React, {useEffect, useState, useRef} from 'react';
 import {NodeViewWrapper} from '@tiptap/react';
+import type {Editor} from '@tiptap/core';
 import {Node} from '@tiptap/core';
 import styles from './BlankComponent.module.scss';
+
+interface BlankEditorProps {
+  mode?: string;
+  onAnswerChange?: (id: string, value: string) => void;
+}
 
 interface BlankComponentProps {
   node: Node & {
@@ -14,8 +20,8 @@ interface BlankComponentProps {
       placeholder: string;
     };
   };
-  updateAttributes: (attrs: Record<string, any>) => void;
-  editor: any;
+  updateAttributes: (attrs: Record<string, string>) => void;
+  editor: Editor;
 }
 
 export const BlankComponent: React.FC<BlankComponentProps> = ({
@@ -29,7 +35,8 @@ export const BlankComponent: React.FC<BlankComponentProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [inputWidth, setInputWidth] = useState(node.attrs.minWidth);
   
-  const mode = editor.options.editorProps?.mode || 'student';
+  const editorProps = editor.options.editorProps as BlankEditorProps | undefined;
+  const mode = editorProps?.mode || 'student';
   const isTeacher = mode === 'teacher';
   
   const isCorrect = React.useMemo(() => {
@@ -71,8 +78,8 @@ export const BlankComponent: React.FC<BlankComponentProps> = ({
     } else {
       updateAttributes({studentAnswer: newAnswer});
       
-      if (editor.options.editorProps?.onAnswerChange) {
-        editor.options.editorProps.onAnswerChange(node.attrs.id, newAnswer);
+      if (editorProps?.onAnswerChange) {
+        editorProps.onAnswerChange(node.attrs.id, newAnswer);
       }
     }
   };

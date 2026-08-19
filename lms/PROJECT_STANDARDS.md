@@ -156,7 +156,7 @@ Historical normalized-store designs in `STATE_MANAGEMENT.md` / `ARCHITECTURE.md`
 - New files: `.ts` / `.tsx` only.
 - Prefer explicit types on public function params, API payloads, and component props.
 - Avoid new `any` and `as any`. If unavoidable at a boundary, narrow ASAP and comment why.
-- `tsconfig` is not fully `strict` yet — **new code should still aim for strict-null-safe types** (`strictNullChecks` is on).
+- `tsconfig` is not fully `strict` yet — **new code should still aim for strict-null-safe types** (`strictNullChecks` is on). Production gate: `npm run typecheck:production` (`tsconfig.production.json`, `strict` / `noImplicitAny`, existing quarantine plus leftover v1 shells).
 - Do not add `@ts-nocheck` to new files.
 
 ---
@@ -207,10 +207,10 @@ Historical normalized-store designs in `STATE_MANAGEMENT.md` / `ARCHITECTURE.md`
 
 ## 13. Known gaps (improve when you touch the area)
 
-1. **Legacy JSX** — chat, profile, settings, old roster/notification sections still `.jsx`.
+1. **Legacy JSX** — chat, old roster/notification sections still `.jsx`. Profile and Settings are TSX.
 2. **Legacy type quarantine** — these files carry `// @ts-nocheck` until migration: `ChatContent.tsx`, `RichTextEditor/extensions/BlankNode.ts`, `DetailWorkspacePage/index.tsx`, `DetailWorkspacePage/components/AssignmentEdit/index.config.ts`, `stores/core/AggregateRootGenerator.test.ts`.
-3. **ESLint** — now covers `*.{ts,tsx}` and `*.{js,jsx}`; run `npm run lint` before pushing.
-4. **Typecheck** — run `npm run typecheck` in `lms/`; must pass on all non-quarantined files.
+3. **ESLint** — `npm run lint:ci` (`eslint . --max-warnings=0`) must stay green. Do not leave production-surface issues as warnings.
+4. **Typecheck** — `npm run typecheck` and `npm run typecheck:production` in `lms/`.
 5. **Dead dependencies** — remove unused UI libraries once confirmed unused.
 6. **Docs drift** — update this file when a new vertical establishes a better pattern than the references above.
 

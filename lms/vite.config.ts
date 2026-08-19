@@ -39,10 +39,8 @@ export default defineConfig(({mode}) => {
             if (path.includes('/src/styles/_tokens.scss') || path.includes('/src/styles/tokens.global.scss')) {
               return source
             }
-            // Strip a leading BOM before prepending. Sass ignores a BOM at the
-            // very start of a file but not one sitting mid-document, and
-            // prepending a line is exactly what pushes it there — which broke
-            // every one of the 28 stylesheets in this tree that carry one.
+            // Sass ignores a BOM at the start of a file but not after
+            // additionalData prepends tokens. See docs/adr/0001-dev-proxy-and-error-reporting.md.
             return `@use "${tokensPath}" as t;\n${source.replace(/^﻿/, '')}`
           },
         },
@@ -57,18 +55,8 @@ export default defineConfig(({mode}) => {
         'localhost',
         '127.0.0.1',
       ],
-      // In dev the app calls the API on a relative path so the browser sees a
-      // same-origin request and this proxy forwards it. Two reasons, both of
-      // which block login without it:
-      //
-      //  1. The backend emits Access-Control-Allow-Origin twice on real
-      //     responses (once on preflight), and browsers reject a duplicated
-      //     value. That is a server bug; this sidesteps it until it is fixed.
-      //  2. The refreshToken cookie is SameSite=Lax, so it would never be sent
-      //     on a cross-site XHR. Same-origin keeps token refresh working.
-      //
-      // Production is unaffected: .env.production points at an absolute URL
-      // and no proxy is involved.
+      // Same-origin proxy: refresh cookie is SameSite=Lax, and the backend's
+      // duplicated CORS ACAO headers break cross-origin XHR. See ADR 0001.
       proxy: {
         [apiPath]: {
           target: apiTarget,
@@ -84,10 +72,7 @@ export default defineConfig(({mode}) => {
           rewrite: path => path.replace(new RegExp(`^${aiAgentPath}`), ''),
           configure: proxy => {
             proxy.on('proxyReq', proxyRequest => {
-              // This is a same-origin browser request by the time it reaches
-              // Vite. The API's current duplicate CORS filters reject the
-              // forwarded :8084 Origin on the actual POST, so the dev proxy
-              // must not pass that browser-only header upstream.
+              // Duplicate CORS filters reject the forwarded Origin. See ADR 0001.
               proxyRequest.removeHeader('origin')
             })
           },
@@ -97,6 +82,7 @@ export default defineConfig(({mode}) => {
     test: {
       globals: true,
       environment: 'happy-dom',
+      setupFiles: ['./src/setupTests.ts'],
       transformMode: {
         web: [/\.tsx$/]
       },
@@ -106,7 +92,7 @@ export default defineConfig(({mode}) => {
         reporter: ['text', 'json', 'html']
       },
       include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-      exclude: ['**/node_modules/**', '**/dist/**']
+      exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**']
     }
   }
 })

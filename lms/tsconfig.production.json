@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noUncheckedIndexedAccess": false
+  },
+  "exclude": [
+    "node_modules",
+    "src/components/ChatContent.tsx",
+    "src/components/RichTextEditor/extensions/BlankNode.ts",
+    "src/pages/DetailWorkspacePage",
+    "src/stores/core",
+    "src/types/core",
+    "src/pages/CourseWorkspacePage/components/AssignmentsList",
+    "src/pages/CourseWorkspacePage/components/CourseUnitsManager",
+    "src/pages/CourseWorkspacePage/components/CourseUnitPanel",
+    "src/pages/CourseWorkspacePage/components/CourseInfoPanel"
+  ]
+}

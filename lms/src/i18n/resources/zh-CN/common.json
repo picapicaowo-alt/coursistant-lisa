@@ -4,6 +4,7 @@
   },
   "menu": {
     "profile": "个人资料",
+    "settings": "设置",
     "signOut": "退出登录"
   },
   "sidebar": {

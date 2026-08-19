@@ -13,6 +13,13 @@
     margin-inline: auto;
 }
 
+.headerActions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
 .taNotice {
     max-width: 360px;
     color: t.$text-muted;

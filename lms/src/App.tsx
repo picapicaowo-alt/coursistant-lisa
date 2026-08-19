@@ -31,14 +31,15 @@ const AIBot = lazy(() => import("./pages/aibot"));
 const Settings = lazy(() => import("./pages/settings"));
 const Login = lazy(() => import("@/pages/LoginPage"));
 const Signup = lazy(() => import("./pages/signup/SignUpView"));
-const ForgotPassword = lazy(() => import("./pages/ForgotPassword"))
+const ForgotPassword = lazy(() => import("./pages/ForgotPasswordPage"));
 const AdminConsolePage = lazy(() => import('./pages/AdminConsolePage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 const App = () => {
   return (
     <AuthProvider>
       <Router>
-        <Suspense>
+        <Suspense fallback={<div role="status">Loading…</div>}>
           <Routes>
             <Route path="/login"
                    element={
@@ -47,7 +48,7 @@ const App = () => {
                      </AuthLayout>
                    }
             />
-            
+
             <Route path="/signup"
                    element={
                      <AuthLayout>
@@ -55,7 +56,7 @@ const App = () => {
                      </AuthLayout>
                    }
             />
-            
+
             <Route path="/forgotpassword"
                    element={
                      <AuthLayout>
@@ -63,7 +64,7 @@ const App = () => {
                      </AuthLayout>
                    }
             />
-            
+
             <Route path="/" element={<RequiredAuthProvider><Layout/></RequiredAuthProvider>}>
               <Route index element={<LMSHome/>}/>
               <Route path="course" element={<CourseCataloguePage/>}/>
@@ -95,7 +96,16 @@ const App = () => {
               <Route path="aibot" element={<AIBot/>}/>
               <Route path="settings" element={<Settings/>}/>
               <Route path="admin" element={<AdminConsolePage/>}/>
+              <Route path="*" element={<NotFoundPage/>}/>
             </Route>
+            <Route
+              path="*"
+              element={
+                <AuthLayout>
+                  <NotFoundPage/>
+                </AuthLayout>
+              }
+            />
           </Routes>
         </Suspense>
       </Router>

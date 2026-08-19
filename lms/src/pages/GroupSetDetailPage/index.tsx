@@ -65,6 +65,8 @@ const GroupSetDetailPage = () => {
       joinClosesAt: groupSet.joinClosesAtLocal?.slice(0, 16) ?? null,
       locked: groupSet.locked,
     });
+    // Field-level deps keep a mid-edit draft from being overwritten on refetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingSettings, groupSet?.id, groupSet?.name, groupSet?.defaultCapacity, groupSet?.joinOpensAtLocal, groupSet?.joinClosesAtLocal, groupSet?.locked]);
 
   const refresh = async () => {

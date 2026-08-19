@@ -57,7 +57,10 @@ const AverageScoreComponent: React.FC = () => {
     () => buildStaffAverageGradeItems(staffRosterQueries.flatMap(query => query.data ? [query.data] : [])),
     [staffRosterQueries],
   );
-  const grades = selectedRole === 'Student' ? studentGradesQuery.data ?? [] : staffGrades;
+  const grades = useMemo(
+    () => selectedRole === 'Student' ? studentGradesQuery.data ?? [] : staffGrades,
+    [selectedRole, studentGradesQuery.data, staffGrades],
+  );
   const summary = useMemo(() => buildAverageScoreSummary(grades), [grades]);
   const loading = coursesQuery.isPending
     || (selectedRole === 'Student' && studentGradesQuery.isPending)

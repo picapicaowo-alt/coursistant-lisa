@@ -15,6 +15,23 @@ const courseApi = vi.hoisted(() => ({listGroupSets: vi.fn()}));
 
 vi.mock('@/apis/services/assignment-api', () => ({assignmentApiService: api}));
 vi.mock('@/apis/services/course-api', () => ({courseApiService: courseApi}));
+vi.mock('@/components/RichTextEditor', () => ({
+  RichTextEditor: ({
+    content,
+    onChange,
+    ariaLabel,
+  }: {
+    content?: string;
+    onChange?: (value: string) => void;
+    ariaLabel?: string;
+  }) => (
+    <textarea
+      aria-label={ariaLabel || 'Assignment description'}
+      value={content}
+      onChange={event => onChange?.(event.target.value)}
+    />
+  ),
+}));
 
 import {AssignmentEditorForm} from './index';
 

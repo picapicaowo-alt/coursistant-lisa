@@ -101,6 +101,8 @@ const QuizPage = () => {
 
   useEffect(() => {
     if (attemptQuery.data) setDrafts(toDrafts(attemptQuery.data));
+    // Rehydrate only when the attempt identity changes, not on every refetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attemptQuery.data?.id]);
 
   const startAttempt = useMutation({

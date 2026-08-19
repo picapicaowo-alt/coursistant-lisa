@@ -1,3 +1,7 @@
+import {ApiClient} from '@/apis/api-client';
+import {agentApiClient} from '@/apis/v2-api-client';
+import {getApiErrorMessage} from '@/utils/apiError';
+
 export type AiAgentRole = 'STUDENT' | 'INSTRUCTOR';
 export type DeadlineDecision = 'ALLOW' | 'REJECT';
 
@@ -20,6 +24,10 @@ export interface AiAgentResponse {
 
 export interface AiAgentChatRequest {
   message: string;
+  /**
+   * UI hint only. The agent backend must derive identity and course role from
+   * the Bearer token; do not treat this field as authorization.
+   */
   role: AiAgentRole;
   conversationId?: string;
   history?: AiAgentChatHistoryTurn[];
@@ -29,9 +37,6 @@ export interface DeadlineDecisionRequest {
   actionId: string;
   decision: DeadlineDecision;
 }
-
-const AGENT_API_BASE = (import.meta.env.VITE_AI_AGENT_API_DOMAIN_NAME || '/ai-agent').replace(/\/$/, '');
-const REQUEST_TIMEOUT_MS = 60_000;
 
 const asRecord = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -80,24 +85,6 @@ const parsePendingAction = (value: unknown): AiAgentPendingAction | null => {
   return {actionId, type};
 };
 
-const getAccessToken = (): string => {
-  const directToken = localStorage.getItem('accToken');
-  if (directToken) return directToken;
-
-  const storedUser = localStorage.getItem('user');
-  if (storedUser) {
-    try {
-      const token = (JSON.parse(storedUser) as {accessToken?: unknown}).accessToken;
-      if (typeof token === 'string' && token) return token;
-    } catch {
-      // AuthContext owns malformed-session cleanup. This client reports the
-      // missing session without mutating unrelated local state.
-    }
-  }
-
-  throw new Error('Your session is missing. Please sign in again.');
-};
-
 const normalizeResponse = (body: unknown): AiAgentResponse => {
   const candidate = unwrapPayload(body);
   const reply = firstString(candidate.reply, candidate.message) ?? '';
@@ -129,81 +116,31 @@ const normalizeResponse = (body: unknown): AiAgentResponse => {
   };
 };
 
-const parseBody = async (response: Response): Promise<unknown> => {
-  const contentType = response.headers.get('content-type') || '';
-  if (contentType.includes('application/json')) return response.json();
-  const text = await response.text();
-  return text ? {message: text} : {};
-};
-
-const request = async (
-  path: string,
-  body: AiAgentChatRequest | DeadlineDecisionRequest,
-  accessToken: string,
-): Promise<AiAgentResponse> => {
-  const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-
-  try {
-    const response = await fetch(`${AGENT_API_BASE}${path}`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
-    const responseBody = await parseBody(response);
-
-    if (!response.ok) {
-      const detail = asRecord(responseBody)?.message;
-      if (response.status === 401) {
-        throw new Error('Your session expired. Please sign in again.');
-      }
-      throw new Error(
-        typeof detail === 'string' && detail
-          ? detail
-          : 'Workflow is temporarily unavailable. Please try again.',
-      );
-    }
-
-    return normalizeResponse(responseBody);
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') {
-      throw new Error('The AI Agent took too long to respond. Please try again.');
-    }
-    throw error;
-  } finally {
-    window.clearTimeout(timeoutId);
-  }
-};
-
 export class AiAgentApiService {
-  private pendingDecisionContext: {actionId: string; accessToken: string} | null = null;
+  constructor(private readonly client: ApiClient = agentApiClient) {}
 
   async chat(body: AiAgentChatRequest): Promise<AiAgentResponse> {
-    const accessToken = getAccessToken();
-    const response = await request('/chat', body, accessToken);
-
-    this.pendingDecisionContext = response.pendingAction
-      ? {actionId: response.pendingAction.actionId, accessToken}
-      : null;
-
-    return response;
+    return this.post('/chat', {
+      message: body.message,
+      role: body.role,
+      conversationId: body.conversationId,
+      history: body.history,
+    });
   }
 
   async decideDeadlineChange(body: DeadlineDecisionRequest): Promise<AiAgentResponse> {
-    const accessToken = this.pendingDecisionContext?.actionId === body.actionId
-      ? this.pendingDecisionContext.accessToken
-      : getAccessToken();
-    const response = await request('/chat/deadline-change/decision', body, accessToken);
+    return this.post('/chat/deadline-change/decision', body);
+  }
 
-    if (!response.pendingAction) {
-      this.pendingDecisionContext = null;
+  private async post(path: string, data: unknown): Promise<AiAgentResponse> {
+    try {
+      // Agent JSON is not the LMS envelope; read Axios data after interceptors
+      // have attached Bearer and recovered a 401 through V2ApiClient.
+      const response = await this.client.getClient().post(path, data);
+      return normalizeResponse(response.data);
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, 'Workflow is temporarily unavailable. Please try again.'));
     }
-
-    return response;
   }
 }
 

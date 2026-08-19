@@ -1,13 +1,15 @@
-import {FormEvent, useMemo, useState} from 'react';
+import {FormEvent, useEffect, useMemo, useState} from 'react';
 import {useQuery, useQueryClient} from '@tanstack/react-query';
-import {ArrowLeft, CheckCircle2, Download, MessageSquare, Search, Upload, X} from 'lucide-react';
+import {ArrowLeft, CheckCircle2, Download, MessageSquare, RotateCcw, Search, Upload, X} from 'lucide-react';
 import {Link, useParams} from 'react-router-dom';
 import type {GradingRosterItem, UpsertGradePayload} from '@/apis';
 import {unwrapData} from '@/apis';
 import {assignmentApiService} from '@/apis/services/assignment-api';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
 import {saveBlob} from '@/utils/downloadBlob';
+import {htmlToPlainText} from '@/utils/htmlText';
 import {StudentSubmissionHistory} from '@/pages/AssignmentDetailPage/StudentSubmissionHistory';
+import {buildGradeSelection, rosterRowKey} from './gradeSelection';
 import styles from './index.module.scss';
 
 type RosterFilter = 'All' | 'Ungraded' | 'Graded';
@@ -82,6 +84,15 @@ export const GradeDialog = ({
   const [score, setScore] = useState(row.score === undefined ? '' : String(row.score));
   const [feedback, setFeedback] = useState('');
   const [annotatedFile, setAnnotatedFile] = useState<File | undefined>();
+  const gradingViewQuery = useQuery({
+    queryKey: ['assignment-grading-view', courseId, assignmentId, row.studentUserId, row.groupId],
+    queryFn: async () => unwrapData(
+      row.groupId !== undefined
+        ? await assignmentApiService.getGroupGradingView(courseId, assignmentId, row.groupId)
+        : await assignmentApiService.getStudentGradingView(courseId, assignmentId, row.studentUserId!),
+      'getGradingView',
+    ),
+  });
   const submissionVersionsQuery = useQuery({
     queryKey: ['assignment-submission-versions', courseId, assignmentId, row.submissionId],
     enabled: row.submissionId !== undefined,
@@ -93,6 +104,13 @@ export const GradeDialog = ({
     ),
   });
 
+  useEffect(() => {
+    const html = gradingViewQuery.data?.grade?.feedbackHtml;
+    if (html) setFeedback(htmlToPlainText(html));
+    const nextScore = gradingViewQuery.data?.grade?.score;
+    if (nextScore !== undefined) setScore(String(nextScore));
+  }, [gradingViewQuery.data?.grade?.feedbackHtml, gradingViewQuery.data?.grade?.score]);
+
   const submit = (event: FormEvent) => {
     event.preventDefault();
     const parsedScore = Number(score);
@@ -101,6 +119,8 @@ export const GradeDialog = ({
       score: parsedScore,
       feedbackHtml: feedback.trim() ? `<p>${escapeHtml(feedback.trim())}</p>` : undefined,
       submissionVersionId: row.submissionVersionId,
+      rubricVersionId: gradingViewQuery.data?.grade?.rubricVersionId
+        ?? gradingViewQuery.data?.rubric?.versionId,
       aiAssisted: false,
     }, annotatedFile);
   };
@@ -169,6 +189,13 @@ export const GradeDialog = ({
 
         <label className={styles.feedbackField}>
           <span>Feedback for the learner</span>
+          {gradingViewQuery.isPending ? <p className={styles.dialogNote}>Loading existing feedback…</p> : null}
+          {gradingViewQuery.isError ? (
+            <div className={styles.submissionFilesError} role="alert">
+              <span>Existing feedback couldn&apos;t be loaded.</span>
+              <button type="button" onClick={() => void gradingViewQuery.refetch()}>Try again</button>
+            </div>
+          ) : null}
           <textarea
             rows={5}
             value={feedback}
@@ -208,6 +235,7 @@ const AssignmentGradingPage = () => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<RosterFilter>('All');
   const [selectedRow, setSelectedRow] = useState<GradingRosterItem | null>(null);
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [isSaving, setSaving] = useState(false);
   const [isReleasing, setReleasing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -284,12 +312,50 @@ const AssignmentGradingPage = () => {
         queryClient.invalidateQueries({queryKey: ['assignment-grading-roster', courseId, assignmentId]}),
         queryClient.invalidateQueries({queryKey: ['assignment', courseId, assignmentId]}),
       ]);
+      setSelectedKeys(new Set());
     } catch {
       setActionError('Grades could not be released. No local status was changed.');
     } finally {
       setReleasing(false);
     }
   };
+
+  const updateSelectedRelease = async (action: 'release' | 'retract') => {
+    if (courseId === null || assignmentId === null || selectedKeys.size === 0) return;
+    const selection = buildGradeSelection(rows, selectedKeys);
+    const confirmMessage = action === 'release'
+      ? `Release ${selectedKeys.size} selected grade(s) to learners now?`
+      : `Retract ${selectedKeys.size} selected grade(s)? Learners will lose access until they are released again.`;
+    if (!window.confirm(confirmMessage)) return;
+
+    setReleasing(true);
+    setActionError(null);
+    try {
+      if (action === 'release') {
+        await assignmentApiService.releaseGrades(courseId, assignmentId, selection);
+      } else {
+        await assignmentApiService.retractGrades(courseId, assignmentId, selection);
+      }
+      await Promise.all([
+        queryClient.invalidateQueries({queryKey: ['assignment-grading-roster', courseId, assignmentId]}),
+        queryClient.invalidateQueries({queryKey: ['assignment', courseId, assignmentId]}),
+      ]);
+      setSelectedKeys(new Set());
+    } catch {
+      setActionError(action === 'release'
+        ? 'Selected grades could not be released. No local status was changed.'
+        : 'Selected grades could not be retracted. No local status was changed.');
+    } finally {
+      setReleasing(false);
+    }
+  };
+
+  const toggleRow = (key: string) => setSelectedKeys(current => {
+    const next = new Set(current);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    return next;
+  });
 
   if (courseId === null || assignmentId === null) {
     return <div className={styles.status} role="alert">This grading link is invalid.</div>;
@@ -340,15 +406,35 @@ const AssignmentGradingPage = () => {
           </div>
         </div>
         {access.canReleaseGrades ? (
-          <button
-            type="button"
-            className={styles.primaryButton}
-            onClick={() => void releaseAll()}
-            disabled={isReleasing || roster.enteredCount === 0 || !roster.gradingWritable}
-          >
-            <CheckCircle2 size={18}/>
-            {isReleasing ? 'Releasing…' : `Release entered grades (${roster.enteredCount})`}
-          </button>
+          <div className={styles.headerActions}>
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={() => void updateSelectedRelease('retract')}
+              disabled={isReleasing || selectedKeys.size === 0 || !roster.gradingWritable}
+            >
+              <RotateCcw size={18}/>
+              Retract selected
+            </button>
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={() => void updateSelectedRelease('release')}
+              disabled={isReleasing || selectedKeys.size === 0 || !roster.gradingWritable}
+            >
+              <CheckCircle2 size={18}/>
+              Release selected
+            </button>
+            <button
+              type="button"
+              className={styles.primaryButton}
+              onClick={() => void releaseAll()}
+              disabled={isReleasing || roster.enteredCount === 0 || !roster.gradingWritable}
+            >
+              <CheckCircle2 size={18}/>
+              {isReleasing ? 'Updating…' : `Release entered grades (${roster.enteredCount})`}
+            </button>
+          </div>
         ) : (
           <p className={styles.taNotice}>TA access: grades can be entered, but only the Instructor can release them.</p>
         )}
@@ -389,6 +475,11 @@ const AssignmentGradingPage = () => {
           <table>
             <thead>
               <tr>
+                {access.canReleaseGrades ? (
+                  <th>
+                    <span className={styles.srOnly}>Select</span>
+                  </th>
+                ) : null}
                 <th>Learner</th>
                 <th>Submission</th>
                 <th>Submitted at</th>
@@ -400,9 +491,19 @@ const AssignmentGradingPage = () => {
             <tbody>
               {rows.map(row => {
                 const name = getDisplayName(row);
-                const key = row.groupId !== undefined ? `group-${row.groupId}` : `student-${row.studentUserId}`;
+                const key = rosterRowKey(row);
                 return (
                   <tr key={key}>
+                    {access.canReleaseGrades ? (
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={selectedKeys.has(key)}
+                          onChange={() => toggleRow(key)}
+                          aria-label={`Select ${name}`}
+                        />
+                      </td>
+                    ) : null}
                     <td>
                       <div className={styles.learner}>
                         <span className={styles.avatar}>{getInitials(name)}</span>

@@ -3,7 +3,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import type {AssignmentAttachment} from '@/apis';
 import {assignmentApiService} from '@/apis/services/assignment-api';
 import {openPreviewWindow, saveBlob, showBlobInPreviewWindow} from '@/utils/downloadBlob';
-import {InstructorAttachmentRow, StudentGradeSummary, uploadRubricWithReplaceConfirmation} from './index';
+import {InstructorAttachmentRow, StudentGradeSummary} from './index';
+import {uploadRubricWithReplaceConfirmation} from './rubricUpload';
 
 vi.mock('@/apis/services/assignment-api', () => ({
   assignmentApiService: {

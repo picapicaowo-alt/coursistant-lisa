@@ -3,7 +3,7 @@ import {useTranslation} from "react-i18next";
 import styles from './index.module.scss';
 import {AssignmentItem} from "../AssignmentsList/AssignmentItem";
 import {useCourseWorkspaceStore} from "../../stores/useCourseWorkspaceStore";
-import {AssignmentEntity} from "@/pages/DetailWorkspacePage/config";
+import {AssignmentEntity} from "../../workspaceEntities";
 
 interface AssignmentsListProps {
   activeUnitId: number | null;

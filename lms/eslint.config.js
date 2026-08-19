@@ -13,7 +13,12 @@ const legacyIgnores = [
   'src/components/ChatContent.tsx',
   'src/components/RichTextEditor/extensions/BlankNode.ts',
   'src/pages/DetailWorkspacePage/**',
-  'src/stores/core/AggregateRootGenerator.test.ts',
+  'src/stores/core/**',
+  'src/types/core/**',
+  'src/pages/CourseWorkspacePage/components/AssignmentsList/**',
+  'src/pages/CourseWorkspacePage/components/CourseUnitsManager/**',
+  'src/pages/CourseWorkspacePage/components/CourseUnitPanel/**',
+  'src/pages/CourseWorkspacePage/components/CourseInfoPanel/**',
 ]
 
 export default [
@@ -44,11 +49,11 @@ export default [
       'react/jsx-no-target-blank': 'off',
       'react/prop-types': 'off',
       'react-refresh/only-export-components': [
-        'warn',
-        {allowConstantExport: true},
+        'error',
+        {allowConstantExport: true, allowExportNames: ['useAuth', 'useRequiredAuth']},
       ],
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': ['warn', {argsIgnorePattern: '^_'}],
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unused-vars': ['error', {argsIgnorePattern: '^_'}],
     },
   })),
 ]

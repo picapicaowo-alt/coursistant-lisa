@@ -6,7 +6,7 @@
  * number. `data` is genuinely optional: the server serializes NON_NULL, so a
  * response with nothing to return omits the field entirely.
  */
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   /** HTTP status, mirrored into the body. */
   status: number;
   code: string;
@@ -19,7 +19,7 @@ export interface ApiResponse<T = any> {
 export interface ApiError {
   code: number;
   message: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }
 
 /**

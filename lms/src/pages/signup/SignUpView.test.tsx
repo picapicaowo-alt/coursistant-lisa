@@ -144,7 +144,6 @@ describe('SignUpView', () => {
       email: 'student@example.com',
       password: 'Passw0rd1',
       verificationCode: '123456',
-      tenantId: 1,
     });
     expect(mocks.setAccessToken).toHaveBeenCalledWith('registered-token');
     expect(mocks.storeLogin).toHaveBeenCalledWith(expect.objectContaining({id: 9}));

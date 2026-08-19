@@ -1,6 +1,6 @@
 ﻿import {StateCreator} from 'zustand';
 import {CourseWorkspaceStore} from "../useCourseWorkspaceStore";
-import {CourseEntity} from "@/pages/DetailWorkspacePage/config";
+import {CourseEntity} from "../../workspaceEntities";
 import {CourseDetailDTO} from "@/apis";
 
 export interface CourseDataSlice {

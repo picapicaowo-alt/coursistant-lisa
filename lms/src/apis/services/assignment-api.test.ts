@@ -208,4 +208,12 @@ describe('AssignmentApiService 8081 routes', () => {
       '/v2/courses/4/assignments/9/groups/21/grade/annotated-file',
     ]);
   });
+
+  it('loads a student or group grading view for existing-feedback prefill', async () => {
+    client.get.mockResolvedValue({status: 200, data: {assignmentId: 9}});
+    await service.getStudentGradingView(4, 9, 385);
+    await service.getGroupGradingView(4, 9, 21);
+    expect(client.get).toHaveBeenCalledWith('/v2/courses/4/assignments/9/students/385/grading');
+    expect(client.get).toHaveBeenCalledWith('/v2/courses/4/assignments/9/groups/21/grading');
+  });
 });

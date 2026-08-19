@@ -30,6 +30,7 @@ const INSTRUCTOR_QUICK_PROMPTS = [
 ];
 
 const getAgentRole = (level: string | null): AiAgentRole =>
+  // UI-only. The agent backend must derive authorization from the Bearer token.
   level === 'INSTRUCTOR' ? 'INSTRUCTOR' : 'STUDENT';
 
 const getErrorMessage = (error: unknown): string => {

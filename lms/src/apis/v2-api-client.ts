@@ -1,5 +1,12 @@
 import {ApiClient} from "@/apis/api-client";
 
+const endBrowserSession = () => {
+  localStorage.removeItem('user');
+  if (window.location.pathname !== '/login') {
+    window.location.href = '/login';
+  }
+};
+
 export const V2ApiClient = new ApiClient({
   baseURL: import.meta.env.VITE_API_DOMAIN_NAME,
   timeout: 10000,
@@ -7,13 +14,17 @@ export const V2ApiClient = new ApiClient({
   // server if credentials are sent.
   withCredentials: true,
   refreshPath: "/v1/auth/refresh-token",
-  onSessionExpired: () => {
-    // Refresh failed, so the session is genuinely over. A full navigation
-    // rather than a router push: the caller is deep inside a failed request
-    // and every bit of cached state now belongs to a logged-out user.
-    localStorage.removeItem('user');
-    if (window.location.pathname !== '/login') {
-      window.location.href = '/login';
-    }
-  },
-})
+  onSessionExpired: endBrowserSession,
+});
+
+/**
+ * AI Agent lives on a different origin than `/v1/auth/refresh-token`.
+ * 401 recovery reuses the LMS session rotation, then retries with the new Bearer.
+ */
+export const agentApiClient = new ApiClient({
+  baseURL: import.meta.env.VITE_AI_AGENT_API_DOMAIN_NAME || '/ai-agent',
+  timeout: 60_000,
+  withCredentials: true,
+  refreshDelegate: () => V2ApiClient.recoverSession(),
+  onSessionExpired: endBrowserSession,
+});

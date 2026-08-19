@@ -1,0 +1,126 @@
+import {FormEvent, useEffect, useRef, useState} from 'react';
+import {useLocation, useNavigate} from 'react-router-dom';
+import {useTranslation} from 'react-i18next';
+import {authApiService} from '@/apis/services/auth-api';
+import {getApiErrorMessage} from '@/utils/apiError';
+import {isValidPassword} from '@/utils/passwordRules';
+
+export type PasswordResetStep = 'email' | 'code' | 'password' | 'complete';
+
+interface PasswordResetLocationState {
+  forced?: boolean;
+  email?: string;
+}
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const CODE_LENGTH = 6;
+
+const usePasswordReset = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const {t} = useTranslation('auth');
+  const query = new URLSearchParams(location.search);
+  const locationState = (location.state ?? {}) as PasswordResetLocationState;
+  const forced = locationState.forced === true || query.get('forced') === '1';
+  const presetEmail = locationState.email || query.get('email') || '';
+
+  const [step, setStep] = useState<PasswordResetStep>(forced && presetEmail ? 'code' : 'email');
+  const [email, setEmail] = useState(presetEmail);
+  const [code, setCode] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
+
+  useEffect(() => {
+    if (forced && presetEmail) {
+      setEmail(presetEmail);
+      setStep('code');
+    }
+  }, [forced, presetEmail]);
+
+  const sendCode = async () => {
+    const normalized = email.trim().toLowerCase();
+    if (!EMAIL_PATTERN.test(normalized)) {
+      setError(t('forgotPasswordErrors.emailRequired'));
+      return;
+    }
+    setSubmitting(true);
+    setError('');
+    try {
+      await authApiService.sendPasswordResetVerification(normalized);
+      setEmail(normalized);
+      setCode('');
+      setStep('code');
+    } catch (cause) {
+      setError(getApiErrorMessage(cause, t('forgotPasswordErrors.sendVerificationFailed')));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const confirmCode = (event: FormEvent) => {
+    event.preventDefault();
+    if (code.trim().length !== CODE_LENGTH) {
+      setError(t('forgotPasswordErrors.codeRequired'));
+      return;
+    }
+    setError('');
+    setStep('password');
+  };
+
+  const submitPassword = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!isValidPassword(password)) {
+      setError(t('forgotPasswordErrors.passwordTooShort'));
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError(t('forgotPasswordErrors.passwordsDontMatch'));
+      return;
+    }
+    setSubmitting(true);
+    setError('');
+    try {
+      await authApiService.resetPassword({
+        email,
+        verificationCode: code,
+        newPassword: password,
+      });
+      setStep('complete');
+    } catch (cause) {
+      setError(getApiErrorMessage(cause, t('forgotPasswordErrors.updateError')));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return {
+    t,
+    navigate,
+    step,
+    setStep,
+    forced,
+    email,
+    setEmail,
+    code,
+    setCode,
+    password,
+    setPassword,
+    confirmPassword,
+    setConfirmPassword,
+    showPassword,
+    setShowPassword,
+    isSubmitting,
+    error,
+    setError,
+    inputRefs,
+    sendCode,
+    confirmCode,
+    submitPassword,
+  };
+};
+
+export default usePasswordReset;

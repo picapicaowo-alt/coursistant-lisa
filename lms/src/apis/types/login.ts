@@ -18,7 +18,10 @@ export interface LoginRequest {
   role: LoginAccountType;
 }
 
-/** Public self-registration payload for `POST /v1/auth/register`. */
+/** Public self-registration payload for `POST /v1/auth/register`.
+ * Do not send tenantId: the backend ignores a client tenant and binds public
+ * registration to the platform tenant from the request host.
+ */
 export interface RegisterRequest {
   email: string;
   verificationCode: string;
@@ -26,8 +29,6 @@ export interface RegisterRequest {
   name: string;
   /** Optional. The backend derives it from the email when omitted. */
   username?: string;
-  /** Public registration currently joins the platform tenant. */
-  tenantId: 1;
 }
 
 export interface PasswordResetRequest {

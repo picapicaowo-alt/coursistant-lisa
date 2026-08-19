@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './ErrorBoundary.module.scss';
+import {frontendErrorReporter} from '@/utils/frontendErrorReporter';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -11,18 +12,7 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-/**
- * Catches a render-time failure and shows something the user can act on.
- *
- * The app had none, which mattered more than it sounds: useSuspenseQuery
- * reports failures by throwing, so any failed load — an expired token, a
- * server error — unmounted the entire application and left a blank screen.
- * PRIN-02 requires every function to define what happens on failure, and
- * "the page disappears" is not that.
- *
- * This is a last line of defence. A region that can fail on its own should
- * still handle its own error inline, the way the dashboard widgets do.
- */
+/** Last-resort render failure UI. Feature regions should still handle their own errors. */
 export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   state: ErrorBoundaryState = {error: null};
 
@@ -31,14 +21,13 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   componentDidUpdate(prev: ErrorBoundaryProps) {
-    // Navigating away from a broken page should not keep showing its error.
     if (this.state.error && prev.resetKey !== this.props.resetKey) {
       this.setState({error: null});
     }
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('Unhandled render error', error, info.componentStack);
+    frontendErrorReporter.capture(error, {componentStack: info.componentStack});
   }
 
   render() {

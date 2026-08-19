@@ -3,7 +3,7 @@ import {useTranslation} from 'react-i18next';
 import styles from './index.module.scss';
 import {CourseUnitItem} from "./CourseUnitItem";
 import {useCourseWorkspaceStore} from "../../stores/useCourseWorkspaceStore";
-import {CourseUnitEntity} from "@/pages/DetailWorkspacePage/config";
+import {CourseUnitEntity} from "../../workspaceEntities";
 import {useQueryClient} from '@tanstack/react-query';
 import {courseApiService} from "@/apis/services/course-api";
 import {useRequiredAuth} from "@/contexts/RequiredAuthContext";

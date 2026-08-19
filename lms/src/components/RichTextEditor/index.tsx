@@ -103,13 +103,14 @@ const RichTextEditorClient: React.FC<TextBlockProps> = ({
     }
   }, [editor, registerRef, index]);
   
+  const editorHtml = editor?.getHTML();
   useEffect(() => {
     if (editor && adjustHeight) {
       requestAnimationFrame(() => {
         adjustHeight(index);
       });
     }
-  }, [editor?.getHTML(), adjustHeight, index]);
+  }, [editor, editorHtml, adjustHeight, index]);
   
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {

@@ -1,7 +1,11 @@
 ﻿import {StateCreator} from 'zustand';
 import {CourseWorkspaceStore} from "../useCourseWorkspaceStore";
 import {UserRole, WorkspaceMode} from "../../types";
-import {DetailWorkspaceProps} from "@/pages/DetailWorkspacePage/types";
+
+export type DetailWorkspaceProps = {
+  type: string;
+  query: Record<string, unknown>;
+};
 
 export interface ContextSlice {
   /** Legacy detail-workspace audience. Privileged page controls no longer use this value. */

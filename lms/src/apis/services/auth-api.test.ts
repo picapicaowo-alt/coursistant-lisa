@@ -25,7 +25,6 @@ describe('AuthApiService registration', () => {
       email: 'student@example.com',
       password: 'Passw0rd1',
       verificationCode: '123456',
-      tenantId: 1 as const,
     };
 
     await service.register(request);

@@ -1,7 +1,7 @@
 ﻿declare module '@tiptap/core' {
   interface Editor {
     markdown: {
-      get(options?: any): string;
+      get(options?: Record<string, unknown>): string;
       set(content: string, emitUpdate?: boolean): void;
     };
   }

@@ -386,6 +386,23 @@ export interface GradeSelectionPayload {
   groupIds?: number[];
 }
 
+/**
+ * GET .../students/{id}/grading and .../groups/{id}/grading.
+ * Roster rows do not include feedbackHtml; this view is the source for prefill.
+ */
+export interface GradingView {
+  assignmentId: number;
+  assignmentTitle?: string;
+  student?: GradingRosterItem;
+  currentVersion?: SubmissionVersion;
+  versions?: SubmissionVersion[];
+  rubric?: RubricState;
+  grade?: GradeRecord;
+  gradingWritable?: boolean;
+  prevStudentId?: number;
+  nextStudentId?: number;
+}
+
 /** A student's assignment result from GET /v2/courses/{courseId}/my-grades. */
 export interface MyGradeItem {
   assignmentId: number;

@@ -1,42 +1,27 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
+import type {ApiClient} from '@/apis/api-client';
 import {AiAgentApiService} from './ai-agent-api';
 
-const jsonResponse = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
-  status,
-  headers: {'Content-Type': 'application/json'},
-});
-
-const memory = new Map<string, string>();
-const localStorageStub = {
-  clear: () => memory.clear(),
-  getItem: (key: string) => memory.get(key) ?? null,
-  setItem: (key: string, value: string) => {
-    memory.set(key, value);
-  },
-  removeItem: (key: string) => {
-    memory.delete(key);
-  },
-};
+const json = (data: unknown) => ({data});
 
 describe('AiAgentApiService', () => {
-  let aiAgentApiService: AiAgentApiService;
+  const post = vi.fn();
+  const client = {getClient: () => ({post})} as unknown as ApiClient;
+  let service: AiAgentApiService;
 
   beforeEach(() => {
-    vi.restoreAllMocks();
-    memory.clear();
-    vi.stubGlobal('localStorage', localStorageStub);
-    aiAgentApiService = new AiAgentApiService();
-    localStorage.setItem('accToken', 'test-access-token');
+    vi.clearAllMocks();
+    service = new AiAgentApiService(client);
   });
 
-  it('sends chat through the same-origin agent proxy with the LMS bearer token', async () => {
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({
+  it('posts chat through the shared authenticated client', async () => {
+    post.mockResolvedValue(json({
       reply: 'You have two upcoming assignments.',
       pendingAction: null,
       trace: {private: 'must not leak into the UI model'},
     }));
 
-    await expect(aiAgentApiService.chat({
+    await expect(service.chat({
       message: 'What is due?',
       role: 'STUDENT',
     })).resolves.toEqual({
@@ -46,67 +31,49 @@ describe('AiAgentApiService', () => {
       confirmationRequired: false,
     });
 
-    expect(fetchMock).toHaveBeenCalledWith('/ai-agent/chat', expect.objectContaining({
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer test-access-token',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({message: 'What is due?', role: 'STUDENT'}),
-    }));
+    expect(post).toHaveBeenCalledWith('/chat', {
+      message: 'What is due?',
+      role: 'STUDENT',
+      conversationId: undefined,
+      history: undefined,
+    });
   });
 
-  it('uses the confirmed deadline-decision contract', async () => {
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({
-      reply: 'The deadline change was rejected.',
-      pendingAction: null,
-    }));
-
-    await aiAgentApiService.decideDeadlineChange({actionId: 'action-123', decision: 'REJECT'});
-
-    expect(fetchMock).toHaveBeenCalledWith('/ai-agent/chat/deadline-change/decision', expect.objectContaining({
-      body: JSON.stringify({actionId: 'action-123', decision: 'REJECT'}),
-    }));
-  });
-
-  it('reuses the token that created a pending deadline action', async () => {
-    localStorage.setItem('accToken', 'pending-action-token');
-    const fetchMock = vi.spyOn(globalThis, 'fetch')
-      .mockResolvedValueOnce(jsonResponse({
+  it('does not bind a pending decision to a captured access token', async () => {
+    post
+      .mockResolvedValueOnce(json({
         reply: 'Allow this deadline change?',
         pendingAction: {actionId: 'action-456', type: 'ASSIGNMENT_DEADLINE_CHANGE'},
       }))
-      .mockResolvedValueOnce(jsonResponse({
+      .mockResolvedValueOnce(json({
         reply: 'The deadline change was rejected.',
         pendingAction: null,
       }));
 
-    await aiAgentApiService.chat({message: 'Move Assignment A', role: 'INSTRUCTOR'});
-    localStorage.setItem('accToken', 'refreshed-token');
-    await aiAgentApiService.decideDeadlineChange({actionId: 'action-456', decision: 'REJECT'});
+    await service.chat({message: 'Move Assignment A', role: 'INSTRUCTOR'});
+    await service.decideDeadlineChange({actionId: 'action-456', decision: 'REJECT'});
 
-    expect(fetchMock).toHaveBeenNthCalledWith(2, '/ai-agent/chat/deadline-change/decision', expect.objectContaining({
-      headers: {
-        Authorization: 'Bearer pending-action-token',
-        'Content-Type': 'application/json',
-      },
-    }));
+    expect(post).toHaveBeenNthCalledWith(2, '/chat/deadline-change/decision', {
+      actionId: 'action-456',
+      decision: 'REJECT',
+    });
   });
 
   it('surfaces the API error without exposing a server trace', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({
-      message: 'No matching pending deadline change',
-      trace: {internal: true},
-    }, 409));
+    post.mockRejectedValue({
+      code: 409,
+      message: 'Conflict',
+      details: {message: 'No matching pending deadline change', trace: {internal: true}},
+    });
 
-    await expect(aiAgentApiService.decideDeadlineChange({
+    await expect(service.decideDeadlineChange({
       actionId: 'expired-action',
       decision: 'ALLOW',
     })).rejects.toThrow('No matching pending deadline change');
   });
 
   it('normalizes snake_case pending actions and conversation ids', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({
+    post.mockResolvedValue(json({
       data: {
         reply: 'Allow this deadline change?',
         pending_action: {action_id: 456, action_type: 'ASSIGNMENT_DEADLINE_CHANGE'},
@@ -115,7 +82,7 @@ describe('AiAgentApiService', () => {
       },
     }));
 
-    await expect(aiAgentApiService.chat({
+    await expect(service.chat({
       message: 'Move Assignment A',
       role: 'INSTRUCTOR',
       conversationId: 'conv-8',
