@@ -15,5 +15,13 @@ describe("app shell routing", () => {
   it("only selects dashboard for the root URL", () => {
     expect(getSidebarIndex("/")).toBe(0);
     expect(getSidebarIndex("/profile")).toBe(-1);
+    expect(getSidebarIndex("/settings")).toBe(-1);
+  });
+
+  it("shows shell for settings, profile, and admin routes", () => {
+    expect(shouldShowAppShell("/settings")).toBe(true);
+    expect(shouldShowAppShell("/profile")).toBe(true);
+    expect(shouldShowAppShell("/admin")).toBe(true);
+    expect(shouldShowAppShell("/admin/users")).toBe(true);
   });
 });

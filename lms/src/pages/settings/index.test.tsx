@@ -1,3 +1,4 @@
+import {MemoryRouter} from 'react-router-dom';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -39,7 +40,9 @@ const renderPage = () => {
   const client = new QueryClient({defaultOptions: {queries: {retry: false}}});
   return render(
     <QueryClientProvider client={client}>
-      <SettingsPage/>
+      <MemoryRouter>
+        <SettingsPage/>
+      </MemoryRouter>
     </QueryClientProvider>
   );
 };
@@ -110,5 +113,11 @@ describe('SettingsPage', () => {
 
     await userEvent.click(screen.getByRole('button', {name: 'Hide current password'}));
     expect(currentInput).toHaveAttribute('type', 'password');
+  });
+
+  it('renders the back button in settings header', async () => {
+    renderPage();
+    const backButton = await screen.findByRole('button', {name: 'Back'});
+    expect(backButton).toBeInTheDocument();
   });
 });

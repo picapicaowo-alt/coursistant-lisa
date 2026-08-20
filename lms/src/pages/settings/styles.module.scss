@@ -37,6 +37,46 @@
   margin: 0 auto;
 }
 
+.settingsHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  width: 100%;
+  margin-bottom: var(--spacing-md);
+}
+
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--color-background-hover);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+.settingsHeaderText {
+  flex: 1;
+  min-width: 0;
+}
+
 .settingsTitle,
 .settingsSubtitle {
   text-align: left;
@@ -53,7 +93,7 @@
 .settingsSubtitle {
   color: var(--color-text-secondary);
   font-size: var(--font-size-base);
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 0;
 }
 
 .tabsContainer {

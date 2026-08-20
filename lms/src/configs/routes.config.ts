@@ -1,4 +1,4 @@
-﻿export interface SidebarConfig {
+export interface SidebarConfig {
   name: string;
   path: string;
   sidebarItem: {
@@ -45,5 +45,21 @@ export const getSidebarIndex = (pathname: string): number =>
       : pathname === path || pathname.startsWith(`${path}/`),
   );
 
-export const shouldShowAppShell = (pathname: string): boolean =>
-  getSidebarIndex(pathname) >= 0 || pathname === '/admin' || pathname.startsWith('/admin/');
+const APP_SHELL_BASE_PATHS = [
+  '/',
+  '/course',
+  '/aibot',
+  '/admin',
+  '/settings',
+  '/profile',
+  '/post',
+  '/roster',
+  '/create',
+];
+
+export const shouldShowAppShell = (pathname: string): boolean => {
+  if (pathname === '/') return true;
+  return APP_SHELL_BASE_PATHS.some(
+    base => base !== '/' && (pathname === base || pathname.startsWith(`${base}/`)),
+  );
+};

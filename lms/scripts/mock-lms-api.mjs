@@ -675,6 +675,40 @@ const server = createServer(async (request, response) => {
     return;
   }
 
+  if (url.pathname === '/api/v2/me/profile') {
+    const isInstructor = request.headers.authorization === 'Bearer local-instructor-token';
+    if (request.method === 'GET') {
+      send(response, 200, {
+        userId: isInstructor ? 7 : 8,
+        displayName: isInstructor ? 'Demo Instructor' : 'Demo Student',
+        email: isInstructor ? 'instructor@example.com' : 'student@example.com',
+        role: 'USER',
+        level: isInstructor ? 'INSTRUCTOR' : 'STUDENT',
+        avatarUrl: null,
+        emailNotifications: true,
+      });
+      return;
+    }
+    if (request.method === 'PATCH') {
+      const body = await readBody(request);
+      send(response, 200, {
+        userId: isInstructor ? 7 : 8,
+        displayName: body.displayName || (isInstructor ? 'Demo Instructor' : 'Demo Student'),
+        email: isInstructor ? 'instructor@example.com' : 'student@example.com',
+        role: 'USER',
+        level: isInstructor ? 'INSTRUCTOR' : 'STUDENT',
+        avatarUrl: null,
+        emailNotifications: body.emailNotifications !== undefined ? body.emailNotifications : true,
+      });
+      return;
+    }
+  }
+
+  if (request.method === 'PUT' && url.pathname === '/api/v1/auth/password') {
+    send(response, 200, {});
+    return;
+  }
+
   if (request.method === 'GET' && url.pathname === '/api/v2/courses/4') {
     send(response, 200, previewCourse);
     return;

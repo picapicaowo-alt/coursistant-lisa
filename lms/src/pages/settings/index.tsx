@@ -1,6 +1,7 @@
 import {FormEvent, useEffect, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import {Eye, EyeOff} from 'lucide-react';
+import {ArrowLeft, Eye, EyeOff} from 'lucide-react';
 import styles from './styles.module.scss';
 import type {UpdateProfileRequest} from '@/apis';
 import {unwrapData} from '@/apis';
@@ -19,6 +20,7 @@ interface StatusMessage {
 }
 
 const SettingsPage = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<SettingsTab>('Account');
   const [displayName, setDisplayName] = useState('');
   const [emailNotifications, setEmailNotifications] = useState(false);
@@ -31,6 +33,14 @@ const SettingsPage = () => {
   const [status, setStatus] = useState<StatusMessage | null>(null);
   const queryClient = useQueryClient();
   const {updateProfile} = useAuth();
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/');
+    }
+  };
 
   const profileQuery = useQuery({
     queryKey: ['my-profile'],
@@ -98,8 +108,20 @@ const SettingsPage = () => {
 
   return (
     <div className={styles.settingsPageWrapper}>
-      <h2 className={styles.settingsTitle}>Settings</h2>
-      <p className={styles.settingsSubtitle}>Manage your Coursistant account and security.</p>
+      <div className={styles.settingsHeader}>
+        <button
+          type="button"
+          className={styles.backButton}
+          onClick={handleBack}
+          aria-label="Back"
+        >
+          <ArrowLeft size={20}/>
+        </button>
+        <div className={styles.settingsHeaderText}>
+          <h2 className={styles.settingsTitle}>Settings</h2>
+          <p className={styles.settingsSubtitle}>Manage your Coursistant account and security.</p>
+        </div>
+      </div>
       <div className={styles.tabsContainer} role="tablist" aria-label="Settings sections">
         {tabList.map(tab => (
           <button
