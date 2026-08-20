@@ -22,7 +22,7 @@ const mockAnnouncement = (
 });
 
 describe('AnnouncementsCard', () => {
-  it('renders "+ Add announcement" button for staff with manage permissions', () => {
+  it('renders "Manage announcements" button for staff with manage permissions', () => {
     render(
       <MemoryRouter>
         <AnnouncementsCard
@@ -34,7 +34,7 @@ describe('AnnouncementsCard', () => {
       </MemoryRouter>,
     );
 
-    const button = screen.getByRole('link', {name: '+ Add announcement'});
+    const button = screen.getByRole('link', {name: 'Manage announcements'});
     expect(button).toBeInTheDocument();
     expect(button).toHaveAttribute('href', '/course/33/announcements');
   });
@@ -106,7 +106,7 @@ describe('AnnouncementsCard', () => {
     );
 
     const links = screen.getAllByRole('link');
-    // Top right "+ Add announcement", followed by 3 rows
+    // Top right "Manage announcements", followed by 3 rows
     expect(links).toHaveLength(4);
 
     const titles = screen.getAllByText(/Note$/).map((el) => el.textContent);

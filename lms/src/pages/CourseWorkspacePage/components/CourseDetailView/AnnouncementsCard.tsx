@@ -41,7 +41,7 @@ export const AnnouncementsCard: React.FC<AnnouncementsCardProps> = ({
           to={`/course/${courseId}/announcements`}
           className={styles.addButton}
         >
-          {canManage ? '+ Add announcement' : 'View all'}
+          {canManage ? 'Manage announcements' : 'View all'}
         </Link>
       </div>
 
