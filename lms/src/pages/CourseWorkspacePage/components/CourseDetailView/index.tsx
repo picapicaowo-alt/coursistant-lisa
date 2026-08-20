@@ -31,8 +31,8 @@ interface CourseDetailViewProps {
  */
 export const CourseDetailView: React.FC<CourseDetailViewProps> = ({canCreateAssignments = false, canManageEvents = false, canManageGroups = false, canPostAnnouncements = false}) => {
   const {
-    course, weeks, sessions, assignments, quizzes, events, groupSets,
-    isLoading, isError, sessionsFailed, assignmentsFailed, quizzesFailed, eventsFailed, groupSetsFailed, refetch,
+    course, weeks, sessions, assignments, quizzes, events, groupSets, announcements,
+    isLoading, isError, sessionsFailed, assignmentsFailed, quizzesFailed, eventsFailed, groupSetsFailed, announcementsFailed, refetch,
   } = useCourseWorkspaceData();
 
   const [activeWeekId, setActiveWeekId] = useState<number | null>(null);
@@ -77,7 +77,12 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({canCreateAssi
       <div className={styles.cards}>
         <ContentCard week={activeWeek}/>
         <SyllabusCard courseId={course.id} canManage={canCreateAssignments}/>
-        <AnnouncementsCard courseId={course.id} canManage={canPostAnnouncements}/>
+        <AnnouncementsCard
+          courseId={course.id}
+          announcements={announcements}
+          failed={announcementsFailed}
+          canManage={canPostAnnouncements}
+        />
         <AssignmentsCard
           courseId={course.id}
           assignments={assignments}

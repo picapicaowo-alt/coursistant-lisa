@@ -48,13 +48,15 @@ describe('useCourseEdit', () => {
       quizzes: [],
       events: [],
       groupSets: [],
+      announcements: [],
       isLoading: false,
       isError: false,
       sessionsFailed: false,
-    assignmentsFailed: false,
+      assignmentsFailed: false,
       quizzesFailed: false,
       eventsFailed: false,
       groupSetsFailed: false,
+      announcementsFailed: false,
       refetch: vi.fn(),
     });
 

@@ -441,9 +441,32 @@
 }
 
 .uploadArea:focus-visible,
-.inlineStatus button:focus-visible {
+.inlineStatus button:focus-visible,
+.viewAllLink:focus-visible {
     outline: 3px solid t.$brand-subtle;
     outline-offset: 2px;
+}
+
+.cardFooter {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid t.$border;
+}
+
+.viewAllLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: t.$fs-caption;
+    font-weight: t.$fw-semibold;
+    color: t.$brand;
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: underline;
+    }
 }
 
 // -------------------------------------------------------------- schedule
