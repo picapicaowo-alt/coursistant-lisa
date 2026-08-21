@@ -13,6 +13,14 @@ export interface RosterFilters {
   includeWithdrawn: boolean;
 }
 
+const ROLE_PRIORITY: Record<string, number> = {
+  Instructor: 1,
+  TA: 2,
+  Student: 3,
+};
+
+const getRolePriority = (role?: string) => (role && ROLE_PRIORITY[role]) || 4;
+
 export const useRoster = () => {
   const {courseId} = useParams();
   const queryClient = useQueryClient();
@@ -63,10 +71,17 @@ export const useRoster = () => {
     onSuccess: () => void refresh(),
   });
   const total = query.data?.total ?? 0;
+  const rawMembers = query.data?.items ?? [];
+  const members = [...rawMembers].sort((a, b) => {
+    const pA = getRolePriority(a.courseRole);
+    const pB = getRolePriority(b.courseRole);
+    if (pA !== pB) return pA - pB;
+    return a.userId - b.userId;
+  });
 
   return {
     courseId: id,
-    members: query.data?.items ?? [],
+    members,
     total,
     page,
     pageCount: Math.max(1, Math.ceil(total / ROSTER_PAGE_SIZE)),
