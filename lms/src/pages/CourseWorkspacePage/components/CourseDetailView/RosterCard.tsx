@@ -11,7 +11,7 @@ export const RosterCard: React.FC<{courseId: number}> = ({courseId}) => (
     </div>
     <div className={styles.rosterSummary}>
       <UsersRound size={22} aria-hidden="true"/>
-      <p>Enrol students, review course roles, and manage teaching assistants.</p>
+      <p>Enroll students, review course roles, and manage teaching assistants.</p>
     </div>
   </section>
 );
