@@ -79,11 +79,12 @@ export class DashboardApiService {
    * Sessions that already finished today are still included.
    */
   async getUpcomingActivities(
-    days: number = DASHBOARD_LIMITS.activityDays.default
+    days: number = DASHBOARD_LIMITS.activityDays.default,
+    options?: {source?: 'SESSION' | 'EVENT' | 'Session' | 'Event' | string; limit?: number}
   ): Promise<ApiResponse<UpcomingActivity[]>> {
     try {
       return await this.apiClient.get<UpcomingActivity[]>('/v2/me/events/upcoming', {
-        params: {days},
+        params: {days, ...options},
       });
     } catch (error) {
       console.error('Failed to get upcoming activities', error);

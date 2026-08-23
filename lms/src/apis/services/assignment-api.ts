@@ -1,4 +1,4 @@
-﻿import {
+import {
   ApiResponse,
   AssignmentAttachment,
   AssignmentDetail,
@@ -56,42 +56,55 @@ export class AssignmentApiService {
 
   async createAssignment(
     courseId: number,
-    request: CreateAssignmentPayload
+    request: CreateAssignmentPayload,
+    idempotencyKey: string = crypto.randomUUID()
   ): Promise<ApiResponse<AssignmentDetail>> {
-    return this.apiClient.post<AssignmentDetail>(`/v2/courses/${courseId}/assignments`, request);
+    return this.apiClient.post<AssignmentDetail>(`/v2/courses/${courseId}/assignments`, request, idempotent(idempotencyKey));
   }
 
   async patchAssignment(
     courseId: number,
     assignmentId: number,
-    request: PatchAssignmentPayload
+    request: PatchAssignmentPayload,
+    idempotencyKey: string = crypto.randomUUID()
   ): Promise<ApiResponse<AssignmentDetail>> {
     return this.apiClient.patch<AssignmentDetail>(
       `/v2/courses/${courseId}/assignments/${assignmentId}`,
-      request
+      request,
+      idempotent(idempotencyKey)
     );
   }
 
   async publishAssignment(
     courseId: number,
-    assignmentId: number
+    assignmentId: number,
+    idempotencyKey: string = crypto.randomUUID()
   ): Promise<ApiResponse<AssignmentDetail>> {
     return this.apiClient.post<AssignmentDetail>(
-      `/v2/courses/${courseId}/assignments/${assignmentId}/publish`
+      `/v2/courses/${courseId}/assignments/${assignmentId}/publish`,
+      undefined,
+      idempotent(idempotencyKey)
     );
   }
 
   async unpublishAssignment(
     courseId: number,
-    assignmentId: number
+    assignmentId: number,
+    idempotencyKey: string = crypto.randomUUID()
   ): Promise<ApiResponse<AssignmentDetail>> {
     return this.apiClient.post<AssignmentDetail>(
-      `/v2/courses/${courseId}/assignments/${assignmentId}/unpublish`
+      `/v2/courses/${courseId}/assignments/${assignmentId}/unpublish`,
+      undefined,
+      idempotent(idempotencyKey)
     );
   }
 
-  async deleteAssignment(courseId: number, assignmentId: number): Promise<ApiResponse<void>> {
-    return this.apiClient.delete(`/v2/courses/${courseId}/assignments/${assignmentId}`);
+  async deleteAssignment(
+    courseId: number,
+    assignmentId: number,
+    idempotencyKey: string = crypto.randomUUID()
+  ): Promise<ApiResponse<void>> {
+    return this.apiClient.delete(`/v2/courses/${courseId}/assignments/${assignmentId}`, idempotent(idempotencyKey));
   }
 
   async previewDueDateChange(
@@ -273,24 +286,28 @@ export class AssignmentApiService {
   async uploadAttachments(
     courseId: number,
     assignmentId: number,
-    files: File[]
+    files: File[],
+    idempotencyKey: string = crypto.randomUUID()
   ): Promise<ApiResponse<AssignmentAttachment[]>> {
     const formData = new FormData();
     files.forEach(file => formData.append('files', file));
 
     return this.apiClient.post<AssignmentAttachment[]>(
       `/v2/courses/${courseId}/assignments/${assignmentId}/attachments`,
-      formData
+      formData,
+      idempotent(idempotencyKey)
     );
   }
 
   async deleteAttachment(
     courseId: number,
     assignmentId: number,
-    attachmentId: number
+    attachmentId: number,
+    idempotencyKey: string = crypto.randomUUID()
   ): Promise<ApiResponse<void>> {
     return this.apiClient.delete<void>(
-      `/v2/courses/${courseId}/assignments/${assignmentId}/attachments/${attachmentId}`
+      `/v2/courses/${courseId}/assignments/${assignmentId}/attachments/${attachmentId}`,
+      idempotent(idempotencyKey)
     );
   }
 

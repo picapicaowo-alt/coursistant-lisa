@@ -22,6 +22,11 @@ export interface QuizResponse {
   totalPoints: number;
   questionCount: number;
   hasAttempts: boolean;
+  /**
+   * For student: true if caller has open attempt, false if not.
+   * For staff: null.
+   */
+  hasOpenAttempt?: boolean | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -146,6 +151,7 @@ export interface QuizResult {
   totalScore: number | null;
   manualGradingPending: boolean;
   showCorrectAnswers: boolean;
+  releasedAt: string | null;
   questions: Array<{
     questionId: number;
     type: QuizQuestionType;

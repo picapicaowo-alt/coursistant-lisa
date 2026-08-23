@@ -53,7 +53,11 @@ export const useDashboardActivities = (): DashboardActivitiesResult => {
       if (!response.data) {
         throw new Error('Malformed response from the activities endpoint');
       }
-      return response.data;
+      return [...response.data].sort((a, b) => {
+        const aKey = a.startsAtUtc || `${a.date}T${a.startTime}`;
+        const bKey = b.startsAtUtc || `${b.date}T${b.startTime}`;
+        return aKey.localeCompare(bKey);
+      });
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 5 * 60 * 1000,

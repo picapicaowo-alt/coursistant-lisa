@@ -13,7 +13,11 @@ describe('AuthApiService registration', () => {
     expect(post).toHaveBeenCalledWith(
       '/v1/auth/email-verifications/register',
       undefined,
-      {params: {email: 'student@example.com'}, skipAuth: true},
+      expect.objectContaining({
+        params: {email: 'student@example.com'},
+        skipAuth: true,
+        headers: expect.objectContaining({'Idempotency-Key': expect.any(String)}),
+      }),
     );
   });
 
@@ -29,7 +33,14 @@ describe('AuthApiService registration', () => {
 
     await service.register(request);
 
-    expect(post).toHaveBeenCalledWith('/v1/auth/register', request, {skipAuth: true});
+    expect(post).toHaveBeenCalledWith(
+      '/v1/auth/register',
+      request,
+      expect.objectContaining({
+        skipAuth: true,
+        headers: expect.objectContaining({'Idempotency-Key': expect.any(String)}),
+      }),
+    );
   });
 
   it('uses the current verification, reset, and authenticated password routes', async () => {
@@ -42,7 +53,16 @@ describe('AuthApiService registration', () => {
     await service.resetPassword(reset);
     await service.changePassword(change);
 
-    expect(client.post).toHaveBeenNthCalledWith(1, '/v1/auth/email-verifications/reset', undefined, {params: {email: reset.email}, skipAuth: true});
+    expect(client.post).toHaveBeenNthCalledWith(
+      1,
+      '/v1/auth/email-verifications/reset',
+      undefined,
+      expect.objectContaining({
+        params: {email: reset.email},
+        skipAuth: true,
+        headers: expect.objectContaining({'Idempotency-Key': expect.any(String)}),
+      }),
+    );
     expect(client.post).toHaveBeenNthCalledWith(2, '/v1/auth/password-resets', reset, expect.objectContaining({skipAuth: true, headers: expect.objectContaining({'Idempotency-Key': expect.any(String)})}));
     expect(client.put).toHaveBeenCalledWith('/v1/auth/password', change, expect.objectContaining({headers: expect.objectContaining({'Idempotency-Key': expect.any(String)})}));
   });

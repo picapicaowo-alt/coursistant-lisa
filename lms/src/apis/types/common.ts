@@ -1,4 +1,4 @@
-﻿/**
+/**
  * The unified response envelope — see docs/api/auth_module-api_en.md 1.4.
  *
  * Success and failure share this shape, so `status` is what you branch on;
@@ -11,7 +11,7 @@ export interface ApiResponse<T = unknown> {
   status: number;
   code: string;
   message: string;
-  data?: T;
+  data?: T | null;
   /** ISO-8601 instant, e.g. "2026-07-25T01:00:00Z". */
   timestamp: string;
 }

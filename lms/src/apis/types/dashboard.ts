@@ -18,8 +18,8 @@ export type CourseRole = 'Student' | 'TA' | 'Instructor';
 
 export type CourseState = 'Active' | 'Archived';
 
-/** Session expansion (`Lecture` / `Lab` / `Tutorial`) plus course events. */
-export type ActivitySource = 'Session' | 'CourseEvent';
+/** Session occurrence (`Lecture` / `Lab` / `Tutorial`) plus course events. */
+export type ActivitySource = 'Session' | 'Event' | 'CourseEvent';
 
 export interface UpcomingActivity {
   courseId: number;
@@ -32,6 +32,11 @@ export interface UpcomingActivity {
   date: string;
   startTime: string;
   endTime: string;
+  /** Standard time fields */
+  startsAtLocal?: string;
+  endsAtLocal?: string;
+  startsAtUtc?: string;
+  endsAtUtc?: string;
   location: string | null;
   source: ActivitySource;
   sourceId: number;

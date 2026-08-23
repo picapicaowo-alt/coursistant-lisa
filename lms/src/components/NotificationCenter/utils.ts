@@ -14,6 +14,8 @@ const NOTIFICATION_TITLES: Record<NotificationType, string> = {
   QUIZ_SCHEDULE_CHANGED: 'Quiz schedule changed',
   QUIZ_TIME_LIMIT_CHANGED: 'Quiz time limit changed',
   COURSE_EVENT_CREATED: 'New course event',
+  COURSE_EVENT_UPDATED: 'Course event updated',
+  COURSE_EVENT_CANCELLED: 'Course event cancelled',
   GROUP_MEMBER_ADDED: 'Group member added',
   GROUP_MEMBER_REMOVED: 'Group member removed',
   GROUP_MEMBER_MOVED: 'Group membership updated',
@@ -30,12 +32,23 @@ export const getNotificationTitle = (type: NotificationType) => NOTIFICATION_TIT
  * absolute or protocol-relative value is never followed.
  */
 export const resolveNotificationPath = (
-  notification: Pick<NotificationItem, 'availability' | 'courseId' | 'deepLink'>
+  notification: Pick<NotificationItem, 'availability' | 'courseId' | 'deepLink'> & {
+    notificationType?: NotificationType;
+  }
 ): string | null => {
   if (notification.availability !== 'AVAILABLE') return null;
 
+  if (notification.notificationType === 'COURSE_EVENT_CANCELLED') {
+    return notification.courseId ? `/course/${notification.courseId}/events` : null;
+  }
+
   const deepLink = notification.deepLink?.trim();
   if (deepLink?.startsWith('/') && !deepLink.startsWith('//')) {
+    const pluralEventsList = deepLink.match(/^\/courses\/(\d+)\/events\/?$/);
+    if (pluralEventsList) {
+      return `/course/${pluralEventsList[1]}/events`;
+    }
+
     const pluralSubmission = deepLink.match(
       /^\/courses\/(\d+)\/assignments\/(\d+)\/submissions\/(\d+)\/?$/,
     );

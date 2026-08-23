@@ -10,6 +10,11 @@ import {
   formatQuizInstant,
   isMissingCurrentAttempt,
   isMissingQuizResult,
+  isQuizAttemptNotFound,
+  isQuizAttemptNotInProgress,
+  isQuizNotFound,
+  isQuizWindowClosed,
+  quizQuestionErrorMessage,
   quizWindowStatus,
   quizWindowStatusLabel,
   startAttemptErrorMessage,
@@ -48,12 +53,6 @@ const QuizPage = () => {
     enabled: valid,
     retry: 1,
   });
-  const questionsQuery = useQuery({
-    queryKey: ['quiz-questions', courseId, quizId],
-    queryFn: async () => unwrapData(await quizApiService.listQuestions(courseId, quizId), 'listQuestions'),
-    enabled: valid,
-    retry: 1,
-  });
   const attemptQuery = useQuery({
     queryKey: ['quiz-current-attempt', courseId, quizId],
     queryFn: async () => {
@@ -66,6 +65,18 @@ const QuizPage = () => {
     },
     enabled: valid && access.isResolved && !isStaff,
     retry: false,
+  });
+  const isStudentInProgress = Boolean(attemptQuery.data && attemptQuery.data.status === 'InProgress');
+  const questionsQuery = useQuery({
+    queryKey: ['quiz-questions', courseId, quizId],
+    queryFn: async () => unwrapData(await quizApiService.listQuestions(courseId, quizId), 'listQuestions'),
+    enabled: valid && (isStaff || (access.isResolved && isStudentInProgress)),
+    retry: (failureCount, error) => {
+      if (isQuizAttemptNotFound(error) || isQuizAttemptNotInProgress(error) || isQuizWindowClosed(error) || isQuizNotFound(error)) {
+        return false;
+      }
+      return failureCount < 1;
+    },
   });
   const resultQuery = useQuery({
     queryKey: ['quiz-my-result', courseId, quizId],
@@ -104,6 +115,16 @@ const QuizPage = () => {
     // Rehydrate only when the attempt identity changes, not on every refetch.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attemptQuery.data?.id]);
+
+  useEffect(() => {
+    if (questionsQuery.isError && questionsQuery.error) {
+      if (isQuizAttemptNotFound(questionsQuery.error)) {
+        queryClient.setQueryData(['quiz-current-attempt', courseId, quizId], null);
+      } else if (isQuizAttemptNotInProgress(questionsQuery.error)) {
+        void queryClient.invalidateQueries({queryKey: ['quiz-current-attempt', courseId, quizId]});
+      }
+    }
+  }, [questionsQuery.isError, questionsQuery.error, queryClient, courseId, quizId]);
 
   const startAttempt = useMutation({
     mutationFn: () => quizApiService.startAttempt(courseId, quizId),
@@ -165,8 +186,8 @@ const QuizPage = () => {
     }));
   };
 
-  if (!valid || quizQuery.isError || questionsQuery.isError) {
-    return <main className={styles.page}><div className={styles.error} role="alert">This quiz could not be loaded.</div></main>;
+  if (!valid || quizQuery.isError || (questionsQuery.isError && isStaff)) {
+    return <main className={styles.page}><div className={styles.error} role="alert">{questionsQuery.isError ? quizQuestionErrorMessage(questionsQuery.error) : 'This quiz could not be loaded.'}</div></main>;
   }
 
   const quiz = quizQuery.data;
@@ -306,6 +327,9 @@ const QuizPage = () => {
         <section className={styles.card}>
           <div className={styles.resultHeader}><CheckCircle2 size={28}/><div><h2>Quiz submitted</h2><p>Receipt {result.receiptId || 'pending'}</p></div></div>
           <p className={styles.score}>{result.totalScore === null ? 'Waiting for grading' : `${result.totalScore} / ${quiz?.totalPoints ?? 0}`}</p>
+          {result.releasedAt ? (
+            <p className={styles.muted}>Grade released on {formatQuizInstant(result.releasedAt, quiz?.timezone || 'UTC')}</p>
+          ) : null}
           {result.manualGradingPending ? <p className={styles.muted}>A short-answer response still needs instructor grading.</p> : null}
           {attemptsRemaining > 0 ? (
             <div className={styles.retakeRow}>

@@ -1,4 +1,4 @@
-﻿import type {CourseRole} from './dashboard';
+import type {CourseRole} from './dashboard';
 import type {UserLevel} from './login';
 
 /**
@@ -89,6 +89,9 @@ export interface CourseMaterial {
   /** Same-origin API path. For a LINK this may redirect off-site. */
   downloadUrl: string;
   previewUrl?: string | null;
+  publicationState?: 'DRAFT' | 'PUBLISHED' | string;
+  effectiveStudentVisible?: boolean;
+  checksumSha256?: string | null;
 }
 
 /**
@@ -148,6 +151,7 @@ export interface CourseEvent {
   location: string | null;
   description: string | null;
   timezone: string;
+  version?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -159,6 +163,7 @@ export interface CourseEventPayload {
   endTime?: string | null;
   location?: string | null;
   description?: string | null;
+  expectedVersion?: number;
 }
 
 export interface CourseGroupMembership {

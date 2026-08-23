@@ -1,4 +1,4 @@
-﻿export interface FileResponse {
+export interface FileResponse {
   id: number;
   createdAt: Date;
   updatedAt: Date;
@@ -159,6 +159,7 @@ export interface AssignmentDetail {
   maxFileCount?: number;
   state: AssignmentState;
   attachments: AssignmentAttachment[];
+  version?: number;
   createdAt: string;
   updatedAt: string;
 
@@ -264,6 +265,7 @@ export interface CreateAssignmentPayload {
 }
 
 export type PatchAssignmentPayload = Partial<CreateAssignmentPayload> & {
+  expectedVersion?: number;
   clearLateUntil?: boolean;
   confirmShortenDueDate?: boolean;
 };

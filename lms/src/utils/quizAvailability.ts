@@ -22,6 +22,47 @@ export const isMissingCurrentAttempt = (error: unknown): boolean => {
   return code === 'QUIZ_ATTEMPT_NOT_FOUND' || code === undefined;
 };
 
+export const isQuizAttemptNotFound = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
+  const apiError = error as ApiError;
+  return apiError.code === 404 && apiErrorCode(error) === 'QUIZ_ATTEMPT_NOT_FOUND';
+};
+
+export const isQuizAttemptNotInProgress = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
+  const apiError = error as ApiError;
+  return apiError.code === 409 && apiErrorCode(error) === 'QUIZ_ATTEMPT_NOT_IN_PROGRESS';
+};
+
+export const isQuizWindowClosed = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
+  const apiError = error as ApiError;
+  return apiError.code === 409 && apiErrorCode(error) === 'QUIZ_WINDOW_CLOSED';
+};
+
+export const isQuizNotFound = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
+  const apiError = error as ApiError;
+  return apiError.code === 404 && (apiErrorCode(error) === 'QUIZ_NOT_FOUND' || apiErrorCode(error) === 'NOT_FOUND');
+};
+
+export const quizQuestionErrorMessage = (error: unknown): string => {
+  const code = apiErrorCode(error);
+  if (code === 'QUIZ_ATTEMPT_NOT_FOUND') {
+    return 'The exam has not been started yet. Please return to the start screen to begin your attempt.';
+  }
+  if (code === 'QUIZ_ATTEMPT_NOT_IN_PROGRESS') {
+    return 'Your exam attempt is no longer in progress.';
+  }
+  if (code === 'QUIZ_WINDOW_CLOSED') {
+    return 'The quiz has not opened or has already closed.';
+  }
+  if (code === 'QUIZ_NOT_FOUND') {
+    return 'This quiz is not available or not visible.';
+  }
+  return 'This quiz could not be loaded.';
+};
+
 export const isMissingQuizResult = (error: unknown): boolean => {
   if (!error || typeof error !== 'object') return false;
   const apiError = error as ApiError;

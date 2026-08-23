@@ -47,20 +47,20 @@ export class AuthApiService {
     return this.apiClient.post<void>(
       '/v1/auth/email-verifications/register',
       undefined,
-      {params: {email}, skipAuth: true},
+      {params: {email}, ...idempotent(), skipAuth: true},
     );
   }
 
   /** Creates a student account and returns an authenticated session. */
   async register(request: RegisterRequest): Promise<ApiResponse<AuthResult>> {
-    return this.apiClient.post<AuthResult>('/v1/auth/register', request, {skipAuth: true});
+    return this.apiClient.post<AuthResult>('/v1/auth/register', request, {...idempotent(), skipAuth: true});
   }
 
   async sendPasswordResetVerification(email: string): Promise<ApiResponse<void>> {
     return this.apiClient.post<void>(
       '/v1/auth/email-verifications/reset',
       undefined,
-      {params: {email}, skipAuth: true},
+      {params: {email}, ...idempotent(), skipAuth: true},
     );
   }
 
@@ -79,7 +79,7 @@ export class AuthApiService {
   /** Allowed without a Bearer token — the refresh cookie identifies the session. */
   async logout(): Promise<ApiResponse<void>> {
     try {
-      return await this.apiClient.post<void>('/v1/auth/logout', undefined, {skipAuth: true});
+      return await this.apiClient.post<void>('/v1/auth/logout', undefined, {...idempotent(), skipAuth: true});
     } catch (error) {
       console.error('Failed to log out', error);
       throw error;

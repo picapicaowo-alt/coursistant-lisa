@@ -21,7 +21,7 @@ const DATE_KEY = "yyyy-MM-dd";
 const ActivityIcon: React.FC<{source: UpcomingActivity["source"]}> = ({source}) => (
   <svg className="mr-2 ml-1" width="24" height="24" viewBox="0 0 24 24" fill="none"
        xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    {source === "CourseEvent" ? (
+    {source === "CourseEvent" || source === "Event" ? (
       <>
         <path d="M7 2V5" stroke="var(--xl-brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         <path d="M17 2V5" stroke="var(--xl-brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>

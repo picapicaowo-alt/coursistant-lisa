@@ -119,5 +119,13 @@ describe('WeekContentCard', () => {
     expect(screen.queryByLabelText('Delete Slides')).toBeNull();
     expect(screen.queryByLabelText('Rename Reading')).toBeNull();
     expect(screen.queryByLabelText('Move Reading to another week')).toBeNull();
+    expect(screen.queryByLabelText('Publish Reading')).toBeNull();
+    expect(screen.queryByLabelText('Unpublish Reading')).toBeNull();
+  });
+
+  it('shows publish and unpublish controls for instructors', () => {
+    renderCard(true);
+
+    expect(screen.getByLabelText('Publish Reading')).toBeTruthy();
   });
 });

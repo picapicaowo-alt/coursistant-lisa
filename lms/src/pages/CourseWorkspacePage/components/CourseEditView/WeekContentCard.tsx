@@ -3,6 +3,8 @@ import {useMutation} from '@tanstack/react-query';
 import {
   ArrowDown,
   ArrowUp,
+  Eye,
+  EyeOff,
   FileText,
   FolderInput,
   Link as LinkIcon,
@@ -135,6 +137,24 @@ export const WeekContentCard: React.FC<WeekContentCardProps> = ({
     onError: () => setFailure("Couldn't reorder the materials."),
   });
 
+  const publishMaterial = useMutation({
+    mutationFn: (materialId: number) => {
+      if (!week) throw new Error('Select a week first');
+      return courseApiService.publishMaterial(courseId, week.id, materialId);
+    },
+    onSuccess: finishChange,
+    onError: () => setFailure("Couldn't publish the material."),
+  });
+
+  const unpublishMaterial = useMutation({
+    mutationFn: (materialId: number) => {
+      if (!week) throw new Error('Select a week first');
+      return courseApiService.unpublishMaterial(courseId, week.id, materialId);
+    },
+    onSuccess: finishChange,
+    onError: () => setFailure("Couldn't unpublish the material."),
+  });
+
   const commitRename = (material: CourseMaterial) => {
     const displayName = editingName.trim();
     if (!displayName || displayName === material.displayName) {
@@ -225,12 +245,44 @@ export const WeekContentCard: React.FC<WeekContentCardProps> = ({
                         }}
                       />
                     ) : (
-                      <span className={styles.materialName}>{material.displayName}</span>
+                      <span className={styles.materialName}>
+                        {material.displayName}
+                        {material.publicationState === 'DRAFT' ? (
+                          <span className={editStyles.draftBadge}>Draft</span>
+                        ) : material.publicationState === 'PUBLISHED' ? (
+                          week.publicationState === 'DRAFT' || material.effectiveStudentVisible === false ? (
+                            <span className={editStyles.hiddenBadge} title="Week is in draft; material is not visible to students">Draft Week</span>
+                          ) : (
+                            <span className={editStyles.publishedBadge}>Published</span>
+                          )
+                        ) : null}
+                      </span>
                     )}
 
                     <span className={editStyles.materialControls}>
                       {canEditStructure ? (
                         <>
+                          {material.publicationState === 'PUBLISHED' ? (
+                            <button
+                              type="button"
+                              disabled={unpublishMaterial.isPending}
+                              onClick={() => unpublishMaterial.mutate(material.id)}
+                              aria-label={`Unpublish ${material.displayName}`}
+                              title="Unpublish material"
+                            >
+                              <EyeOff size={15}/>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={publishMaterial.isPending}
+                              onClick={() => publishMaterial.mutate(material.id)}
+                              aria-label={`Publish ${material.displayName}`}
+                              title="Publish material"
+                            >
+                              <Eye size={15}/>
+                            </button>
+                          )}
                           <button
                             type="button"
                             disabled={index === 0 || reorderMaterials.isPending}

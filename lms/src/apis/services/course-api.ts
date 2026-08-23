@@ -1,4 +1,4 @@
-﻿import {
+import {
   ApiResponse,
   CourseBrowseParams,
   CourseAnnouncement,
@@ -202,16 +202,25 @@ export class CourseApiService {
     courseId: number,
     eventId: number,
     request: CourseEventPayload,
+    idempotencyKey: string = crypto.randomUUID(),
   ): Promise<ApiResponse<CourseEvent>> {
     return this.apiClient.put<CourseEvent>(
       `/v2/courses/${courseId}/events/${eventId}`,
       request,
-      idempotent(),
+      idempotent(idempotencyKey),
     );
   }
 
-  async deleteCourseEvent(courseId: number, eventId: number): Promise<ApiResponse<void>> {
-    return this.apiClient.delete<void>(`/v2/courses/${courseId}/events/${eventId}`);
+  async deleteCourseEvent(
+    courseId: number,
+    eventId: number,
+    expectedVersion?: number,
+    idempotencyKey: string = crypto.randomUUID(),
+  ): Promise<ApiResponse<void>> {
+    return this.apiClient.delete<void>(`/v2/courses/${courseId}/events/${eventId}`, {
+      params: expectedVersion !== undefined ? {expectedVersion} : undefined,
+      ...idempotent(idempotencyKey),
+    });
   }
 
   async getGroupSet(
@@ -522,10 +531,38 @@ export class CourseApiService {
   async deleteMaterial(
     courseId: number,
     weekId: number,
-    materialId: number
+    materialId: number,
+    idempotencyKey: string = crypto.randomUUID()
   ): Promise<ApiResponse<void>> {
     return this.apiClient.delete<void>(
-      `/v2/courses/${courseId}/weeks/${weekId}/materials/${materialId}`
+      `/v2/courses/${courseId}/weeks/${weekId}/materials/${materialId}`,
+      idempotent(idempotencyKey)
+    );
+  }
+
+  async publishMaterial(
+    courseId: number,
+    weekId: number,
+    materialId: number,
+    idempotencyKey: string = crypto.randomUUID()
+  ): Promise<ApiResponse<CourseMaterial>> {
+    return this.apiClient.post<CourseMaterial>(
+      `/v2/courses/${courseId}/weeks/${weekId}/materials/${materialId}/publish`,
+      undefined,
+      idempotent(idempotencyKey)
+    );
+  }
+
+  async unpublishMaterial(
+    courseId: number,
+    weekId: number,
+    materialId: number,
+    idempotencyKey: string = crypto.randomUUID()
+  ): Promise<ApiResponse<CourseMaterial>> {
+    return this.apiClient.post<CourseMaterial>(
+      `/v2/courses/${courseId}/weeks/${weekId}/materials/${materialId}/unpublish`,
+      undefined,
+      idempotent(idempotencyKey)
     );
   }
 
@@ -600,6 +637,10 @@ export class CourseApiService {
   // Weeks are the course outline. All writes are Course Manager only and fail
   // with COURSE_ARCHIVED once the course is archived. A new week starts as a
   // Draft and stays invisible to students until it is published.
+
+  async getCourseWeek(courseId: number, weekId: number): Promise<ApiResponse<CourseWeek>> {
+    return this.apiClient.get<CourseWeek>(`/v2/courses/${courseId}/weeks/${weekId}`);
+  }
 
   async createWeek(
     courseId: number,

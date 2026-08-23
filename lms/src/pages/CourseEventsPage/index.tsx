@@ -7,6 +7,7 @@ import {unwrapData} from '@/apis';
 import {courseApiService} from '@/apis/services/course-api';
 import {EnglishDateInput, EnglishTimeInput} from '@/components/EnglishDateInput';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
+import {getApiErrorCode, isConflict} from '@/utils/apiError';
 import styles from './index.module.scss';
 
 const emptyEvent = (): CourseEventPayload => ({
@@ -65,6 +66,7 @@ const CourseEventsPage = () => {
         endTime: draft.endTime || null,
         location: draft.location?.trim() || null,
         description: draft.description?.trim() || null,
+        expectedVersion: editorMode === 'edit' && selectedEvent ? selectedEvent.version : undefined,
       };
       return editorMode === 'edit' && eventId !== null
         ? courseApiService.updateCourseEvent(courseId, eventId, request)
@@ -80,16 +82,32 @@ const CourseEventsPage = () => {
       ]);
       if (editorMode === 'create') navigate(`/course/${courseId}/events/${saved.id}`);
     },
-    onError: () => setMessage('The event could not be saved.'),
+    onError: async error => {
+      if (isConflict(error) || getApiErrorCode(error) === 'COURSE_EVENT_VERSION_CONFLICT') {
+        if (eventId !== null) {
+          await selectedEventQuery.refetch();
+        }
+        setMessage('This event was modified by another user. The latest version has been loaded. Please review your changes and try saving again.');
+      } else {
+        setMessage('The event could not be saved.');
+      }
+    },
   });
 
   const deleteEvent = useMutation({
-    mutationFn: () => courseApiService.deleteCourseEvent(courseId, eventId!),
+    mutationFn: () => courseApiService.deleteCourseEvent(courseId, eventId!, selectedEvent?.version),
     onSuccess: async () => {
       await queryClient.invalidateQueries({queryKey: ['course-events', courseId]});
       navigate(`/course/${courseId}/events`, {replace: true});
     },
-    onError: () => setMessage('The event could not be deleted.'),
+    onError: async error => {
+      if (isConflict(error) || getApiErrorCode(error) === 'COURSE_EVENT_VERSION_CONFLICT') {
+        await selectedEventQuery.refetch();
+        setMessage('This event was modified by another user. Please review the updated event before deleting.');
+      } else {
+        setMessage('The event could not be deleted.');
+      }
+    },
   });
 
   const submit = (submitEvent: FormEvent) => {

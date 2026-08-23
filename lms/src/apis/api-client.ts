@@ -1,4 +1,4 @@
-﻿import axios, {AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig} from 'axios';
+import axios, {AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig} from 'axios';
 import {ApiError, ApiResponse} from './types';
 import {isRecord} from '@/utils/apiError';
 
@@ -147,7 +147,7 @@ export class ApiClient {
     return response;
   }
   
-  private handleResponseError(error: AxiosError): Promise<never> {
+  private async handleResponseError(error: AxiosError): Promise<never> {
     const apiError: ApiError = {
       code: error.response?.status || 0,
       message: error.message,
@@ -156,6 +156,20 @@ export class ApiClient {
     
     if (error.response?.status === 401) {
       return this.handleAuthError(error);
+    }
+
+    const original = error.config as (InternalAxiosRequestConfig & RequestConfig) | undefined;
+    const errorCode = isRecord(error.response?.data) && typeof error.response.data.code === 'string'
+      ? error.response.data.code
+      : undefined;
+
+    if (errorCode === 'IDEMPOTENCY_REQUEST_IN_PROGRESS' && original) {
+      const retryCount = original.retryCount ?? 0;
+      if (retryCount < 3) {
+        original.retryCount = retryCount + 1;
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return await this.client.request(original) as never;
+      }
     }
     
     // Keep diagnostics useful without logging response bodies, which may

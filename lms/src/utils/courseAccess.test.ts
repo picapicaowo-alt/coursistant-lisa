@@ -70,10 +70,10 @@ describe('deriveCourseAccess', () => {
     });
   });
 
-  it('keeps TA material actions disabled until the PRD content toggle is granted', () => {
+  it('grants TA inherent material upload permission without requiring canManageContent', () => {
     const access = deriveCourseAccess(membership({courseRole: 'TA', role: 'TA'}));
 
-    expect(access.canUploadMaterials).toBe(false);
+    expect(access.canUploadMaterials).toBe(true);
   });
 
   it('keeps a Student on student-only assignment behavior', () => {

@@ -58,9 +58,8 @@ export const deriveCourseAccess = (membership?: MyCourse): CourseAccess => {
     // TA permissions are course-scoped flags and never carry to another course.
     canGrade: isInstructor || (isTa && membership.canGrade === true),
     canReleaseGrades: isInstructor,
-    // PRD TA-04: content actions are off by default and must be explicitly granted.
-    // Fail closed while older backend payloads omit canManageContent.
-    canUploadMaterials: isInstructor || (isTa && membership.canManageContent === true),
+    // Material upload is an inherent permission of Instructors and active TAs.
+    canUploadMaterials: isInstructor || isTa,
     canPostAnnouncements: isInstructor || (isTa && membership.canPostAnnouncements === true),
     canManageGroups: isInstructor || (isTa && membership.canManageGroups === true),
     canManageCourseEvents: isInstructor || (isTa && membership.canManageCourseEvents === true),

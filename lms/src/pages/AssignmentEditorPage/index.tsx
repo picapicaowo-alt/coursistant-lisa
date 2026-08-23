@@ -9,6 +9,7 @@ import {courseApiService} from '@/apis/services/course-api';
 import {EnglishDateTimeInput} from '@/components/EnglishDateInput';
 import {RichTextEditor} from '@/components/RichTextEditor';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
+import {getApiErrorCode, isConflict} from '@/utils/apiError';
 import {isPreviewableFile, openPreviewWindow, saveBlob, showBlobInPreviewWindow} from '@/utils/downloadBlob';
 import {FileTypeMultiSelect} from './FileTypeMultiSelect';
 import styles from './index.module.scss';
@@ -230,6 +231,7 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
       const response = saved
         ? await assignmentApiService.patchAssignment(courseId, saved.id, {
           ...payload,
+          expectedVersion: saved.version,
           ...(checkpointAssignment?.lateUntilLocal && !lateUntil ? {clearLateUntil: true} : {}),
           ...(confirmShortenDueDate ? {confirmShortenDueDate: true} : {}),
         })
@@ -264,8 +266,17 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
         queryClient.invalidateQueries({queryKey: ['assignment', courseId, saved.id]}),
       ]);
       navigate(`/course/${courseId}/assignments/${saved.id}`);
-    } catch {
-      if (stage === 'attachments' && saved) {
+    } catch (err) {
+      const isVersionConflict = isConflict(err) || getApiErrorCode(err) === 'ASSIGNMENT_VERSION_CONFLICT';
+      if (isVersionConflict && saved) {
+        try {
+          const fresh = unwrapData(await assignmentApiService.getAssignment(courseId, saved.id), 'getAssignment');
+          setCheckpointAssignment(fresh);
+        } catch {
+          // ignore
+        }
+        setError('This assignment was modified by another user. The latest version has been loaded. Please review your changes and try saving again.');
+      } else if (stage === 'attachments' && saved) {
         setError(`Assignment #${saved.id} is saved, but its attachments could not be uploaded. Retry will continue this same assignment.`);
       } else if (stage === 'publish' && saved) {
         setError(`Assignment #${saved.id} and its attachments are saved, but publishing failed. Retry will publish this same assignment.`);

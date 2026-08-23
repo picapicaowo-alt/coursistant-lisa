@@ -28,3 +28,5 @@ CLAUDE.md
 CLAUDE.local.md
 .claude/
 docs/
+*.png
+lms/test-results/

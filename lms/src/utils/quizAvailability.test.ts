@@ -2,6 +2,11 @@ import {describe, expect, it} from 'vitest';
 import type {QuizResponse} from '@/apis';
 import {
   isMissingCurrentAttempt,
+  isQuizAttemptNotFound,
+  isQuizAttemptNotInProgress,
+  isQuizNotFound,
+  isQuizWindowClosed,
+  quizQuestionErrorMessage,
   quizWindowStatus,
   quizWindowStatusLabel,
   startAttemptErrorMessage,
@@ -90,5 +95,59 @@ describe('startAttemptErrorMessage', () => {
         opensAtLocal: '2099-09-05T00:00:00',
       }),
     )).toMatch(/not open yet/i);
+  });
+});
+
+describe('Quiz Question Attempt Gate error helpers', () => {
+  it('detects QUIZ_ATTEMPT_NOT_FOUND', () => {
+    expect(isQuizAttemptNotFound({
+      code: 404,
+      message: 'Not Found',
+      details: {code: 'QUIZ_ATTEMPT_NOT_FOUND'},
+    })).toBe(true);
+    expect(quizQuestionErrorMessage({
+      code: 404,
+      message: 'Not Found',
+      details: {code: 'QUIZ_ATTEMPT_NOT_FOUND'},
+    })).toMatch(/exam has not been started/i);
+  });
+
+  it('detects QUIZ_ATTEMPT_NOT_IN_PROGRESS', () => {
+    expect(isQuizAttemptNotInProgress({
+      code: 409,
+      message: 'Conflict',
+      details: {code: 'QUIZ_ATTEMPT_NOT_IN_PROGRESS'},
+    })).toBe(true);
+    expect(quizQuestionErrorMessage({
+      code: 409,
+      message: 'Conflict',
+      details: {code: 'QUIZ_ATTEMPT_NOT_IN_PROGRESS'},
+    })).toMatch(/no longer in progress/i);
+  });
+
+  it('detects QUIZ_WINDOW_CLOSED', () => {
+    expect(isQuizWindowClosed({
+      code: 409,
+      message: 'Conflict',
+      details: {code: 'QUIZ_WINDOW_CLOSED'},
+    })).toBe(true);
+    expect(quizQuestionErrorMessage({
+      code: 409,
+      message: 'Conflict',
+      details: {code: 'QUIZ_WINDOW_CLOSED'},
+    })).toMatch(/not opened or has already closed/i);
+  });
+
+  it('detects QUIZ_NOT_FOUND', () => {
+    expect(isQuizNotFound({
+      code: 404,
+      message: 'Not Found',
+      details: {code: 'QUIZ_NOT_FOUND'},
+    })).toBe(true);
+    expect(quizQuestionErrorMessage({
+      code: 404,
+      message: 'Not Found',
+      details: {code: 'QUIZ_NOT_FOUND'},
+    })).toMatch(/not available or not visible/i);
   });
 });

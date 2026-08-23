@@ -17,6 +17,7 @@ import {
   toChatHistory,
   type WorkflowChatMessage,
 } from './workflowConversation';
+import {getApiErrorCode} from '@/utils/apiError';
 import styles from './index.module.scss';
 
 const READ_ONLY_QUICK_PROMPTS = [
@@ -34,6 +35,10 @@ const getAgentRole = (level: string | null): AiAgentRole =>
   level === 'INSTRUCTOR' ? 'INSTRUCTOR' : 'STUDENT';
 
 const getErrorMessage = (error: unknown): string => {
+  const code = getApiErrorCode(error);
+  if (code === 'AI_EXAM_LOCKDOWN' || code === 'QUIZ_EXAM_LOCKDOWN') {
+    return 'AI assistance is not available while you have an active quiz attempt in progress.';
+  }
   if (error instanceof Error) return error.message;
   return 'Workflow is temporarily unavailable. Please try again.';
 };

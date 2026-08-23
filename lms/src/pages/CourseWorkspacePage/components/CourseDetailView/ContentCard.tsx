@@ -3,6 +3,7 @@ import {Download, ExternalLink, Eye} from 'lucide-react';
 import styles from "./index.module.scss";
 import {CourseMaterial, CourseWeek} from "@/apis";
 import {courseApiService} from '@/apis/services/course-api';
+import {isNotFound} from '@/utils/apiError';
 import {openPreviewWindow, saveBlob, showBlobInPreviewWindow} from '@/utils/downloadBlob';
 
 const formatSize = (bytes: number | null): string => {
@@ -35,8 +36,12 @@ const ContentCardBody: React.FC<{week: CourseWeek | null}> = ({week}) => {
     try {
       const blob = await courseApiService.downloadMaterial(week.courseId, week.id, material.id);
       saveBlob(blob, material.originalFilename || material.displayName);
-    } catch {
-      setError(`Could not download ${material.displayName}.`);
+    } catch (err) {
+      if (isNotFound(err)) {
+        setError('This material is no longer available.');
+      } else {
+        setError(`Could not download ${material.displayName}.`);
+      }
     } finally {
       setActiveAction(null);
     }
@@ -55,9 +60,13 @@ const ContentCardBody: React.FC<{week: CourseWeek | null}> = ({week}) => {
     try {
       const blob = await courseApiService.previewMaterial(week.courseId, week.id, material.id);
       showBlobInPreviewWindow(previewWindow, blob);
-    } catch {
+    } catch (err) {
       previewWindow.close();
-      setError(`Could not preview ${material.displayName}.`);
+      if (isNotFound(err)) {
+        setError('This material is no longer available.');
+      } else {
+        setError(`Could not preview ${material.displayName}.`);
+      }
     } finally {
       setActiveAction(null);
     }

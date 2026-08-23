@@ -122,6 +122,53 @@
     color: t.$danger;
 }
 
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.45rem;
+    border-radius: t.$radius-control-sm;
+    font-size: 0.75rem;
+    font-weight: t.$fw-semibold;
+    margin-left: 0.5rem;
+}
+
+.draftBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.45rem;
+    border-radius: t.$radius-control-sm;
+    font-size: 0.75rem;
+    font-weight: t.$fw-semibold;
+    margin-left: 0.5rem;
+    background-color: t.$neutral-fill;
+    color: t.$text-muted;
+}
+
+.publishedBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.45rem;
+    border-radius: t.$radius-control-sm;
+    font-size: 0.75rem;
+    font-weight: t.$fw-semibold;
+    margin-left: 0.5rem;
+    background-color: t.$brand-subtle;
+    color: t.$brand;
+}
+
+.hiddenBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.45rem;
+    border-radius: t.$radius-control-sm;
+    font-size: 0.75rem;
+    font-weight: t.$fw-semibold;
+    margin-left: 0.5rem;
+    background-color: t.$subcard-bg;
+    color: t.$text-muted;
+    border: 1px dashed t.$border;
+}
+
 .visuallyHidden {
     position: absolute;
     width: 1px;

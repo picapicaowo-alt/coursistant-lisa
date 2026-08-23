@@ -31,5 +31,30 @@ export const getApiErrorMessage = (error: unknown, fallback: string): string => 
 export const isHttpStatus = (error: unknown, status: number): boolean =>
   isApiError(error) && error.code === status;
 
+export const isNotFound = (error: unknown): boolean =>
+  isHttpStatus(error, 404);
+
+export const isMethodNotAllowed = (error: unknown): boolean =>
+  isHttpStatus(error, 405);
+
+export const isConflict = (error: unknown): boolean =>
+  isHttpStatus(error, 409);
+
 export const isTransportOrServerFailure = (error: unknown): boolean =>
   isApiError(error) && (error.code === 0 || error.code >= 500);
+
+export const getHttpStatusDescription = (error: unknown): string | undefined => {
+  if (!isApiError(error)) return undefined;
+  switch (error.code) {
+    case 404:
+      return 'The requested resource was not found or is not available.';
+    case 405:
+      return 'The requested action is not supported for this resource.';
+    case 409:
+      return 'A conflict occurred. The resource may have been updated by another user.';
+    case 500:
+      return 'An unexpected server error occurred. Please try again later.';
+    default:
+      return undefined;
+  }
+};

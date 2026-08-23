@@ -86,7 +86,28 @@ describe('CourseApiService material management', () => {
       {materialIds: [82, 81]},
       expect.objectContaining({headers: expect.objectContaining({'Idempotency-Key': expect.any(String)})})
     );
-    expect(client.delete).toHaveBeenCalledWith('/v2/courses/31/weeks/5/materials/81');
+    expect(client.delete).toHaveBeenCalledWith(
+      '/v2/courses/31/weeks/5/materials/81',
+      expect.objectContaining({headers: expect.objectContaining({'Idempotency-Key': expect.any(String)})})
+    );
+  });
+
+  it('publishes and unpublishes materials through documented endpoints', async () => {
+    client.post.mockResolvedValue({status: 200, data: {id: 81, publicationState: 'PUBLISHED'}});
+    await service.publishMaterial(31, 5, 81);
+    await service.unpublishMaterial(31, 5, 81);
+    expect(client.post).toHaveBeenNthCalledWith(
+      1,
+      '/v2/courses/31/weeks/5/materials/81/publish',
+      undefined,
+      expect.objectContaining({headers: expect.objectContaining({'Idempotency-Key': expect.any(String)})})
+    );
+    expect(client.post).toHaveBeenNthCalledWith(
+      2,
+      '/v2/courses/31/weeks/5/materials/81/unpublish',
+      undefined,
+      expect.objectContaining({headers: expect.objectContaining({'Idempotency-Key': expect.any(String)})})
+    );
   });
 });
 
@@ -135,7 +156,10 @@ describe('CourseApiService event and group management', () => {
     await service.deleteCourseEvent(31, 10);
     expect(client.post).toHaveBeenCalledWith('/v2/courses/31/events', payload, {headers: {'Idempotency-Key': 'event-key'}});
     expect(client.put).toHaveBeenCalledWith('/v2/courses/31/events/10', payload, expect.objectContaining({headers: expect.any(Object)}));
-    expect(client.delete).toHaveBeenCalledWith('/v2/courses/31/events/10');
+    expect(client.delete).toHaveBeenCalledWith(
+      '/v2/courses/31/events/10',
+      expect.objectContaining({headers: expect.objectContaining({'Idempotency-Key': expect.any(String)})})
+    );
   });
 
   it('uses canonical group membership routes for student and staff actions', async () => {

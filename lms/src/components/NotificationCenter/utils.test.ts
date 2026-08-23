@@ -75,4 +75,21 @@ describe('resolveNotificationPath', () => {
     expect(resolveNotificationPath(unread)).toBe('/course/7/assignments/12');
     expect(resolveNotificationPath(read)).toBe('/course/7/assignments/12');
   });
+
+  it('routes COURSE_EVENT_CANCELLED to the course events list', () => {
+    expect(resolveNotificationPath({
+      availability: 'AVAILABLE',
+      courseId: 7,
+      deepLink: '/courses/7/events/99',
+      notificationType: 'COURSE_EVENT_CANCELLED',
+    })).toBe('/course/7/events');
+  });
+
+  it('routes plural /courses/7/events deep links to /course/7/events', () => {
+    expect(resolveNotificationPath({
+      availability: 'AVAILABLE',
+      courseId: 7,
+      deepLink: '/courses/7/events',
+    })).toBe('/course/7/events');
+  });
 });

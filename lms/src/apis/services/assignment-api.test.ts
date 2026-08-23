@@ -39,7 +39,11 @@ describe('AssignmentApiService 8081 routes', () => {
 
     await service.patchAssignment(4, 9, payload);
 
-    expect(client.patch).toHaveBeenCalledWith('/v2/courses/4/assignments/9', payload);
+    expect(client.patch).toHaveBeenCalledWith(
+      '/v2/courses/4/assignments/9',
+      payload,
+      expect.objectContaining({headers: expect.objectContaining({'Idempotency-Key': expect.any(String)})}),
+    );
   });
 
   it('uploads submission files to staging before hand-in', async () => {
@@ -89,7 +93,8 @@ describe('AssignmentApiService 8081 routes', () => {
     );
     expect(client.delete).toHaveBeenNthCalledWith(
       2,
-      '/v2/courses/4/assignments/9/attachments/33'
+      '/v2/courses/4/assignments/9/attachments/33',
+      expect.objectContaining({headers: expect.objectContaining({'Idempotency-Key': expect.any(String)})}),
     );
   });
 
@@ -110,7 +115,11 @@ describe('AssignmentApiService 8081 routes', () => {
 
     await service.publishAssignment(4, 9);
 
-    expect(client.post).toHaveBeenCalledWith('/v2/courses/4/assignments/9/publish');
+    expect(client.post).toHaveBeenCalledWith(
+      '/v2/courses/4/assignments/9/publish',
+      undefined,
+      expect.objectContaining({headers: expect.objectContaining({'Idempotency-Key': expect.any(String)})}),
+    );
   });
 
   it('loads the instructor grading roster in the assignment course scope', async () => {
@@ -165,9 +174,17 @@ describe('AssignmentApiService 8081 routes', () => {
     await service.unpublishAssignment(4, 9);
     await service.previewDueDateChange(4, 9, preview);
     await service.deleteAssignment(4, 9);
-    expect(client.post).toHaveBeenNthCalledWith(1, '/v2/courses/4/assignments/9/unpublish');
+    expect(client.post).toHaveBeenNthCalledWith(
+      1,
+      '/v2/courses/4/assignments/9/unpublish',
+      undefined,
+      expect.objectContaining({headers: expect.objectContaining({'Idempotency-Key': expect.any(String)})}),
+    );
     expect(client.post).toHaveBeenNthCalledWith(2, '/v2/courses/4/assignments/9/due-date-change-preview', preview);
-    expect(client.delete).toHaveBeenCalledWith('/v2/courses/4/assignments/9');
+    expect(client.delete).toHaveBeenCalledWith(
+      '/v2/courses/4/assignments/9',
+      expect.objectContaining({headers: expect.objectContaining({'Idempotency-Key': expect.any(String)})}),
+    );
   });
 
   it('uploads, previews, downloads, and restores versioned rubric files', async () => {
