@@ -107,6 +107,7 @@ export interface CourseWeek {
   /** Zero-based, ascending. */
   orderPosition: number;
   state: 'Draft' | 'Published';
+  publicationState?: 'DRAFT' | 'PUBLISHED' | string;
   materials: CourseMaterial[];
   createdAt: string;
   updatedAt: string;

@@ -250,7 +250,7 @@ export const WeekContentCard: React.FC<WeekContentCardProps> = ({
                         {material.publicationState === 'DRAFT' ? (
                           <span className={editStyles.draftBadge}>Draft</span>
                         ) : material.publicationState === 'PUBLISHED' ? (
-                          week.publicationState === 'DRAFT' || material.effectiveStudentVisible === false ? (
+                          week.state === 'Draft' || week.publicationState === 'DRAFT' || material.effectiveStudentVisible === false ? (
                             <span className={editStyles.hiddenBadge} title="Week is in draft; material is not visible to students">Draft Week</span>
                           ) : (
                             <span className={editStyles.publishedBadge}>Published</span>

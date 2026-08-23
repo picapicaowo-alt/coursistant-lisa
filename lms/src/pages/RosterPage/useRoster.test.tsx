@@ -2,6 +2,7 @@ import {renderHook, waitFor} from '@testing-library/react';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
 import {describe, expect, it, vi} from 'vitest';
+import type {ApiResponse, CourseMemberPage} from '@/apis';
 import {courseApiService} from '@/apis/services/course-api';
 import {useRoster} from './useRoster';
 import React from 'react';
@@ -20,7 +21,7 @@ const createWrapper = () => {
       },
     },
   });
-  return ({children}: {children: React.ReactNode}) => (
+  const Wrapper = ({children}: {children: React.ReactNode}) => (
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={['/course/10/roster']}>
         <Routes>
@@ -29,19 +30,49 @@ const createWrapper = () => {
       </MemoryRouter>
     </QueryClientProvider>
   );
+  Wrapper.displayName = 'RosterTestWrapper';
+  return Wrapper;
 };
 
 describe('useRoster sorting', () => {
   it('sorts members client-side by role priority (Instructor -> TA -> Student)', async () => {
-    const mockMembers = {
+    const mockMembers: ApiResponse<CourseMemberPage> = {
       status: 200,
       code: 'SUCCESS',
       message: 'Success',
+      timestamp: '2026-08-01T00:00:00Z',
       data: {
         items: [
-          {id: 1, userId: 101, courseRole: 'Student', userName: 'Student A'},
-          {id: 2, userId: 102, courseRole: 'TA', userName: 'TA A'},
-          {id: 3, userId: 103, courseRole: 'Instructor', userName: 'Instructor A'},
+          {
+            id: 1,
+            courseId: 10,
+            userId: 101,
+            courseRole: 'Student',
+            userName: 'Student A',
+            userEmail: 'student@example.com',
+            active: true,
+            joinedAt: '2026-08-01T00:00:00Z',
+          },
+          {
+            id: 2,
+            courseId: 10,
+            userId: 102,
+            courseRole: 'TA',
+            userName: 'TA A',
+            userEmail: 'ta@example.com',
+            active: true,
+            joinedAt: '2026-08-01T00:00:00Z',
+          },
+          {
+            id: 3,
+            courseId: 10,
+            userId: 103,
+            courseRole: 'Instructor',
+            userName: 'Instructor A',
+            userEmail: 'instructor@example.com',
+            active: true,
+            joinedAt: '2026-08-01T00:00:00Z',
+          },
         ],
         total: 3,
         page: 0,
@@ -49,7 +80,7 @@ describe('useRoster sorting', () => {
       },
     };
 
-    vi.mocked(courseApiService.listCourseMembers).mockResolvedValue(mockMembers as any);
+    vi.mocked(courseApiService.listCourseMembers).mockResolvedValue(mockMembers);
 
     const {result} = renderHook(() => useRoster(), {
       wrapper: createWrapper(),
