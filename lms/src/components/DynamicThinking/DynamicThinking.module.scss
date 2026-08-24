@@ -1,0 +1,114 @@
+.container {
+    width: min(100%, 34rem);
+    padding: 0.85rem 1rem;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-control;
+    background: t.$subcard-bg;
+    color: t.$text-muted;
+    font-family: t.$font-family;
+}
+
+.header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    font-size: t.$fs-caption;
+    font-weight: t.$fw-semibold;
+}
+
+.elapsed {
+    color: t.$text-placeholder;
+    font-variant-numeric: tabular-nums;
+    font-weight: t.$fw-regular;
+}
+
+.steps {
+    display: grid;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    gap: 0.65rem;
+    list-style: none;
+
+    li {
+        position: relative;
+        display: grid;
+        min-width: 0;
+        grid-template-columns: 1rem minmax(0, 1fr);
+        gap: 0.55rem;
+        align-items: start;
+        font-size: t.$fs-caption;
+        line-height: 1.45;
+    }
+
+    li:not(:last-child)::after {
+        position: absolute;
+        width: 1px;
+        background: t.$border;
+        content: '';
+        inset: 1rem auto -0.65rem 0.47rem;
+    }
+}
+
+.marker {
+    display: block;
+    width: 0.9rem;
+    height: 0.9rem;
+    margin-top: 0.14rem;
+    border: 2px solid t.$text-placeholder;
+    border-radius: 50%;
+}
+
+.completedStep {
+    color: t.$text-muted;
+
+    .marker {
+        position: relative;
+        border-color: t.$brand;
+        background: t.$brand;
+    }
+
+    .marker::after {
+        position: absolute;
+        width: 0.22rem;
+        height: 0.42rem;
+        border: solid t.$card-bg;
+        border-width: 0 1.5px 1.5px 0;
+        content: '';
+        inset: 0.08rem 0 0 0.23rem;
+        transform: rotate(45deg);
+    }
+}
+
+.activeStep {
+    color: t.$text;
+
+    .marker {
+        border-color: t.$brand-subtle;
+        border-top-color: t.$brand;
+        animation: thinking-spin 900ms linear infinite;
+    }
+}
+
+.srOnly {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    margin: -1px;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}
+
+@keyframes thinking-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .activeStep .marker {
+        animation: none;
+    }
+}

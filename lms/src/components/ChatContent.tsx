@@ -9,6 +9,13 @@ import transformDate from '../utils/transformDate';
 import {useNavigate} from 'react-router-dom';
 import {useAiExamLockdown} from '@/hooks/useAiExamLockdown';
 import {loadActiveChatCourses} from '@/utils/chatCourses';
+import DynamicThinking from '@/components/DynamicThinking/DynamicThinking';
+
+const STUDY_SUPPORT_THINKING_STEPS = [
+  {id: 'understand', text: 'Understanding your question.'},
+  {id: 'context', text: 'Reviewing the relevant course context.'},
+  {id: 'response', text: 'Preparing a clear response.'},
+];
 
 const getSavedDialogueId = () => {
   const raw = localStorage.getItem('dialogueId');
@@ -778,18 +785,9 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
                   </div>
                 ))}
                 
-                {isLoading && (
-                  <div
-                    className="max-w-[70%] px-4 py-2 rounded-xl text-base whitespace-pre-wrap break-words self-start bg-[rgb(203,209,241)]">
-                    <div className="whitespace-pre-line text-base text-gray-900">
-                      <img
-                        src="/icons/chat/msg_loading.gif"
-                        alt="loading"
-                        style={{width: '4rem', margin: '0.4rem'}}
-                      />
-                    </div>
-                  </div>
-                )}
+                {isLoading ? (
+                  <DynamicThinking fallbackSteps={STUDY_SUPPORT_THINKING_STEPS}/>
+                ) : null}
                 <div ref={bottomRef}/>
               </>
             )}

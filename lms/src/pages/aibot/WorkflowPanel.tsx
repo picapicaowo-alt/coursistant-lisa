@@ -18,6 +18,7 @@ import {
   type WorkflowChatMessage,
 } from './workflowConversation';
 import {getApiErrorCode} from '@/utils/apiError';
+import DynamicThinking from '@/components/DynamicThinking/DynamicThinking';
 import styles from './index.module.scss';
 
 const READ_ONLY_QUICK_PROMPTS = [
@@ -28,6 +29,12 @@ const READ_ONLY_QUICK_PROMPTS = [
 const INSTRUCTOR_QUICK_PROMPTS = [
   ...READ_ONLY_QUICK_PROMPTS,
   'Help me change an assignment deadline.',
+];
+
+const WORKFLOW_THINKING_STEPS = [
+  {id: 'understand', text: 'Interpreting your request.'},
+  {id: 'context', text: 'Checking the relevant LMS context.'},
+  {id: 'response', text: 'Preparing the next step.'},
 ];
 
 const getAgentRole = (level: string | null): AiAgentRole =>
@@ -279,7 +286,12 @@ const WorkflowPanel = () => {
           </div>
         ))}
 
-        {isSending ? <div className={styles.agentStatus} role="status">AI Agent is working…</div> : null}
+        {isSending ? (
+          <DynamicThinking
+            label="AI Agent is thinking"
+            fallbackSteps={WORKFLOW_THINKING_STEPS}
+          />
+        ) : null}
         <div ref={conversationEndRef}/>
       </div>
 
