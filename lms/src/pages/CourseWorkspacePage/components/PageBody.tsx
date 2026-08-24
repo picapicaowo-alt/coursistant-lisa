@@ -12,6 +12,7 @@ interface PageBodyProps {
   canManageEvents?: boolean;
   canManageGroups?: boolean;
   canPostAnnouncements?: boolean;
+  canViewOwnGrades?: boolean;
 }
 
 export const PageBody: React.FC<PageBodyProps> = ({
@@ -21,6 +22,7 @@ export const PageBody: React.FC<PageBodyProps> = ({
   canManageEvents = false,
   canManageGroups = false,
   canPostAnnouncements = false,
+  canViewOwnGrades = false,
 }) => {
   const {courseId} = useParams();
   const {workspaceMode} = useCourseWorkspaceStore();
@@ -56,6 +58,7 @@ export const PageBody: React.FC<PageBodyProps> = ({
         canManageEvents={canManageEvents}
         canManageGroups={canManageGroups}
         canPostAnnouncements={canPostAnnouncements}
+        canViewOwnGrades={canViewOwnGrades}
       />
     </div>
   );

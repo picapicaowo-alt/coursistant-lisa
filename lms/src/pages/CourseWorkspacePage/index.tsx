@@ -76,6 +76,7 @@ const Container: React.FC = () => {
         canManageEvents={access.canManageCourseEvents}
         canManageGroups={access.canManageGroups}
         canPostAnnouncements={access.canPostAnnouncements}
+        canViewOwnGrades={access.isStudent}
       />
     </div>
   );

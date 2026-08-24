@@ -1,0 +1,128 @@
+.page {
+    min-height: 100%;
+    padding: 2rem clamp(1rem, 4vw, 3.75rem) 4rem;
+    background: t.$page-bg;
+    color: t.$text;
+}
+
+.header,
+.notice,
+.sections,
+.status,
+.error {
+    max-width: 1100px;
+    margin-inline: auto;
+}
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+
+    h1 {
+        margin: .2rem 0 0;
+        font-size: clamp(1.9rem, 4vw, t.$fs-h1);
+        font-weight: t.$fw-extrabold;
+    }
+}
+
+.backLink {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 t.$control-size;
+    width: t.$control-size;
+    height: t.$control-size;
+    border-radius: t.$radius-control;
+    background: t.$neutral-fill;
+    color: t.$text;
+}
+
+.eyebrow {
+    color: t.$brand;
+    font-size: t.$fs-caption;
+    font-weight: t.$fw-semibold;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+
+.courseName { margin-top: .25rem; color: t.$text-muted; }
+
+.notice {
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    margin-bottom: 1.25rem;
+    padding: .9rem 1rem;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-control;
+    background: t.$brand-subtle;
+    color: t.$text-muted;
+
+    svg { flex: 0 0 1.2rem; color: t.$brand; }
+}
+
+.sections { display: grid; gap: 1.25rem; }
+
+.card {
+    padding: 1.5rem;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-card-lg;
+    background: t.$card-bg;
+    box-shadow: t.$shadow-card;
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    margin-bottom: .75rem;
+
+    > svg { color: t.$brand; }
+    h2 { font-size: t.$fs-card-title; font-weight: t.$fw-bold; }
+    p { margin-top: .15rem; color: t.$text-muted; font-size: t.$fs-caption; }
+}
+
+.gradeList { margin: 0; padding: 0; list-style: none; }
+.gradeList li { border-top: 1px solid t.$border; }
+.gradeList a {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+    color: inherit;
+    text-decoration: none;
+}
+.gradeList a:hover strong,
+.gradeList a:focus-visible strong { color: t.$brand; }
+
+.itemText {
+    display: grid;
+    flex: 1;
+    gap: .25rem;
+    min-width: 0;
+
+    strong { overflow-wrap: anywhere; }
+    small { color: t.$text-muted; }
+}
+
+.releasedScore,
+.pendingScore {
+    flex: 0 0 auto;
+    max-width: 45%;
+    text-align: right;
+    font-weight: t.$fw-semibold;
+    font-variant-numeric: tabular-nums;
+}
+.releasedScore { color: t.$brand; }
+.pendingScore { color: t.$text-muted; }
+.empty,
+.status { color: t.$text-muted; }
+.error { color: t.$danger; }
+
+@media (max-width: 650px) {
+    .page { padding-top: 1rem; }
+    .card { padding: 1rem; }
+    .gradeList a { align-items: flex-start; flex-direction: column; gap: .5rem; }
+    .releasedScore, .pendingScore { max-width: 100%; text-align: left; }
+}

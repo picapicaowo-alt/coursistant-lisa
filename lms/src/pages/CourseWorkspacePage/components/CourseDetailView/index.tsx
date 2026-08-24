@@ -12,12 +12,14 @@ import {GroupsCard} from './GroupsCard';
 import {SyllabusCard} from '../SyllabusCard';
 import {RosterCard} from './RosterCard';
 import {AnnouncementsCard} from './AnnouncementsCard';
+import {GradesCard} from './GradesCard';
 
 interface CourseDetailViewProps {
   canCreateAssignments?: boolean;
   canManageEvents?: boolean;
   canManageGroups?: boolean;
   canPostAnnouncements?: boolean;
+  canViewOwnGrades?: boolean;
 }
 
 /**
@@ -29,7 +31,7 @@ interface CourseDetailViewProps {
  * per-item scores and no course total — and no endpoint stores a weight, so
  * the card would be decoration over nothing (open-decisions.md B-3).
  */
-export const CourseDetailView: React.FC<CourseDetailViewProps> = ({canCreateAssignments = false, canManageEvents = false, canManageGroups = false, canPostAnnouncements = false}) => {
+export const CourseDetailView: React.FC<CourseDetailViewProps> = ({canCreateAssignments = false, canManageEvents = false, canManageGroups = false, canPostAnnouncements = false, canViewOwnGrades = false}) => {
   const {
     course, weeks, sessions, assignments, quizzes, events, groupSets, announcements,
     isLoading, isError, sessionsFailed, assignmentsFailed, quizzesFailed, eventsFailed, groupSetsFailed, announcementsFailed, refetch,
@@ -95,6 +97,7 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({canCreateAssi
           failed={quizzesFailed}
           canCreate={canCreateAssignments}
         />
+        {canViewOwnGrades ? <GradesCard courseId={course.id}/> : null}
         <EventsCard courseId={course.id} events={events} failed={eventsFailed} canManage={canManageEvents}/>
         <GroupsCard courseId={course.id} groupSets={groupSets} failed={groupSetsFailed} canManage={canManageGroups}/>
         {canCreateAssignments ? <RosterCard courseId={course.id}/> : null}
