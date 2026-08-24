@@ -30,6 +30,7 @@ export interface CourseWorkspaceData {
   announcements: CourseAnnouncementSummary[];
   isLoading: boolean;
   isError: boolean;
+  isForbidden: boolean;
   sessionsFailed: boolean;
   assignmentsFailed: boolean;
   quizzesFailed: boolean;
@@ -138,6 +139,9 @@ export const useCourseWorkspaceData = (): CourseWorkspaceData => {
     // otherwise report a load that never finishes.
     isLoading: enabled && (course.isPending || weeks.isPending),
     isError: !enabled || course.isError || weeks.isError,
+    isForbidden: [course.error, weeks.error].some(
+      error => (error as {code?: number} | null)?.code === 403,
+    ),
     sessionsFailed: sessions.isError,
     assignmentsFailed: assignments.isError,
     quizzesFailed: quizzes.isError,
