@@ -171,10 +171,19 @@ describe('QuizGradingPage', () => {
 
     await waitFor(() => expect(quizApiService.getAttemptResult).toHaveBeenCalledWith(37, 12, 1001));
     expect(quizApiService.getAttempt).toHaveBeenCalledWith(37, 12, 1001);
+    const dialog = screen.getByRole('dialog', {name: 'Student One'});
+    expect(dialog).toHaveTextContent('one@example.com');
+    expect(dialog.closest('main')).toBeNull();
+    expect(document.body.style.overflow).toBe('hidden');
     expect(await screen.findByText('7 / 10')).toBeInTheDocument();
     expect(screen.getByText('Which option is correct?')).toBeInTheDocument();
     expect(screen.getByText('Student answer')).toBeInTheDocument();
     expect(screen.getByText('Correct answer')).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog', {name: 'Student One'})).not.toBeInTheDocument();
+    expect(document.body.style.overflow).toBe('');
+    expect(screen.getByRole('button', {name: 'Review result for Student One'})).toHaveFocus();
   });
 
   it('provides explicit select-all and clear-all controls', async () => {

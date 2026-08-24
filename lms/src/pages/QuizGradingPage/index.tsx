@@ -1,4 +1,5 @@
-import {useDeferredValue, useEffect, useMemo, useState} from 'react';
+import {useDeferredValue, useEffect, useMemo, useRef, useState} from 'react';
+import {createPortal} from 'react-dom';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {ArrowLeft, CheckCircle2, CheckSquare2, Eye, RotateCcw, Search, Send, Square, Users, X} from 'lucide-react';
 import {Link, useParams} from 'react-router-dom';
@@ -93,6 +94,55 @@ const QuizGradingPage = () => {
   const deferredStudentSearch = useDeferredValue(studentSearch);
   const [message, setMessage] = useState<string | null>(null);
   const [reviewTarget, setReviewTarget] = useState<ReviewTarget | null>(null);
+  const reviewDialogRef = useRef<HTMLElement>(null);
+  const reviewTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const reviewOpen = reviewTarget !== null;
+
+  useEffect(() => {
+    if (!reviewOpen) return;
+
+    const trigger = reviewTriggerRef.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const focusTimer = window.setTimeout(() => reviewDialogRef.current?.focus(), 0);
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setReviewTarget(null);
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const dialog = reviewDialogRef.current;
+      if (!dialog) return;
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), select:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+      )).filter(element => element.getAttribute('aria-hidden') !== 'true');
+      if (focusable.length === 0) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.clearTimeout(focusTimer);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      trigger?.focus();
+    };
+  }, [reviewOpen]);
 
   const quizQuery = useQuery({
     queryKey: ['quiz', courseId, quizId],
@@ -330,8 +380,12 @@ const QuizGradingPage = () => {
                     {row.finalizedAttempts[0] ? <button
                       type="button"
                       className={styles.reviewButton}
-                      onClick={() => setReviewTarget({userId: row.student.userId, attemptId: row.finalizedAttempts[0].id})}
+                      onClick={event => {
+                        reviewTriggerRef.current = event.currentTarget;
+                        setReviewTarget({userId: row.student.userId, attemptId: row.finalizedAttempts[0].id});
+                      }}
                       aria-label={`Review result for ${studentName}`}
+                      aria-haspopup="dialog"
                       aria-expanded={reviewTarget?.userId === row.student.userId}
                     ><Eye size={16}/> Review result</button> : null}
                   </div>
@@ -346,12 +400,24 @@ const QuizGradingPage = () => {
             </div>
           ) : null}
 
-          {reviewTarget && reviewStudentRow ? (
-            <section className={styles.resultReview} aria-labelledby="attempt-review-title">
+          {reviewTarget && reviewStudentRow && typeof document !== 'undefined' ? createPortal(
+            <div className={styles.reviewBackdrop} role="presentation" onMouseDown={event => {
+              if (event.target === event.currentTarget) setReviewTarget(null);
+            }}>
+            <section
+              ref={reviewDialogRef}
+              className={styles.resultReview}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="attempt-review-title"
+              aria-describedby="attempt-review-student"
+              tabIndex={-1}
+            >
               <div className={styles.resultReviewHeader}>
                 <div>
                   <p>Attempt review</p>
                   <h3 id="attempt-review-title">{reviewStudentRow.student.userName || `User ${reviewStudentRow.student.userId}`}</h3>
+                  <small id="attempt-review-student">{reviewStudentRow.student.userEmail || `User ID ${reviewStudentRow.student.userId}`}</small>
                 </div>
                 <div className={styles.reviewHeaderActions}>
                   <label>
@@ -407,6 +473,8 @@ const QuizGradingPage = () => {
                 </ol>
               </> : null}
             </section>
+            </div>,
+            document.body,
           ) : null}
         </section>
       ) : null}

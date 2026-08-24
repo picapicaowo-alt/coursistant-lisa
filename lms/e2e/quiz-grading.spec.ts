@@ -173,11 +173,18 @@ test('teacher reviews quiz results and uses explicit bulk selection', async ({pa
   expect(attemptRequests.map(request => new URL(request).searchParams.get('userId')).sort()).toEqual(['101', '102', '103']);
 
   await page.getByRole('button', {name: 'Review result for Student One'}).click();
-  await expect(page.getByRole('heading', {name: 'Student One'})).toBeVisible();
+  const reviewDialog = page.getByRole('dialog', {name: 'Student One'});
+  await expect(reviewDialog).toBeVisible();
+  await expect(reviewDialog).toContainText('one@example.com');
+  await expect(page.locator('body')).toHaveCSS('overflow', 'hidden');
   await expect(page.getByText('7 / 10')).toBeVisible();
   await expect(page.getByText('Which option is correct?')).toBeVisible();
   await expect(page.getByText('Student answer')).toBeVisible();
   await expect(page.getByText('Correct answer')).toBeVisible();
+
+  await page.keyboard.press('Escape');
+  await expect(reviewDialog).toBeHidden();
+  await expect(page.getByRole('button', {name: 'Review result for Student One'})).toBeFocused();
 
   await page.getByRole('button', {name: 'Select all eligible (2)'}).click();
   await expect(page.getByText('2 selected')).toBeVisible();
