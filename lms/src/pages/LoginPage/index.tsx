@@ -125,7 +125,7 @@ const LoginPage: React.FC = () => {
       <div className="mx-auto grid w-full max-w-[1500px] grid-cols-1 items-stretch gap-8 lg:grid-cols-[55%_45%] lg:gap-10">
         {/* Left side image */}
         <div className="hidden items-center justify-center lg:flex" aria-hidden="true">
-          <img src="/icons/login/login-img.png" alt=""
+          <img src="/icons/login/login-img-xlearn.png" alt=""
                className="max-h-[calc(100vh-48px)] w-full rounded-2xl object-cover"/>
         </div>
         

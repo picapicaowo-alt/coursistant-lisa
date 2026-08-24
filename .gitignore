@@ -29,4 +29,5 @@ CLAUDE.local.md
 .claude/
 docs/
 *.png
+!lms/public/icons/login/login-img-xlearn.png
 lms/test-results/

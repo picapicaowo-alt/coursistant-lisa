@@ -85,6 +85,22 @@ const fillCredentials = async (email: string) => {
   return user;
 };
 
+describe('LoginPage branding and sign-in method', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+  });
+
+  it('shows the X-Learn hero while keeping email and password as the only sign-in method', () => {
+    const {container} = renderLogin();
+
+    expect(container.querySelector('img[src="/icons/login/login-img-xlearn.png"]')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', {name: 'Email'})).toBeInTheDocument();
+    expect(screen.getByLabelText('Password')).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: /google|microsoft|linkedin|facebook/i})).not.toBeInTheDocument();
+  });
+});
+
 describe('LoginPage account routing', () => {
   beforeEach(() => {
     vi.clearAllMocks();
