@@ -27,6 +27,7 @@ import {isPreviewableFile, openPreviewWindow, saveBlob, showBlobInPreviewWindow}
 import {SubmitAssignmentDialog} from './SubmitAssignmentDialog';
 import {StudentSubmissionHistory} from './StudentSubmissionHistory';
 import {uploadRubricWithReplaceConfirmation} from './rubricUpload';
+import {loadRubricState} from './rubricState';
 import {
   buildEmptySubmissionState,
   formatSubmissionStatus,
@@ -265,7 +266,7 @@ const AssignmentDetailPage = () => {
   const rubricQuery = useQuery({
     queryKey: ['assignment-rubric', courseId, assignmentId],
     enabled: assignmentQuery.isSuccess && courseId !== null && assignmentId !== null,
-    queryFn: async () => unwrapData(await assignmentApiService.getRubric(courseId!, assignmentId!), 'getRubric'),
+    queryFn: () => loadRubricState(courseId!, assignmentId!),
   });
 
   const unpublish = useMutation({
