@@ -4,6 +4,7 @@ import {Navigate} from 'react-router-dom';
 import {
   AdminTenant,
   AdminTenantPayload,
+  AssignmentGradeCorrectionRequest,
   ChangeManagedUserRoleRequest,
   CreateManagedUserRequest,
   ManagedUser,
@@ -45,15 +46,19 @@ const TenantRow = ({tenant, busy, onSave, onDelete}: {
   );
 };
 
-const ManagedUserRow = ({account, busy, onUpdate, onDisable}: {
+const ManagedUserRow = ({account, tenants, busy, onUpdate, onDisable, onMoveTenant}: {
   account: ManagedUser;
+  tenants: AdminTenant[];
   busy: boolean;
   onUpdate: (id: number, request: ChangeManagedUserRoleRequest) => void;
   onDisable: (id: number) => void;
+  onMoveTenant: (id: number, tenantId: number) => void;
 }) => {
   const [role, setRole] = useState<ManagedRole>(account.role === 'TENANT_ADMIN' ? 'TENANT_ADMIN' : 'USER');
   const [level, setLevel] = useState<ManagedLevel>(account.level === 'INSTRUCTOR' ? 'INSTRUCTOR' : 'STUDENT');
   const [confirmDisable, setConfirmDisable] = useState(false);
+  const [targetTenantId, setTargetTenantId] = useState(String(account.tenantId));
+  const [confirmMove, setConfirmMove] = useState(false);
 
   return (
     <article className={styles.listRow}>
@@ -68,6 +73,14 @@ const ManagedUserRow = ({account, busy, onUpdate, onDisable}: {
           <label><span>Account role</span><select value={role} onChange={event => setRole(event.target.value as ManagedRole)}><option value="USER">User</option><option value="TENANT_ADMIN">Tenant admin</option></select></label>
           {role === 'USER' ? <label><span>Level</span><select value={level} onChange={event => setLevel(event.target.value as ManagedLevel)}><option value="STUDENT">Student</option><option value="INSTRUCTOR">Instructor</option></select></label> : null}
           <button type="button" className={styles.primaryButton} disabled={busy} onClick={() => onUpdate(account.id, {role, level: role === 'USER' ? level : 'NOT_APPLICABLE'})}>Update role</button>
+          <div className={styles.operationDivider}/>
+          <label><span>Tenant</span><select value={targetTenantId} onChange={event => { setTargetTenantId(event.target.value); setConfirmMove(false); }}>{tenants.map(tenant => <option key={tenant.id} value={tenant.id}>{tenant.name} (#{tenant.id})</option>)}</select></label>
+          {Number(targetTenantId) !== account.tenantId ? confirmMove ? (
+            <div className={styles.confirmStack}>
+              <p>Move this identity to tenant #{targetTenantId}? Course memberships and active responsibilities may make the server refuse this operation.</p>
+              <div className={styles.confirmRow}><button type="button" className={styles.dangerButton} disabled={busy} onClick={() => onMoveTenant(account.id, Number(targetTenantId))}>Confirm tenant move</button><button type="button" className={styles.secondaryButton} onClick={() => setConfirmMove(false)}>Cancel</button></div>
+            </div>
+          ) : <button type="button" className={styles.dangerLink} disabled={busy} onClick={() => setConfirmMove(true)}>Move to another tenant</button> : null}
           {account.status !== 'DISABLED' ? confirmDisable ? <><button type="button" className={styles.dangerButton} disabled={busy} onClick={() => onDisable(account.id)}>Confirm disable</button><button type="button" className={styles.secondaryButton} onClick={() => setConfirmDisable(false)}>Cancel</button></> : <button type="button" className={styles.dangerLink} onClick={() => setConfirmDisable(true)}>Disable account</button> : null}
         </div>
       </details>
@@ -81,7 +94,7 @@ const AdminConsolePage: React.FC = () => {
   const isSystemAdmin = user.role === 'SYSTEM_ADMIN';
   const isTenantAdmin = user.role === 'TENANT_ADMIN';
   const scope = isSystemAdmin ? 'system' : 'tenant';
-  const [tab, setTab] = useState<'users' | 'tenants'>('users');
+  const [tab, setTab] = useState<'users' | 'tenants' | 'operations'>('users');
   const [message, setMessage] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [tenantName, setTenantName] = useState('');
@@ -95,6 +108,11 @@ const AdminConsolePage: React.FC = () => {
   const [manualRole, setManualRole] = useState<ManagedRole>('USER');
   const [manualLevel, setManualLevel] = useState<ManagedLevel>('STUDENT');
   const [confirmManualDisable, setConfirmManualDisable] = useState(false);
+  const [courseId, setCourseId] = useState('');
+  const [primaryInstructorUserId, setPrimaryInstructorUserId] = useState('');
+  const [confirmReassignment, setConfirmReassignment] = useState(false);
+  const [correction, setCorrection] = useState<AssignmentGradeCorrectionRequest>({assignmentId: 0, studentUserId: 0, score: 0, reason: ''});
+  const [confirmCorrection, setConfirmCorrection] = useState(false);
 
   const tenantsQuery = useQuery({
     queryKey: ['admin', 'tenants'],
@@ -163,6 +181,30 @@ const AdminConsolePage: React.FC = () => {
     },
     onError: () => setMessage('The user could not be disabled.'),
   });
+  const moveTenant = useMutation({
+    mutationFn: ({id, targetTenantId}: {id: number; targetTenantId: number}) => adminApiService.changeUserTenant(id, {tenantId: targetTenantId}),
+    onSuccess: async () => {
+      setMessage('User moved to the selected tenant. Existing sessions were invalidated by the server.');
+      await queryClient.invalidateQueries({queryKey: ['admin', 'users']});
+    },
+    onError: () => setMessage('The user could not be moved. Resolve active course responsibilities or duplicate tenant identity first.'),
+  });
+  const reassignInstructor = useMutation({
+    mutationFn: () => adminApiService.reassignPrimaryInstructor(Number(courseId), {primaryInstructorUserId: Number(primaryInstructorUserId)}),
+    onSuccess: () => {
+      setConfirmReassignment(false);
+      setMessage('Primary instructor reassigned. The server recorded the course audit event.');
+    },
+    onError: () => setMessage('The primary instructor could not be reassigned. Confirm course, tenant, role, and enrolment constraints.'),
+  });
+  const correctGrade = useMutation({
+    mutationFn: () => adminApiService.correctAssignmentGrade({...correction, reason: correction.reason.trim()}),
+    onSuccess: () => {
+      setConfirmCorrection(false);
+      setMessage('Assignment grade corrected and written to the system audit log.');
+    },
+    onError: () => setMessage('The grade could not be corrected. Confirm that an existing grade row matches this assignment and student.'),
+  });
 
   const filteredUsers = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -183,7 +225,7 @@ const AdminConsolePage: React.FC = () => {
       ...(isSystemAdmin ? {tenantId: resolvedTenantId} : {}),
     });
   };
-  const busy = changeRole.isPending || disableUser.isPending;
+  const busy = changeRole.isPending || disableUser.isPending || moveTenant.isPending;
   const manualId = Number(managedUserId);
 
   return (
@@ -195,6 +237,7 @@ const AdminConsolePage: React.FC = () => {
       <nav className={styles.tabs} aria-label="Admin sections">
         <button type="button" aria-pressed={tab === 'users'} className={tab === 'users' ? styles.activeTab : ''} onClick={() => setTab('users')}>Managed users</button>
         {isSystemAdmin ? <button type="button" aria-pressed={tab === 'tenants'} className={tab === 'tenants' ? styles.activeTab : ''} onClick={() => setTab('tenants')}>Tenants</button> : null}
+        {isSystemAdmin ? <button type="button" aria-pressed={tab === 'operations'} className={tab === 'operations' ? styles.activeTab : ''} onClick={() => setTab('operations')}>Audited operations</button> : null}
       </nav>
 
       {message ? <p className={message.includes('could not') ? styles.errorMessage : styles.message} role="status">{message}</p> : null}
@@ -239,7 +282,7 @@ const AdminConsolePage: React.FC = () => {
               <label className={styles.search}><span>Search users</span><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Name, email, user ID, or tenant ID"/></label>
               {usersQuery.isPending ? <p className={styles.status}>Loading users…</p> : null}
               {usersQuery.isError ? <p className={styles.errorMessage}>Users could not be loaded.</p> : null}
-              <div className={styles.list}>{filteredUsers.map(account => <ManagedUserRow key={account.id} account={account} busy={busy} onUpdate={(id, request) => changeRole.mutate({id, request})} onDisable={id => disableUser.mutate(id)}/>)}</div>
+              <div className={styles.list}>{filteredUsers.map(account => <ManagedUserRow key={`${account.id}-${account.tenantId}`} account={account} tenants={tenantsQuery.data ?? []} busy={busy} onUpdate={(id, request) => changeRole.mutate({id, request})} onDisable={id => disableUser.mutate(id)} onMoveTenant={(id, targetTenantId) => moveTenant.mutate({id, targetTenantId})}/>)}</div>
             </section>
           ) : (
             <section className={styles.card} aria-labelledby="manage-user-title">
@@ -254,6 +297,42 @@ const AdminConsolePage: React.FC = () => {
               </div>
             </section>
           )}
+        </div>
+      ) : null}
+
+      {tab === 'operations' && isSystemAdmin ? (
+        <div className={styles.operationsGrid}>
+          <section className={styles.card} aria-labelledby="reassign-instructor-title">
+            <h2 id="reassign-instructor-title">Reassign primary instructor</h2>
+            <p className={styles.hint}>Use this administrative path when the current primary instructor must be replaced. The target must satisfy the course tenant and enrolment rules.</p>
+            <div className={styles.form}>
+              <label><span>Course ID</span><input type="number" min="1" value={courseId} onChange={event => { setCourseId(event.target.value); setConfirmReassignment(false); }}/></label>
+              <label><span>New instructor user ID</span><input type="number" min="1" value={primaryInstructorUserId} onChange={event => { setPrimaryInstructorUserId(event.target.value); setConfirmReassignment(false); }}/></label>
+              {confirmReassignment ? (
+                <div className={styles.confirmStack}>
+                  <p>Replace the primary instructor for course #{courseId} with user #{primaryInstructorUserId}?</p>
+                  <div className={styles.confirmRow}><button type="button" className={styles.dangerButton} disabled={reassignInstructor.isPending} onClick={() => reassignInstructor.mutate()}>{reassignInstructor.isPending ? 'Reassigning…' : 'Confirm reassignment'}</button><button type="button" className={styles.secondaryButton} onClick={() => setConfirmReassignment(false)}>Cancel</button></div>
+                </div>
+              ) : <button type="button" className={styles.primaryButton} disabled={!Number(courseId) || !Number(primaryInstructorUserId)} onClick={() => setConfirmReassignment(true)}>Review reassignment</button>}
+            </div>
+          </section>
+
+          <section className={styles.card} aria-labelledby="correct-grade-title">
+            <h2 id="correct-grade-title">Correct assignment grade</h2>
+            <p className={styles.hint}>Emergency system correction only—not daily grading. It updates an existing grade and writes before/after values plus your reason to the audit log.</p>
+            <div className={styles.form}>
+              <label><span>Assignment ID</span><input type="number" min="1" value={correction.assignmentId || ''} onChange={event => { setCorrection(current => ({...current, assignmentId: Number(event.target.value)})); setConfirmCorrection(false); }}/></label>
+              <label><span>Student user ID</span><input type="number" min="1" value={correction.studentUserId || ''} onChange={event => { setCorrection(current => ({...current, studentUserId: Number(event.target.value)})); setConfirmCorrection(false); }}/></label>
+              <label><span>Corrected score</span><input type="number" min="0" step="0.01" value={correction.score} onChange={event => { setCorrection(current => ({...current, score: Number(event.target.value)})); setConfirmCorrection(false); }}/></label>
+              <label><span>Audit reason</span><textarea required value={correction.reason} onChange={event => { setCorrection(current => ({...current, reason: event.target.value})); setConfirmCorrection(false); }} placeholder="Required: explain why this correction is authorized"/></label>
+              {confirmCorrection ? (
+                <div className={styles.confirmStack}>
+                  <p>Set assignment #{correction.assignmentId}, student #{correction.studentUserId} to {correction.score} points?</p>
+                  <div className={styles.confirmRow}><button type="button" className={styles.dangerButton} disabled={correctGrade.isPending} onClick={() => correctGrade.mutate()}>{correctGrade.isPending ? 'Correcting…' : 'Confirm audited correction'}</button><button type="button" className={styles.secondaryButton} onClick={() => setConfirmCorrection(false)}>Cancel</button></div>
+                </div>
+              ) : <button type="button" className={styles.primaryButton} disabled={correction.assignmentId < 1 || correction.studentUserId < 1 || !Number.isFinite(correction.score) || !correction.reason.trim()} onClick={() => setConfirmCorrection(true)}>Review correction</button>}
+            </div>
+          </section>
         </div>
       ) : null}
     </main>

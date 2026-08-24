@@ -28,6 +28,15 @@ export const SIDEBAR_CONFIGS: SidebarConfig[] = [
     },
   },
   {
+    name: "Calendar",
+    path: "/calendar",
+    sidebarItem: {
+      filledIcon: "/icons/calendar_fill.svg",
+      unfilledIcon: "/icons/calendar_unfill.svg",
+      translationLabel: "sidebar.calendar",
+    },
+  },
+  {
     name: "AI Workplace",
     path: "/aibot",
     sidebarItem: {
@@ -48,6 +57,7 @@ export const getSidebarIndex = (pathname: string): number =>
 const APP_SHELL_BASE_PATHS = [
   '/',
   '/course',
+  '/calendar',
   '/aibot',
   '/admin',
   '/settings',

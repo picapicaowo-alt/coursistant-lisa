@@ -3,6 +3,7 @@ import {
   CreateQuizQuestionRequest,
   CreateQuizRequest,
   idempotent,
+  PatchQuizAnswerKeyRequest,
   PatchQuizQuestionRequest,
   PatchQuizRequest,
   QuizAttempt,
@@ -83,6 +84,20 @@ export class QuizApiService {
   ): Promise<ApiResponse<QuizQuestion>> {
     return this.apiClient.patch(
       `/v2/courses/${courseId}/quizzes/${quizId}/questions/${questionId}`,
+      request,
+      idempotent(idempotencyKey),
+    );
+  }
+
+  patchAnswerKey(
+    courseId: number,
+    quizId: number,
+    questionId: number,
+    request: PatchQuizAnswerKeyRequest,
+    idempotencyKey: string = crypto.randomUUID(),
+  ): Promise<ApiResponse<QuizQuestion>> {
+    return this.apiClient.patch(
+      `/v2/courses/${courseId}/quizzes/${quizId}/questions/${questionId}/answer-key`,
       request,
       idempotent(idempotencyKey),
     );

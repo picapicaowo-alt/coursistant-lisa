@@ -40,3 +40,18 @@ export interface ChangeManagedUserRoleRequest {
   role: 'USER' | 'TENANT_ADMIN';
   level?: UserLevel;
 }
+
+export interface ChangeUserTenantRequest {
+  tenantId: number;
+}
+
+export interface ReassignPrimaryInstructorRequest {
+  primaryInstructorUserId: number;
+}
+
+export interface AssignmentGradeCorrectionRequest {
+  assignmentId: number;
+  studentUserId: number;
+  score: number;
+  reason: string;
+}

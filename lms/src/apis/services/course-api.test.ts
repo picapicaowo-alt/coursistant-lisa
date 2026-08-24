@@ -37,6 +37,17 @@ describe('CourseApiService material binaries', () => {
       {responseType: 'blob'}
     );
   });
+
+  it('downloads every week file as a ZIP through the authenticated client', async () => {
+    const blob = new Blob(['zip'], {type: 'application/zip'});
+    binaryClient.get.mockResolvedValue({data: blob});
+
+    await expect(service.downloadWeekMaterials(31, 5)).resolves.toBe(blob);
+    expect(binaryClient.get).toHaveBeenCalledWith(
+      '/v2/courses/31/weeks/5/download.zip',
+      {responseType: 'blob'},
+    );
+  });
 });
 
 describe('CourseApiService material management', () => {

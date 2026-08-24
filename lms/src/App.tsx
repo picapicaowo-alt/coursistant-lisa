@@ -23,6 +23,7 @@ const QuizPage = lazy(() => import('./pages/QuizPage'));
 const QuizEditorPage = lazy(() => import('./pages/QuizEditorPage'));
 const QuizGradingPage = lazy(() => import('./pages/QuizGradingPage'));
 const CourseGradesPage = lazy(() => import('./pages/CourseGradesPage'));
+const CalendarPage = lazy(() => import('./pages/CalendarPage'));
 const Post = lazy(() => import("./pages/post"));
 const PostDetail = lazy(() => import("./sections/posts/post-detail"));
 const Roster = lazy(() => import("./pages/RosterPage"));
@@ -88,6 +89,7 @@ const App = () => {
               <Route path="course/:courseId/quizzes/:quizId/edit" element={<QuizEditorPage/>}/>
               <Route path="course/:courseId/quizzes/:quizId/grading" element={<QuizGradingPage/>}/>
               <Route path="course/:courseId/grades" element={<CourseGradesPage/>}/>
+              <Route path="calendar" element={<CalendarPage/>}/>
               <Route path="post" element={<Post/>}/>
               <Route path="post/:postId" element={<PostDetail/>}/>
               <Route path="roster" element={<Roster/>}/>

@@ -64,4 +64,19 @@ describe('QuizApiService', () => {
     expect(client.post).toHaveBeenNthCalledWith(1, '/v2/courses/4/quizzes/3/grades/release', {userIds: [385, 386]}, expect.objectContaining({headers: expect.any(Object)}));
     expect(client.post).toHaveBeenNthCalledWith(2, '/v2/courses/4/quizzes/3/grades/retract', {userIds: [386]}, expect.objectContaining({headers: expect.any(Object)}));
   });
+
+  it('uses the dedicated audited answer-key correction route', async () => {
+    client.patch.mockResolvedValue({status: 200, data: {id: 101}});
+    const request = {
+      expectedVersion: 3,
+      reason: 'The published key selected the distractor.',
+      options: [{optionId: 1001, isCorrect: false}, {optionId: 1002, isCorrect: true}],
+    };
+    await service.patchAnswerKey(4, 3, 101, request, 'regrade-key');
+    expect(client.patch).toHaveBeenCalledWith(
+      '/v2/courses/4/quizzes/3/questions/101/answer-key',
+      request,
+      {headers: {'Idempotency-Key': 'regrade-key'}},
+    );
+  });
 });

@@ -66,6 +66,16 @@ export interface PatchQuizQuestionRequest {
   options?: QuizOptionInput[];
 }
 
+/**
+ * The deliberately narrow correction contract used after attempts exist.
+ * It changes only correctness flags and lets the server regrade atomically.
+ */
+export interface PatchQuizAnswerKeyRequest {
+  options: Array<{optionId: number; isCorrect: boolean}>;
+  reason: string;
+  expectedVersion: number;
+}
+
 export interface QuizOption {
   id: number;
   label: string;

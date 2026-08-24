@@ -492,6 +492,15 @@ export class CourseApiService {
     return this.getMaterialBlob(courseId, weekId, materialId, 'download');
   }
 
+  /** Downloads every file in a week as one server-generated ZIP archive. */
+  async downloadWeekMaterials(courseId: number, weekId: number): Promise<Blob> {
+    const response = await this.apiClient.getClient().get<Blob>(
+      `/v2/courses/${courseId}/weeks/${weekId}/download.zip`,
+      {responseType: 'blob'},
+    );
+    return response.data;
+  }
+
   async previewMaterial(courseId: number, weekId: number, materialId: number): Promise<Blob> {
     return this.getMaterialBlob(courseId, weekId, materialId, 'preview');
   }

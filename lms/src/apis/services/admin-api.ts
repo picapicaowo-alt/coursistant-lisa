@@ -2,10 +2,14 @@ import {
   AdminTenant,
   AdminTenantPayload,
   ApiResponse,
+  AssignmentGradeCorrectionRequest,
   ChangeManagedUserRoleRequest,
+  ChangeUserTenantRequest,
+  CourseResponse,
   CreateManagedUserRequest,
   idempotent,
   ManagedUser,
+  ReassignPrimaryInstructorRequest,
   V2ApiClient,
 } from '@/apis';
 
@@ -46,6 +50,18 @@ export class AdminApiService {
 
   disableManagedUser(scope: 'system' | 'tenant', userId: number): Promise<ApiResponse<void>> {
     return this.apiClient.post(`/v2/${scope}/managed-users/${userId}/disable`, undefined, idempotent());
+  }
+
+  changeUserTenant(userId: number, request: ChangeUserTenantRequest): Promise<ApiResponse<ManagedUser>> {
+    return this.apiClient.patch(`/v2/admin/users/${userId}/tenant`, request, idempotent());
+  }
+
+  reassignPrimaryInstructor(courseId: number, request: ReassignPrimaryInstructorRequest): Promise<ApiResponse<CourseResponse>> {
+    return this.apiClient.post(`/v2/courses/${courseId}/primary-instructor`, request, idempotent());
+  }
+
+  correctAssignmentGrade(request: AssignmentGradeCorrectionRequest): Promise<ApiResponse<void>> {
+    return this.apiClient.post('/v2/system/grade-corrections/assignments', request, idempotent());
   }
 }
 

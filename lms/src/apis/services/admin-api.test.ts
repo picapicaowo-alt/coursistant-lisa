@@ -36,4 +36,17 @@ describe('AdminApiService', () => {
     expect(client.put).toHaveBeenCalledWith('/v2/tenant/managed-users/41/role', roleRequest, expect.objectContaining({headers: expect.any(Object)}));
     expect(client.post).toHaveBeenNthCalledWith(2, '/v2/tenant/managed-users/41/disable', undefined, expect.objectContaining({headers: expect.any(Object)}));
   });
+
+  it('uses the audited system operation contracts', async () => {
+    client.patch.mockResolvedValue({status: 200, data: {id: 41, tenantId: 2}});
+    client.post.mockResolvedValue({status: 200, data: null});
+
+    await service.changeUserTenant(41, {tenantId: 2});
+    await service.reassignPrimaryInstructor(37, {primaryInstructorUserId: 443});
+    await service.correctAssignmentGrade({assignmentId: 57, studentUserId: 438, score: 9.5, reason: 'Appeal approved'});
+
+    expect(client.patch).toHaveBeenCalledWith('/v2/admin/users/41/tenant', {tenantId: 2}, expect.objectContaining({headers: expect.any(Object)}));
+    expect(client.post).toHaveBeenNthCalledWith(1, '/v2/courses/37/primary-instructor', {primaryInstructorUserId: 443}, expect.objectContaining({headers: expect.any(Object)}));
+    expect(client.post).toHaveBeenNthCalledWith(2, '/v2/system/grade-corrections/assignments', {assignmentId: 57, studentUserId: 438, score: 9.5, reason: 'Appeal approved'}, expect.objectContaining({headers: expect.any(Object)}));
+  });
 });

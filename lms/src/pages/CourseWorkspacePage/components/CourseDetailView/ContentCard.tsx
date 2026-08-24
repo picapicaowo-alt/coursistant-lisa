@@ -13,6 +13,11 @@ const formatSize = (bytes: number | null): string => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+const zipFilename = (week: CourseWeek) => {
+  const safeTitle = week.title.trim().replace(/[^a-z0-9._-]+/gi, '-').replace(/^-+|-+$/g, '');
+  return `${safeTitle || `week-${week.id}`}-materials.zip`;
+};
+
 /**
  * The Course Content card — the selected week and what is in it.
  *
@@ -27,6 +32,23 @@ export const ContentCard: React.FC<{week: CourseWeek | null}> = ({week}) => (
 const ContentCardBody: React.FC<{week: CourseWeek | null}> = ({week}) => {
   const [activeAction, setActiveAction] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const downloadWeek = async () => {
+    if (!week) return;
+    setActiveAction('download-week');
+    setError(null);
+
+    try {
+      const blob = await courseApiService.downloadWeekMaterials(week.courseId, week.id);
+      saveBlob(blob, zipFilename(week));
+    } catch (err) {
+      setError(isNotFound(err)
+        ? 'This week is no longer available.'
+        : `Could not download all materials for ${week.title}.`);
+    } finally {
+      setActiveAction(null);
+    }
+  };
 
   const download = async (material: CourseMaterial) => {
     if (!week) return;
@@ -74,7 +96,20 @@ const ContentCardBody: React.FC<{week: CourseWeek | null}> = ({week}) => {
 
   return (
     <section className={styles.card}>
-      <p className={styles.cardLabel}>Course Content</p>
+      <div className={styles.cardHeader}>
+        <p className={styles.cardLabel}>Course Content</p>
+        {week?.materials.some(material => material.materialType === 'FILE') ? (
+          <button
+            type="button"
+            className={styles.downloadWeekButton}
+            onClick={() => void downloadWeek()}
+            disabled={activeAction !== null}
+          >
+            <Download size={16}/>
+            {activeAction === 'download-week' ? 'Preparing ZIP…' : 'Download all'}
+          </button>
+        ) : null}
+      </div>
 
       {!week ? (
         <p className={styles.cardEmpty}>Select a week to see its content.</p>

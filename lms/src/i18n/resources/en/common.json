@@ -10,6 +10,7 @@
   "sidebar": {
     "dashboard": "Dashboard",
     "myCourse": "My Course",
+    "calendar": "Calendar",
     "chat": "Chat",
     "aiChatbot": "AI Chatbot",
     "aiWorkplace": "AI Workplace"

@@ -14,8 +14,9 @@
 .cardHeader > span { min-width: 2rem; padding: .2rem .45rem; border-radius: t.$radius-pill; background: t.$brand-subtle; color: t.$brand; text-align: center; font-weight: t.$fw-bold; }
 .form { display: grid; gap: .8rem; margin-top: 1rem; }
 .form label, .inlineForm label, .search { display: grid; gap: .35rem; color: t.$text-muted; font-size: t.$fs-caption; font-weight: t.$fw-semibold; }
-.form input, .form select, .inlineForm input, .inlineForm select, .search input { width: 100%; min-height: 2.65rem; padding: .55rem .7rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; color: t.$text; }
-.form input:focus-visible, .form select:focus-visible, .inlineForm input:focus-visible, .inlineForm select:focus-visible, .search input:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid t.$brand-subtle; outline-offset: 2px; }
+.form input, .form select, .form textarea, .inlineForm input, .inlineForm select, .search input { width: 100%; min-height: 2.65rem; padding: .55rem .7rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; color: t.$text; }
+.form textarea { min-height: 6rem; resize: vertical; font: inherit; }
+.form input:focus-visible, .form select:focus-visible, .form textarea:focus-visible, .inlineForm input:focus-visible, .inlineForm select:focus-visible, .search input:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid t.$brand-subtle; outline-offset: 2px; }
 .primaryButton, .secondaryButton, .dangerButton { min-height: 2.5rem; padding: 0 .9rem; border-radius: t.$radius-control-sm; font-weight: t.$fw-semibold; cursor: pointer; }
 .primaryButton { border: 1px solid t.$brand; background: t.$brand; color: #fff; }
 .secondaryButton { border: 1px solid t.$border; background: t.$card-bg; color: t.$text; }
@@ -39,6 +40,10 @@
 .message, .errorMessage { max-width: 82rem; margin: 0 auto 1rem; padding: .75rem 1rem; border-radius: t.$radius-control; background: rgba(t.$success, .1); color: t.$success; }
 .errorMessage { background: rgba(t.$danger, .1); color: t.$danger; }
 .confirmRow { display: flex; gap: .6rem; }
+.confirmStack { display: grid; gap: .65rem; padding: .75rem; border-radius: t.$radius-control-sm; background: rgba(t.$danger, .08); }
+.confirmStack p { margin: 0; color: t.$danger; font-size: t.$fs-caption; line-height: 1.45; }
+.operationDivider { border-top: 1px solid t.$border; margin: .25rem 0; }
+.operationsGrid { display: grid; max-width: 82rem; margin: 0 auto; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
 
-@media (max-width: 900px) { .contentGrid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .contentGrid, .operationsGrid { grid-template-columns: 1fr; } }
 @media (max-width: 600px) { .page { padding-top: 1rem; } .listRow { flex-direction: column; } .details, .details[open] { width: 100%; } .tabs button { flex: 1; } }

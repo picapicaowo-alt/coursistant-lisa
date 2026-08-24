@@ -1,8 +1,8 @@
 import {Dispatch, FormEvent, SetStateAction, useEffect, useMemo, useState} from 'react';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import {ArrowDown, ArrowLeft, ArrowUp, Pencil, Plus, Trash2, X} from 'lucide-react';
+import {ArrowDown, ArrowLeft, ArrowUp, KeyRound, Pencil, Plus, Trash2, X} from 'lucide-react';
 import {Link, useNavigate, useParams} from 'react-router-dom';
-import type {CreateQuizQuestionRequest, QuizQuestion, QuizQuestionType, QuizResultVisibility} from '@/apis';
+import type {CreateQuizQuestionRequest, PatchQuizAnswerKeyRequest, QuizQuestion, QuizQuestionType, QuizResultVisibility} from '@/apis';
 import {unwrapData} from '@/apis';
 import {quizApiService} from '@/apis/services/quiz-api';
 import {DurationSelect} from '@/components/DurationSelect';
@@ -162,6 +162,9 @@ const QuizEditorPage = () => {
   const [questionDraft, setQuestionDraft] = useState(defaultQuestion);
   const [editingQuestionId, setEditingQuestionId] = useState<number | null>(null);
   const [editingQuestionDraft, setEditingQuestionDraft] = useState<CreateQuizQuestionRequest>(defaultQuestion);
+  const [answerKeyQuestionId, setAnswerKeyQuestionId] = useState<number | null>(null);
+  const [answerKeyOptionIds, setAnswerKeyOptionIds] = useState<number[]>([]);
+  const [answerKeyReason, setAnswerKeyReason] = useState('');
   const [confirmDeleteQuestionId, setConfirmDeleteQuestionId] = useState<number | null>(null);
   const [confirmDeleteQuiz, setConfirmDeleteQuiz] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -279,6 +282,34 @@ const QuizEditorPage = () => {
     onError: () => setMessage('The question could not be updated. Refresh if another editor changed it.'),
   });
 
+  const correctAnswerKey = useMutation({
+    mutationFn: ({questionId, request}: {questionId: number; request: PatchQuizAnswerKeyRequest}) => {
+      const operation = `quiz-answer-key-${courseId}-${quizId}-${questionId}`;
+      return quizApiService.patchAnswerKey(
+        courseId,
+        quizId!,
+        questionId,
+        request,
+        idempotency.keyFor(operation, idempotencyFingerprint(request)),
+      );
+    },
+    onSuccess: async (_, {questionId, request}) => {
+      const operation = `quiz-answer-key-${courseId}-${quizId}-${questionId}`;
+      idempotency.completeFingerprint(operation, idempotencyFingerprint(request));
+      setAnswerKeyQuestionId(null);
+      setAnswerKeyOptionIds([]);
+      setAnswerKeyReason('');
+      setMessage('Answer key corrected. Submitted attempts were regraded atomically.');
+      await Promise.all([
+        queryClient.invalidateQueries({queryKey: ['quiz-questions', courseId, quizId]}),
+        queryClient.invalidateQueries({queryKey: ['quiz', courseId, quizId]}),
+        queryClient.invalidateQueries({queryKey: ['quiz-grading', courseId, quizId]}),
+        queryClient.invalidateQueries({queryKey: ['course-grades', courseId]}),
+      ]);
+    },
+    onError: () => setMessage('The answer key could not be corrected. Refresh if another editor changed it.'),
+  });
+
   const deleteQuestion = useMutation({
     mutationFn: (questionId: number) => quizApiService.deleteQuestion(courseId, quizId!, questionId),
     onSuccess: async () => {
@@ -352,6 +383,14 @@ const QuizEditorPage = () => {
   }
 
   const questions = questionsQuery.data ?? [];
+  const answerKeyQuestion = questions.find(question => question.id === answerKeyQuestionId) ?? null;
+  const answerKeyIsValid = Boolean(
+    answerKeyQuestion
+    && answerKeyReason.trim()
+    && (answerKeyQuestion.type === 'MultipleSelect'
+      ? answerKeyOptionIds.length > 0
+      : answerKeyOptionIds.length === 1),
+  );
   const rangeDuration = dateTimeDurationMinutes(opensAt, closesAt);
   const selectedDuration = presetDuration(rangeDuration, LONG_DURATION_OPTIONS);
   const invalidWindow = Boolean(opensAt && closesAt && closesAt <= opensAt);
@@ -400,9 +439,76 @@ const QuizEditorPage = () => {
         <>
           <section className={styles.card}>
             <div className={styles.cardHeader}><div><h2>Questions</h2><p>{questions.length} question{questions.length === 1 ? '' : 's'} · {quizQuery.data?.totalPoints ?? 0} points</p></div><button type="button" className={styles.primaryButton} onClick={() => publishQuiz.mutate()} disabled={publishQuiz.isPending || (!questions.length && quizQuery.data?.state !== 'Published')}>{quizQuery.data?.state === 'Published' ? 'Unpublish' : 'Publish quiz'}</button></div>
-            {quizQuery.data?.hasAttempts ? <p className={styles.lockedNotice}>Questions are locked because learners have started this quiz.</p> : null}
-            {questions.length ? <ol className={styles.questionList}>{questions.map((question, index) => <li key={question.id}><div><MarkdownMessage content={question.stem}/><small>{question.type} · {question.points} pts</small></div><div className={styles.rowActions}><button type="button" aria-label={`Edit ${question.stem}`} disabled={quizQuery.data?.hasAttempts} onClick={() => { setEditingQuestionId(question.id); setEditingQuestionDraft(questionToDraft(question)); setMessage(null); }}><Pencil size={16}/></button><button type="button" aria-label={`Move ${question.stem} up`} disabled={index === 0 || quizQuery.data?.hasAttempts} onClick={() => moveQuestion(index, -1)}><ArrowUp size={16}/></button><button type="button" aria-label={`Move ${question.stem} down`} disabled={index === questions.length - 1 || quizQuery.data?.hasAttempts} onClick={() => moveQuestion(index, 1)}><ArrowDown size={16}/></button>{confirmDeleteQuestionId === question.id ? <><button type="button" className={styles.dangerText} onClick={() => deleteQuestion.mutate(question.id)}>Confirm</button><button type="button" onClick={() => setConfirmDeleteQuestionId(null)}>Cancel</button></> : <button type="button" aria-label={`Delete ${question.stem}`} disabled={quizQuery.data?.hasAttempts} onClick={() => setConfirmDeleteQuestionId(question.id)}><Trash2 size={16}/></button>}</div></li>)}</ol> : <p className={styles.empty}>Add the first question below.</p>}
+            {quizQuery.data?.hasAttempts ? <p className={styles.lockedNotice}>Question text, points, order, and options are locked because learners have started this quiz. Objective answer keys can still be corrected with an audit reason.</p> : null}
+            {questions.length ? (
+              <ol className={styles.questionList}>
+                {questions.map((question, index) => (
+                  <li key={question.id}>
+                    <div><MarkdownMessage content={question.stem}/><small>{question.type} · {question.points} pts</small></div>
+                    <div className={styles.rowActions}>
+                      {quizQuery.data?.hasAttempts && question.type !== 'ShortAnswer' ? (
+                        <button
+                          type="button"
+                          className={styles.answerKeyButton}
+                          aria-label={`Correct answer key for ${question.stem}`}
+                          onClick={() => {
+                            setAnswerKeyQuestionId(question.id);
+                            setAnswerKeyOptionIds(question.options.filter(option => option.isCorrect).map(option => option.id));
+                            setAnswerKeyReason('');
+                            setEditingQuestionId(null);
+                            setMessage(null);
+                          }}
+                        ><KeyRound size={16}/><span>Correct key</span></button>
+                      ) : null}
+                      <button type="button" aria-label={`Edit ${question.stem}`} disabled={quizQuery.data?.hasAttempts} onClick={() => { setEditingQuestionId(question.id); setEditingQuestionDraft(questionToDraft(question)); setAnswerKeyQuestionId(null); setMessage(null); }}><Pencil size={16}/></button>
+                      <button type="button" aria-label={`Move ${question.stem} up`} disabled={index === 0 || quizQuery.data?.hasAttempts} onClick={() => moveQuestion(index, -1)}><ArrowUp size={16}/></button>
+                      <button type="button" aria-label={`Move ${question.stem} down`} disabled={index === questions.length - 1 || quizQuery.data?.hasAttempts} onClick={() => moveQuestion(index, 1)}><ArrowDown size={16}/></button>
+                      {confirmDeleteQuestionId === question.id ? <><button type="button" className={styles.dangerText} onClick={() => deleteQuestion.mutate(question.id)}>Confirm</button><button type="button" onClick={() => setConfirmDeleteQuestionId(null)}>Cancel</button></> : <button type="button" aria-label={`Delete ${question.stem}`} disabled={quizQuery.data?.hasAttempts} onClick={() => setConfirmDeleteQuestionId(question.id)}><Trash2 size={16}/></button>}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            ) : <p className={styles.empty}>Add the first question below.</p>}
           </section>
+
+          {answerKeyQuestion ? (
+            <section className={styles.card} aria-labelledby="answer-key-title">
+              <div className={styles.cardHeader}>
+                <div><h2 id="answer-key-title">Correct answer key</h2><p>This changes correctness only. Submitted attempts and any released scores will be regraded atomically.</p></div>
+                <button type="button" className={styles.iconButton} aria-label="Close answer key correction" onClick={() => setAnswerKeyQuestionId(null)}><X size={18}/></button>
+              </div>
+              <MarkdownMessage content={answerKeyQuestion.stem}/>
+              <fieldset className={styles.answerKeyEditor}>
+                <legend>Correct answer{answerKeyQuestion.type === 'MultipleSelect' ? 's' : ''}</legend>
+                {answerKeyQuestion.options.map(option => (
+                  <label key={option.id}>
+                    <input
+                      type={answerKeyQuestion.type === 'MultipleSelect' ? 'checkbox' : 'radio'}
+                      name={`answer-key-${answerKeyQuestion.id}`}
+                      checked={answerKeyOptionIds.includes(option.id)}
+                      onChange={() => setAnswerKeyOptionIds(current => answerKeyQuestion.type === 'MultipleSelect'
+                        ? current.includes(option.id) ? current.filter(id => id !== option.id) : [...current, option.id]
+                        : [option.id])}
+                    />
+                    <span><MarkdownMessage content={option.label}/></span>
+                  </label>
+                ))}
+              </fieldset>
+              <label className={styles.reasonField}>
+                <span>Audit reason</span>
+                <textarea value={answerKeyReason} onChange={event => setAnswerKeyReason(event.target.value)} placeholder="Explain why this answer key is being corrected" required/>
+              </label>
+              <p className={styles.regradeWarning}>This action may change learner grades. The server records the reason and performs the regrade as one transaction.</p>
+              <div className={styles.footer}><button type="button" className={styles.primaryButton} disabled={correctAnswerKey.isPending || !answerKeyIsValid} onClick={() => correctAnswerKey.mutate({
+                questionId: answerKeyQuestion.id,
+                request: {
+                  options: answerKeyQuestion.options.map(option => ({optionId: option.id, isCorrect: answerKeyOptionIds.includes(option.id)})),
+                  reason: answerKeyReason.trim(),
+                  expectedVersion: answerKeyQuestion.version ?? 1,
+                },
+              })}>{correctAnswerKey.isPending ? 'Regrading…' : 'Correct key and regrade'}</button></div>
+            </section>
+          ) : null}
 
           {editingQuestionId !== null ? (
             <section className={styles.card} aria-labelledby="edit-question-title">
@@ -415,7 +521,7 @@ const QuizEditorPage = () => {
           <section className={styles.card}>
             <div className={styles.cardHeader}><div><h2>Add question</h2><p>Correct-answer flags are sent only to instructor endpoints.</p></div></div>
             <QuestionFields draft={questionDraft} setDraft={setQuestionDraft} canChangeType/>
-            <div className={styles.footer}><button type="button" className={styles.primaryButton} disabled={addQuestion.isPending || !isQuestionValid(questionDraft)} onClick={() => addQuestion.mutate()}>{addQuestion.isPending ? 'Adding…' : 'Add question'}</button></div>
+            <div className={styles.footer}><button type="button" className={styles.primaryButton} disabled={Boolean(quizQuery.data?.hasAttempts) || addQuestion.isPending || !isQuestionValid(questionDraft)} onClick={() => addQuestion.mutate()}>{addQuestion.isPending ? 'Adding…' : 'Add question'}</button></div>
           </section>
 
           <section className={`${styles.card} ${styles.dangerZone}`} aria-labelledby="delete-quiz-title">

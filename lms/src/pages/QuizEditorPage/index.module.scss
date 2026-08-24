@@ -23,6 +23,7 @@
 .questionList small { display: block; margin-top: .2rem; color: t.$text-muted; }
 .rowActions { display: flex; align-items: center; gap: .35rem; }
 .rowActions button { display: inline-grid; min-width: 2rem; min-height: 2rem; place-items: center; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; color: t.$text; cursor: pointer; }
+.rowActions .answerKeyButton { display: inline-flex; gap: .35rem; padding: 0 .65rem; color: t.$brand; font-size: t.$fs-caption; font-weight: t.$fw-semibold; }
 .dangerText, .error { color: t.$danger !important; }
 .success { color: t.$success; }
 .empty { color: t.$text-muted; }
@@ -35,6 +36,13 @@
 .footer { display: flex; justify-content: flex-end; margin-top: 1rem; }
 .iconButton { display: inline-grid; min-width: 2.5rem; min-height: 2.5rem; place-items: center; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; color: t.$text; cursor: pointer; }
 .lockedNotice { margin: 0 0 1rem; padding: .75rem 1rem; border-radius: t.$radius-control-sm; background: t.$neutral-fill; color: t.$text-muted; }
+.answerKeyEditor { display: grid; gap: .65rem; margin-top: 1rem; padding: 1rem; border: 0; border-radius: t.$radius-card; background: t.$subcard-bg; }
+.answerKeyEditor legend, .reasonField span { color: t.$text-muted; font-size: t.$fs-caption; font-weight: t.$fw-semibold; }
+.answerKeyEditor label { display: flex; align-items: flex-start; gap: .65rem; color: t.$text; cursor: pointer; }
+.answerKeyEditor input { margin-top: .25rem; }
+.reasonField { display: grid; gap: .4rem; margin-top: 1rem; }
+.reasonField textarea { min-height: 5.5rem; padding: .72rem .8rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; color: t.$text; font: inherit; resize: vertical; }
+.regradeWarning { margin-top: .75rem; color: t.$danger; font-size: t.$fs-caption; }
 .dangerZone { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; border-color: rgba(t.$danger, .35); }
 .dangerZone h2 { color: t.$danger; font-size: t.$fs-card-title; font-weight: t.$fw-bold; }
 .dangerZone p { margin-top: .25rem; color: t.$text-muted; }
