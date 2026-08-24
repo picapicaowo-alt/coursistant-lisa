@@ -265,10 +265,9 @@ const QuizPage = () => {
 
       {quiz ? (
         <section className={styles.summaryCard}>
-          <MarkdownMessage
-            className={styles.instructions}
-            content={quiz.instructions || 'No instructions were provided.'}
-          />
+          {quiz.instructions ? (
+            <MarkdownMessage className={styles.instructions} content={quiz.instructions}/>
+          ) : null}
           <div className={styles.summaryGrid}>
             <span><Clock3 size={17}/> {quiz.timeLimitSeconds ? `${Math.round(quiz.timeLimitSeconds / 60)} minutes` : 'No time limit'}</span>
             <span>{quiz.attemptsAllowed} attempt{quiz.attemptsAllowed === 1 ? '' : 's'}</span>
@@ -391,13 +390,11 @@ const QuizPage = () => {
       ) : (
         <section className={styles.card}>
           <h2>Ready to begin?</h2>
-          <p className={styles.muted}>
-            {windowStatus === 'upcoming' && quiz
-              ? `This quiz opens ${formatQuizInstant(quiz.opensAtLocal, quiz.timezone)}. Starting will create an attempt and begin the timer, if one is configured.`
-              : windowStatus === 'closed' && quiz
-                ? `This quiz closed ${formatQuizInstant(quiz.closesAtLocal, quiz.timezone)}.`
-                : 'Starting creates an attempt and begins the quiz timer, if one is configured.'}
-          </p>
+          {windowStatus === 'upcoming' && quiz ? (
+            <p className={styles.muted}>This quiz opens {formatQuizInstant(quiz.opensAtLocal, quiz.timezone)}.</p>
+          ) : windowStatus === 'closed' && quiz ? (
+            <p className={styles.muted}>This quiz closed {formatQuizInstant(quiz.closesAtLocal, quiz.timezone)}.</p>
+          ) : null}
           <button type="button" className={styles.primaryButton} onClick={() => startAttempt.mutate()} disabled={startAttempt.isPending || !canStart}>
             {startLabel}
           </button>

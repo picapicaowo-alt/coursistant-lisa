@@ -422,34 +422,38 @@ const AssignmentDetailPage = () => {
 
       <div className={styles.layout}>
         <main className={styles.mainColumn}>
-          <section className={styles.card}>
-            <h2>Assignment details</h2>
-            <div className={styles.description}>
-              <RichTextEditor
-                content={assignment.description || 'No instructions were provided for this assignment.'}
-                disabled
-                displayOnly
-                showToolbar={false}
-                ariaLabel="Assignment instructions"
-              />
-            </div>
+          {assignment.description || assignment.attachments?.length ? (
+            <section className={styles.card}>
+              <h2>Assignment details</h2>
+              {assignment.description ? (
+                <div className={styles.description}>
+                  <RichTextEditor
+                    content={assignment.description}
+                    disabled
+                    displayOnly
+                    showToolbar={false}
+                    ariaLabel="Assignment instructions"
+                  />
+                </div>
+              ) : null}
 
-            {assignment.attachments?.length > 0 && (
-              <div className={styles.attachments}>
-                <h3>Instructor files</h3>
-                <ul>
-                  {assignment.attachments.map(attachment => (
-                    <InstructorAttachmentRow
-                      key={attachment.id}
-                      courseId={courseId}
-                      assignmentId={assignmentId}
-                      attachment={attachment}
-                    />
-                  ))}
-                </ul>
-              </div>
-            )}
-          </section>
+              {assignment.attachments?.length > 0 ? (
+                <div className={styles.attachments}>
+                  <h3>Instructor files</h3>
+                  <ul>
+                    {assignment.attachments.map(attachment => (
+                      <InstructorAttachmentRow
+                        key={attachment.id}
+                        courseId={courseId}
+                        assignmentId={assignmentId}
+                        attachment={attachment}
+                      />
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </section>
+          ) : null}
 
           <section className={styles.card}>
             <div className={styles.cardHeader}>

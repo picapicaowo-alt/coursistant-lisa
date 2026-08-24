@@ -235,7 +235,7 @@ const QuizGradingPage = () => {
 
       <section className={styles.card}>
         <div className={styles.cardHeader}>
-          <div><h2>Short-answer grading</h2><p>Objective questions are auto-scored by the backend answer key.</p></div>
+          <div><h2>Short-answer grading</h2><p>Objective questions are graded automatically from the answer key.</p></div>
           {shortQuestions.length ? <label><span>Question</span><select value={selectedQuestionId ?? ''} onChange={event => setSelectedQuestionId(Number(event.target.value))}>{shortQuestions.map(question => <option key={question.id} value={question.id}>{question.position}. {question.stem}</option>)}</select></label> : null}
         </div>
 

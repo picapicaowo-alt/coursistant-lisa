@@ -7,6 +7,6 @@ export const GradesCard = ({courseId}: {courseId: number}) => (
       <h2 className={styles.cardTitle}>Grades</h2>
       <Link to={`/course/${courseId}/grades`} className={styles.addButton}>View grades</Link>
     </div>
-    <p className={styles.cardEmpty}>See released assignment scores and available quiz results. No course total is calculated.</p>
+    <p className={styles.cardEmpty}>See released assignment scores and available quiz results.</p>
   </section>
 );

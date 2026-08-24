@@ -232,7 +232,7 @@ const CourseEventsPage = () => {
         </form>
       ) : eventId !== null && selectedEvent ? (
         <section className={styles.card}>
-          {selectedEvent.description ? <MarkdownMessage className={styles.description} content={selectedEvent.description}/> : <p className={styles.muted}>No description was provided.</p>}
+          {selectedEvent.description ? <MarkdownMessage className={styles.description} content={selectedEvent.description}/> : null}
           <dl className={styles.metadata}>
             <div><dt><CalendarDays size={18}/><span className={styles.srOnly}>Date</span></dt><dd>{selectedEvent.date}</dd></div>
             {selectedEvent.startTime ? <div><dt><Clock3 size={18}/><span className={styles.srOnly}>Time</span></dt><dd>{selectedEvent.startTime.slice(0, 5)}{selectedEvent.endTime ? ` – ${selectedEvent.endTime.slice(0, 5)}` : ''} {selectedEvent.timezone}</dd></div> : null}

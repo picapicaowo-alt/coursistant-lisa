@@ -77,7 +77,7 @@ const ManagedUserRow = ({account, tenants, busy, onUpdate, onDisable, onMoveTena
           <label><span>Tenant</span><select value={targetTenantId} onChange={event => { setTargetTenantId(event.target.value); setConfirmMove(false); }}>{tenants.map(tenant => <option key={tenant.id} value={tenant.id}>{tenant.name} (#{tenant.id})</option>)}</select></label>
           {Number(targetTenantId) !== account.tenantId ? confirmMove ? (
             <div className={styles.confirmStack}>
-              <p>Move this identity to tenant #{targetTenantId}? Course memberships and active responsibilities may make the server refuse this operation.</p>
+              <p>Move this identity to tenant #{targetTenantId}? Active course memberships or responsibilities may prevent the move.</p>
               <div className={styles.confirmRow}><button type="button" className={styles.dangerButton} disabled={busy} onClick={() => onMoveTenant(account.id, Number(targetTenantId))}>Confirm tenant move</button><button type="button" className={styles.secondaryButton} onClick={() => setConfirmMove(false)}>Cancel</button></div>
             </div>
           ) : <button type="button" className={styles.dangerLink} disabled={busy} onClick={() => setConfirmMove(true)}>Move to another tenant</button> : null}
@@ -167,7 +167,7 @@ const AdminConsolePage: React.FC = () => {
   const changeRole = useMutation({
     mutationFn: ({id, request}: {id: number; request: ChangeManagedUserRoleRequest}) => adminApiService.changeManagedUserRole(scope, id, request),
     onSuccess: async () => {
-      setMessage('User role updated. Existing sessions were invalidated by the server.');
+      setMessage('User role updated. Existing sessions have been signed out.');
       if (isSystemAdmin) await queryClient.invalidateQueries({queryKey: ['admin', 'users']});
     },
     onError: () => setMessage('The role could not be changed. Check tenant scope and active course responsibilities.'),
@@ -184,7 +184,7 @@ const AdminConsolePage: React.FC = () => {
   const moveTenant = useMutation({
     mutationFn: ({id, targetTenantId}: {id: number; targetTenantId: number}) => adminApiService.changeUserTenant(id, {tenantId: targetTenantId}),
     onSuccess: async () => {
-      setMessage('User moved to the selected tenant. Existing sessions were invalidated by the server.');
+      setMessage('User moved to the selected tenant. Existing sessions have been signed out.');
       await queryClient.invalidateQueries({queryKey: ['admin', 'users']});
     },
     onError: () => setMessage('The user could not be moved. Resolve active course responsibilities or duplicate tenant identity first.'),
@@ -193,7 +193,7 @@ const AdminConsolePage: React.FC = () => {
     mutationFn: () => adminApiService.reassignPrimaryInstructor(Number(courseId), {primaryInstructorUserId: Number(primaryInstructorUserId)}),
     onSuccess: () => {
       setConfirmReassignment(false);
-      setMessage('Primary instructor reassigned. The server recorded the course audit event.');
+      setMessage('Primary instructor reassigned. The change was added to the course audit log.');
     },
     onError: () => setMessage('The primary instructor could not be reassigned. Confirm course, tenant, role, and enrolment constraints.'),
   });
@@ -273,7 +273,7 @@ const AdminConsolePage: React.FC = () => {
               {role === 'USER' ? <label><span>Level</span><select value={level} onChange={event => setLevel(event.target.value as ManagedLevel)}><option value="STUDENT">Student</option><option value="INSTRUCTOR">Instructor</option></select></label> : null}
               <button className={styles.primaryButton} disabled={createUser.isPending || !name.trim() || !email.trim() || (isSystemAdmin && !Number(tenantId || tenantsQuery.data?.[0]?.id))}>{createUser.isPending ? 'Creating…' : 'Create user'}</button>
             </form>
-            <p className={styles.hint}>New accounts are marked for a mandatory password change. The API never exposes the generated password.</p>
+            <p className={styles.hint}>New accounts must establish their password through Forgot Password before signing in.</p>
           </section>
 
           {isSystemAdmin ? (
@@ -287,7 +287,7 @@ const AdminConsolePage: React.FC = () => {
           ) : (
             <section className={styles.card} aria-labelledby="manage-user-title">
               <h2 id="manage-user-title">Manage an existing user</h2>
-              <p className={styles.hint}>The backend currently has no tenant-scoped user listing endpoint. Enter the user ID returned at creation; tenant boundaries are enforced by the API.</p>
+              <p className={styles.hint}>Enter the user ID shown when the account was created.</p>
               <div className={styles.form}>
                 <label><span>User ID</span><input type="number" min="1" value={managedUserId} onChange={event => setManagedUserId(event.target.value)}/></label>
                 <label><span>Account role</span><select value={manualRole} onChange={event => setManualRole(event.target.value as ManagedRole)}><option value="USER">User</option><option value="TENANT_ADMIN">Tenant admin</option></select></label>

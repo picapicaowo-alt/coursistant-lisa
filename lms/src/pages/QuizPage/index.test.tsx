@@ -89,6 +89,7 @@ describe('QuizPage Question Attempt Gate', () => {
   });
 
   it('does NOT fetch questions on initial mount before student starts attempt', async () => {
+    quizApi.getQuiz.mockResolvedValue(response({...quizData, instructions: ''}));
     quizApi.getCurrentAttempt.mockRejectedValue({code: 404, details: {code: 'QUIZ_ATTEMPT_NOT_FOUND'}});
 
     const queryClient = new QueryClient({defaultOptions: {queries: {retry: false}}});
@@ -104,6 +105,8 @@ describe('QuizPage Question Attempt Gate', () => {
     );
 
     expect(await screen.findByRole('button', {name: 'Start attempt'})).toBeInTheDocument();
+    expect(screen.queryByText(/creates an attempt|begin(?:s)? the (?:quiz )?timer/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/no instructions (?:were )?provided/i)).not.toBeInTheDocument();
     // Verify listQuestions was NEVER called because no attempt is in progress
     expect(quizApi.listQuestions).not.toHaveBeenCalled();
   });

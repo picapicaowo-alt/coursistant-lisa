@@ -105,6 +105,14 @@ describe('CourseEventsPage', () => {
     expect(api.updateCourseEvent.mock.calls[0][3]).toBe(api.updateCourseEvent.mock.calls[1][3]);
   });
 
+  it('does not render a missing-description placeholder', async () => {
+    api.getCourseEvent.mockResolvedValue(response({...event, description: null}));
+    renderPage();
+
+    expect(await screen.findByText('Review session')).toBeInTheDocument();
+    expect(screen.queryByText(/no description (?:was )?provided/i)).not.toBeInTheDocument();
+  });
+
   it('defaults a new event to a rounded one-hour range and keeps duration linked', async () => {
     api.listCourseEvents.mockResolvedValue(response([]));
     renderListPage();

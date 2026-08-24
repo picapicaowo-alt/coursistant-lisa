@@ -502,7 +502,7 @@ const QuizEditorPage = () => {
                 <span>Audit reason</span>
                 <textarea value={answerKeyReason} onChange={event => setAnswerKeyReason(event.target.value)} placeholder="Explain why this answer key is being corrected" required/>
               </label>
-              <p className={styles.regradeWarning}>This action may change learner grades. The server records the reason and performs the regrade as one transaction.</p>
+              <p className={styles.regradeWarning}>This action may change learner grades. Your reason will be saved with the regrade.</p>
               <div className={styles.footer}><button type="button" className={styles.primaryButton} disabled={correctAnswerKey.isPending || !answerKeyIsValid} onClick={() => correctAnswerKey.mutate({
                 questionId: answerKeyQuestion.id,
                 request: {
@@ -523,7 +523,7 @@ const QuizEditorPage = () => {
           ) : null}
 
           <section className={styles.card}>
-            <div className={styles.cardHeader}><div><h2>Add question</h2><p>Correct-answer flags are sent only to instructor endpoints.</p></div></div>
+            <div className={styles.cardHeader}><div><h2>Add question</h2><p>Set the correct answer used for automatic grading.</p></div></div>
             <QuestionFields draft={questionDraft} setDraft={setQuestionDraft} canChangeType/>
             <div className={styles.footer}><button type="button" className={styles.primaryButton} disabled={Boolean(quizQuery.data?.hasAttempts) || addQuestion.isPending || !isQuestionValid(questionDraft)} onClick={() => addQuestion.mutate()}>{addQuestion.isPending ? 'Adding…' : 'Add question'}</button></div>
           </section>
@@ -531,7 +531,7 @@ const QuizEditorPage = () => {
           <section className={`${styles.card} ${styles.dangerZone}`} aria-labelledby="delete-quiz-title">
             <div>
               <h2 id="delete-quiz-title">Delete quiz</h2>
-              <p>This permanently removes the quiz. The server will refuse the operation if learner attempts must be retained.</p>
+              <p>This permanently removes the quiz. Quizzes with learner attempts cannot be deleted.</p>
             </div>
             {confirmDeleteQuiz ? (
               <div className={styles.dangerActions}>

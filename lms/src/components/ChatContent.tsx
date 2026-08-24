@@ -490,7 +490,7 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
                 content={input}
                 onChange={setInput}
                 onSubmit={handleSendClick}
-                placeholder="Please note that the AI system is not yet fully developed, and some of its responses may be inaccurate or incomplete."
+                placeholder="Ask a question about your course materials…"
                 disabled={isStudySupportUnavailable}
                 ariaLabel="Ask Study Support"
               />
