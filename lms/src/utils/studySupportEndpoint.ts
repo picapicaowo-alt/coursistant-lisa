@@ -1,5 +1,3 @@
-import {getAppEnv} from '@/config/env';
-
 const DEFAULT_STUDY_SUPPORT_BASE = '/study-support';
 
 export const buildStudySupportEndpoint = (
@@ -13,4 +11,4 @@ export const buildStudySupportEndpoint = (
 };
 
 export const studySupportEndpoint = (path: string): string =>
-  buildStudySupportEndpoint(path, getAppEnv().studySupportBase);
+  buildStudySupportEndpoint(path, import.meta.env.VITE_STUDY_SUPPORT_API_DOMAIN_NAME);

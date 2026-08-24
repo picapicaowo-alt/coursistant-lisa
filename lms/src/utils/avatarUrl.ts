@@ -1,13 +1,26 @@
-import {getAppEnv} from '@/config/env';
-
 const buildConfiguredApiOrigin = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  return new URL(getAppEnv().apiBase, window.location.origin).origin;
+  const configuredApi = import.meta.env.VITE_API_DOMAIN_NAME;
+
+  if (/^https?:\/\//i.test(configuredApi)) {
+    try {
+      return new URL(configuredApi).origin;
+    } catch {
+      return null;
+    }
+  }
+
+  const protocol = import.meta.env.VITE_BASE_PROTOCOL;
+  const hostname = import.meta.env.VITE_BASE_DOMAIN;
+  const port = import.meta.env.VITE_BASE_PORT;
+  if (!protocol || !hostname) return null;
+
+  return `${protocol}://${hostname}${port ? `:${port}` : ""}`;
 };
 
 /**
- * Resolve backend-owned avatars through the current deployment origin. This
- * keeps Dev and Prod on the same artifact while preserving external avatars.
+ * Login currently returns public avatar URLs without the dev API port. Rewrite
+ * only URLs belonging to our configured API host; third-party avatar URLs are
+ * deliberately left untouched.
  */
 export const normalizeAvatarUrl = (
   avatar: string | null | undefined,

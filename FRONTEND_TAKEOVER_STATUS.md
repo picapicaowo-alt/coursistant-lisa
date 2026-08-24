@@ -1,6 +1,6 @@
 # Coursistant Frontend Takeover Status
 
-Updated: 2026-08-24
+Updated: 2026-08-18
 
 This repository is a continuation of the existing React + TypeScript LMS frontend. The takeover work preserves the original application and incrementally replaces incomplete or legacy flows with the current LMS v2 contracts on backend port 8081.
 
@@ -120,17 +120,16 @@ This repository is a continuation of the existing React + TypeScript LMS fronten
 - Added a local mock LMS server for safe UI testing without dev-database writes.
 - Expanded the mock server into an interactive week/material preview so every management action can be reviewed even when 8081 is unavailable.
 - Added service, authentication, upload, routing, deep-link, and store-loop regression tests.
-- Current result: 365 tests passed across 86 test files.
+- Current result: 152 tests passed across 32 test files.
 - Current production Vite build succeeds.
-- Both standard and strict production TypeScript gates pass with the documented legacy quarantine excluded.
-- Added immutable release metadata, exact legacy-code/source audits, an OpenAPI contract lock, and a Dev/Prod artifact verifier.
+- The new Quiz, assignment-submission, event, group, Syllabus, Roster, Average Score, API, routing, and Dashboard files have no TypeScript errors; repository-wide `tsc` remains blocked by documented legacy debt, primarily `ChatContent`, API refresh typing, and old workspace models.
 - Live 8081 notification unread-count and inbox GET flows were verified successfully.
 - Live course 31 renders successfully after the store-loop fix.
 - Browser verification covered student/instructor flows, notification navigation after Mark all read, keyboard activation, course creation, Syllabus role controls, Roster mutations, and 390px Dashboard/Course/Roster layouts with no Vite overlay.
 - Registration browser verification covered code request/countdown, current request payload, automatic authenticated entry, error placement, keyboard order, and 390px layout against the local mock. Public 8084 verification covered the signup route and mobile layout; no real email or account was created on the shared Dev backend.
 - Public 8084 login verification now reaches the same-origin API and renders `Incorrect email or password` for a deliberate invalid isolated account instead of the former generic CORS error.
 - Public 8084 successful-login verification covered both designated Student accounts, the Instructor account, and the System Admin account. Each API login returned `SUCCESS`; browser sessions reached the Student/Instructor Dashboard or the System Admin Courses route with the expected role and no visible error state.
-- Browser API calls use same-origin `/api`; environment-specific upstreams are owned by Nginx, and the timestamped release/current-symlink layout supports rollback.
+- The Dev review build points only to `https://dev.xlearnedu.com:8084/api` and is deployed at `https://dev.xlearnedu.com:8084`; Nginx proxies static content to a loopback-only PM2 process on 18084 and `/api` to the Dev API on 8081, while the timestamped release/current-symlink layout supports rollback.
 
 ## Known backend or environment blockers
 

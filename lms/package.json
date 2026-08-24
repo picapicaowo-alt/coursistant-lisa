@@ -2,13 +2,6 @@
     "name": "lms",
     "private": true,
     "version": "0.0.0",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/picapicaowo-alt/coursistant-lisa.git"
-    },
-    "engines": {
-        "node": ">=22"
-    },
     "type": "module",
     "scripts": {
         "start": "vite dev",
@@ -16,10 +9,6 @@
         "dev:mock-api": "node scripts/mock-lms-api.mjs",
         "build": "vite build",
         "build:dev": "vite build --mode development",
-        "build:release": "npm run audit:source && vite build --mode production",
-        "audit:source": "node scripts/audit-source.mjs",
-        "audit:contract": "node scripts/verify-openapi-contract.mjs",
-        "deploy:verify": "node scripts/verify-deployment-sync.mjs",
         "typecheck": "tsc --noEmit",
         "typecheck:production": "tsc --noEmit -p tsconfig.production.json",
         "lint": "eslint .",

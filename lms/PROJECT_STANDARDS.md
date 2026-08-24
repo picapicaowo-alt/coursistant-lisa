@@ -143,9 +143,6 @@ Historical normalized-store designs in `STATE_MANAGEMENT.md` / `ARCHITECTURE.md`
 - Prefer relative `/api` in Dev so 8084 same-origin proxy works; do not hardcode secrets or long-lived tokens into the bundle.
 - Never log access tokens, refresh material, passwords, or full auth payloads.
 - Binary download/preview: use authenticated blob helpers — do not put Bearer tokens in URLs.
-- Browser service locations must be same-origin paths. Environment hosts,
-  ports, and credentials belong to the serving proxy and never to `VITE_*`.
-- Maintained code reads public configuration only through `src/config/env.ts`.
 
 ### 6.3 Errors and empty states
 
@@ -200,16 +197,11 @@ Historical normalized-store designs in `STATE_MANAGEMENT.md` / `ARCHITECTURE.md`
 
 ---
 
-## 12. Dev and Prod promotion
+## 12. Dev 8084
 
-- CI builds one immutable artifact with `npm run build:release`; Dev and Prod
-  must receive that exact archive, never separate environment builds.
-- Each deployment must expose `release.json` and use an atomic release/current
-  layout with a retained rollback release.
-- `/api`, `/ai-agent`, and `/study-support` stay same-origin. The serving proxy
-  owns environment-specific upstream targets.
-- Follow `docs/RELEASE_SYNC.md` and require `npm run deploy:verify` to pass after
-  promotion.
+- Review UI is built with `npm run build:dev` and deployed as static assets to the Dev host’s `coursistant-review-8084` release layout.
+- 8084 is **not** auto-deployed from GitHub. After merge-worthy work, build from this repo and deploy deliberately.
+- `/api` on 8084 proxies to the Dev LMS API (8081). Keep the frontend pointed at same-origin `/api` for review builds.
 
 ---
 
@@ -218,7 +210,7 @@ Historical normalized-store designs in `STATE_MANAGEMENT.md` / `ARCHITECTURE.md`
 1. **Legacy JSX** — chat, old roster/notification sections still `.jsx`. Profile and Settings are TSX.
 2. **Legacy type quarantine** — these files carry `// @ts-nocheck` until migration: `ChatContent.tsx`, `RichTextEditor/extensions/BlankNode.ts`, `DetailWorkspacePage/index.tsx`, `DetailWorkspacePage/components/AssignmentEdit/index.config.ts`, `stores/core/AggregateRootGenerator.test.ts`.
 3. **ESLint** — `npm run lint:ci` (`eslint . --max-warnings=0`) must stay green. Do not leave production-surface issues as warnings.
-4. **Typecheck** — `npm run typecheck` and `npm run typecheck:production` in `lms/` are green; keep the explicit legacy exclusions from expanding.
+4. **Typecheck** — `npm run typecheck` and `npm run typecheck:production` in `lms/`.
 5. **Dead dependencies** — remove unused UI libraries once confirmed unused.
 6. **Docs drift** — update this file when a new vertical establishes a better pattern than the references above.
 
@@ -232,6 +224,4 @@ Historical normalized-store designs in `STATE_MANAGEMENT.md` / `ARCHITECTURE.md`
 - [ ] Role or course capability respected
 - [ ] Tests added or updated for the behavior change
 - [ ] No secrets in logs or bundle
-- [ ] `npm run audit:source` and `npm run audit:contract` pass
-- [ ] Release artifact was built once and includes a clean `release.json`
 - [ ] Styles use modules/tokens (no new ad-hoc global CSS dumps)
