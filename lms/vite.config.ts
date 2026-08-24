@@ -1,40 +1,79 @@
-import {defineConfig, loadEnv} from 'vite'
+import {defineConfig, loadEnv, type ProxyOptions} from 'vite'
 import {resolve} from 'path'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import {releaseManifestPlugin, resolveReleaseInfo} from './config/releaseManifestPlugin'
 
 const tokensPath = resolve(__dirname, './src/styles/_tokens.scss').replace(/\\/g, '/')
+const release = resolveReleaseInfo(__dirname)
+
+const readPath = (name: string, value: string | undefined, fallback: string): string => {
+  const path = value?.trim() || fallback
+  if (!/^\/(?!\/)/.test(path)) {
+    throw new Error(`${name} must be a same-origin path beginning with one slash.`)
+  }
+  return path.replace(/\/$/, '') || '/'
+}
+
+const readProxyTarget = (name: string, value: string | undefined): string | undefined => {
+  const target = value?.trim()
+  if (!target) return undefined
+  const url = new URL(target)
+  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) {
+    throw new Error(`${name} must be an HTTP(S) origin without embedded credentials.`)
+  }
+  return url.origin
+}
+
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+const agentProxy = (pathPrefix: string, target: string, allowSelfSigned: boolean): ProxyOptions => ({
+  target,
+  changeOrigin: true,
+  secure: !allowSelfSigned,
+  rewrite: (path: string) => path.replace(new RegExp(`^${escapeRegExp(pathPrefix)}`), ''),
+  configure: proxy => {
+    proxy.on('proxyReq', proxyRequest => {
+      // Duplicate CORS filters reject the forwarded Origin. See ADR 0001.
+      proxyRequest.removeHeader('origin')
+    })
+  },
+})
 
 // https://vite.dev/config/
 export default defineConfig(({mode}) => {
-  // auto load .env.development / .env.production
   const env = loadEnv(mode, process.cwd(), '')
+  const apiPath = readPath('VITE_API_DOMAIN_NAME', env.VITE_API_DOMAIN_NAME, '/api')
+  const aiAgentPath = readPath('VITE_AI_AGENT_API_DOMAIN_NAME', env.VITE_AI_AGENT_API_DOMAIN_NAME, '/ai-agent')
+  const studySupportPath = readPath('VITE_STUDY_SUPPORT_API_DOMAIN_NAME', env.VITE_STUDY_SUPPORT_API_DOMAIN_NAME, '/study-support')
+  const apiTarget = readProxyTarget('LMS_API_PROXY_TARGET', env.LMS_API_PROXY_TARGET)
+  const aiAgentTarget = readProxyTarget('LMS_AI_AGENT_PROXY_TARGET', env.LMS_AI_AGENT_PROXY_TARGET)
+  const studySupportTarget = readProxyTarget('LMS_STUDY_SUPPORT_PROXY_TARGET', env.LMS_STUDY_SUPPORT_PROXY_TARGET)
+  const allowSelfSigned = env.LMS_PROXY_ALLOW_SELF_SIGNED === 'true'
+  const proxy: Record<string, ProxyOptions> = {}
 
-  // Where the dev proxy forwards to. Built from the same variables the app
-  // uses so there is only one place to change the backend host.
-  const apiTarget =
-    `${env.VITE_BASE_PROTOCOL}://${env.VITE_BASE_DOMAIN}:${env.VITE_BASE_PORT}`
-  const apiPath = env.VITE_BASE_PATH || '/api'
-  const aiAgentPath = env.VITE_AI_AGENT_API_DOMAIN_NAME || '/ai-agent'
-  const aiAgentTarget = env.VITE_AI_AGENT_TARGET || 'https://dev.xlearnedu.com:8083'
-  const studySupportPath = env.VITE_STUDY_SUPPORT_API_DOMAIN_NAME || '/study-support'
-  const studySupportTarget = env.VITE_STUDY_SUPPORT_TARGET || 'https://dev.xlearnedu.com:8090'
+  if (apiTarget) {
+    proxy[apiPath] = {
+      target: apiTarget,
+      changeOrigin: true,
+      secure: !allowSelfSigned,
+      cookieDomainRewrite: '',
+    }
+  }
+  if (aiAgentTarget) proxy[aiAgentPath] = agentProxy(aiAgentPath, aiAgentTarget, allowSelfSigned)
+  if (studySupportTarget) proxy[studySupportPath] = agentProxy(studySupportPath, studySupportTarget, allowSelfSigned)
 
-  const agentProxy = (pathPrefix: string, target: string) => ({
-    target,
-    changeOrigin: true,
-    secure: false,
-    rewrite: (path: string) => path.replace(new RegExp(`^${pathPrefix}`), ''),
-    configure: (proxy: {on: (event: string, handler: (request: {removeHeader: (name: string) => void}) => void) => void}) => {
-      proxy.on('proxyReq', proxyRequest => {
-        // Duplicate CORS filters reject the forwarded Origin. See ADR 0001.
-        proxyRequest.removeHeader('origin')
-      })
-    },
-  })
+  const allowedHosts = (env.LMS_DEV_ALLOWED_HOSTS || 'localhost,127.0.0.1')
+    .split(',')
+    .map(host => host.trim())
+    .filter(Boolean)
+  const configuredPort = Number(env.LMS_DEV_PORT || 5173)
+  if (!Number.isInteger(configuredPort) || configuredPort < 1 || configuredPort > 65535) {
+    throw new Error('LMS_DEV_PORT must be a valid TCP port.')
+  }
 
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), releaseManifestPlugin(release)],
     resolve: {
       alias: {
         "src": resolve(__dirname, './src'),
@@ -62,27 +101,12 @@ export default defineConfig(({mode}) => {
       },
     },
     server: {
-      host: '0.0.0.0',
-      port: 13005,
-      allowedHosts: [
-        'dev.xlearnedu.com',
-        'ec2.dev.xlearnedu.com',
-        'localhost',
-        '127.0.0.1',
-      ],
+      host: env.LMS_DEV_HOST || '127.0.0.1',
+      port: configuredPort,
+      allowedHosts,
       // Same-origin proxy: refresh cookie is SameSite=Lax, and the backend's
       // duplicated CORS ACAO headers break cross-origin XHR. See ADR 0001.
-      proxy: {
-        [apiPath]: {
-          target: apiTarget,
-          changeOrigin: true,
-          // Drop the cookie's Domain attribute so it binds to localhost
-          // instead of being rejected as a foreign-domain cookie.
-          cookieDomainRewrite: '',
-        },
-        [aiAgentPath]: agentProxy(aiAgentPath, aiAgentTarget),
-        [studySupportPath]: agentProxy(studySupportPath, studySupportTarget),
-      },
+      proxy,
     },
     test: {
       globals: true,

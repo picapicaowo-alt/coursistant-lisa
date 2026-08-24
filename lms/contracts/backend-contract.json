@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-08-24",
+  "contract": {
+    "kind": "openapi",
+    "openapiVersion": "3.0.1",
+    "apiTitle": "LMS API",
+    "apiVersion": "1.0.0",
+    "pathCount": 149,
+    "operationCount": 196,
+    "schemaCount": 73,
+    "fingerprintSha256": "03dca6ea496d07dc9e98b941d292a9a6867aaa2764829be812ea691d2269b5b0"
+  },
+  "backendSource": {
+    "canonicalRepository": "https://github.com/Coursistant-Inc/lms-backend",
+    "reviewedCommit": "8dff388910970e3d9adfc31f8d5d77e57d8857cb",
+    "integrationRepository": "https://github.com/picapicaowo-alt/lms-backend",
+    "integrationCommit": "a77b86900e33de61a1fb2081e6d1a08f462eb23a"
+  },
+  "database": {
+    "migrationTool": null,
+    "deployedMigrationVersion": null,
+    "attestation": "UNVERIFIED"
+  }
+}

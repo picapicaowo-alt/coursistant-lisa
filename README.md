@@ -2,4 +2,7 @@
 
 Coursistant LMS front-end source. Canonical remote: **https://github.com/picapicaowo-alt/coursistant-lisa**
 
-Application code and standards live under [`lms/`](./lms/). Start with [`lms/PROJECT_STANDARDS.md`](./lms/PROJECT_STANDARDS.md).
+Application code and standards live under [`lms/`](./lms/). Start with
+[`lms/PROJECT_STANDARDS.md`](./lms/PROJECT_STANDARDS.md), then use
+[`lms/docs/RELEASE_SYNC.md`](./lms/docs/RELEASE_SYNC.md) for promotion and
+environment synchronization.

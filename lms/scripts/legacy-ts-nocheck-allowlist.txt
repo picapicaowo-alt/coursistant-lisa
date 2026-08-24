@@ -1,0 +1,7 @@
+# Existing TypeScript quarantine. New @ts-nocheck directives are forbidden.
+src/components/ChatContent.tsx
+src/components/RichTextEditor/extensions/BlankNode.ts
+src/pages/DetailWorkspacePage/components/AssignmentEdit/index.config.ts
+src/pages/DetailWorkspacePage/index.tsx
+src/stores/core/AggregateRootGenerator.test.ts
+src/stores/core/AggregateRootGenerator.ts

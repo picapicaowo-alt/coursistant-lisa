@@ -1,4 +1,7 @@
 import {ApiClient} from "@/apis/api-client";
+import {getAppEnv} from '@/config/env';
+
+const appEnv = getAppEnv();
 
 const endBrowserSession = () => {
   localStorage.removeItem('user');
@@ -8,7 +11,7 @@ const endBrowserSession = () => {
 };
 
 export const V2ApiClient = new ApiClient({
-  baseURL: import.meta.env.VITE_API_DOMAIN_NAME,
+  baseURL: appEnv.apiBase,
   timeout: 10000,
   // The refresh token travels as an HttpOnly cookie, so it only reaches the
   // server if credentials are sent.
@@ -22,7 +25,7 @@ export const V2ApiClient = new ApiClient({
  * 401 recovery reuses the LMS session rotation, then retries with the new Bearer.
  */
 export const agentApiClient = new ApiClient({
-  baseURL: import.meta.env.VITE_AI_AGENT_API_DOMAIN_NAME || '/ai-agent',
+  baseURL: appEnv.agentBase,
   timeout: 60_000,
   withCredentials: true,
   refreshDelegate: () => V2ApiClient.recoverSession(),

@@ -16,7 +16,6 @@ const CourseGroupComponent = ( {selectedChatSectionParams} ) => {
         //   sender: 'Sylvia Reyes',
         //   time: '07:40 AM',
         //   content: "Hi, everyone! 👋\nI'd like to start this thread to discuss social media marketing.",
-        //   avatarUrl: 'https://randomuser.me/api/portraits/women/44.jpg',
         //   reactions: [
         //     { emoji: '👍', count: 2 },
         //     { emoji: '❤️', count: 1 }
@@ -28,7 +27,6 @@ const CourseGroupComponent = ( {selectedChatSectionParams} ) => {
         //     sender: 'Alfonso Vacaaro',
         //     time: '10:00 AM',
         //     content: 'joined along with Brandon Francisco',
-        //     avatarUrl: 'https://randomuser.me/api/portraits/men/45.jpg',
         //     file: null,
         //     reactions: []
         // },
@@ -37,7 +35,6 @@ const CourseGroupComponent = ( {selectedChatSectionParams} ) => {
         //     sender: 'Kaiya Lubin',
         //     time: '12:00 PM',
         //     content: 'Please check this file',
-        //     avatarUrl: 'https://randomuser.me/api/portraits/women/45.jpg',
         //     file: { name: 'ReactJS-for-beginner.pdf', size: '4.5 MB' },
         //     reactions: []
         // },
@@ -46,7 +43,6 @@ const CourseGroupComponent = ( {selectedChatSectionParams} ) => {
         //     sender: 'Kaith Lubin',
         //     time: '12:10 PM',
         //     content: 'Hi, everyone!',
-        //     avatarUrl: 'https://randomuser.me/api/portraits/women/42.jpg',
         //     reactions: []
         // }
     ]);
@@ -54,7 +50,6 @@ const CourseGroupComponent = ( {selectedChatSectionParams} ) => {
     //     {
     //       level: "Student",
     //       name: "Kristin Watson",
-    //       profile: "https://randomuser.me/api/portraits/women/44.jpg",
     //       email: "kristin.watson@college.edu",
     //       major: "Business Administration"
     //     },
@@ -93,8 +88,6 @@ const CourseGroupComponent = ( {selectedChatSectionParams} ) => {
                 <CourseGroupHeader params={{title, courseId}} setRosterOpen={setRosterOpen}/>
             </div>
             {/* Main Content */}
-            {/* <iframe src="http://coursistant.com:4000" width="100%" height="800px"></iframe> */}
-            {/* <iframe src="http://localhost:5173" width="100%" height="800px"></iframe> */}
             
             <div className="h-full flex overflow-y-auto">
                 {/* <div className="flex-1 flex flex-col border-r border-gray-300 overflow-y-auto"> */}

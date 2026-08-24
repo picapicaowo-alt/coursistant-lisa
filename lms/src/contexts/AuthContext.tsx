@@ -19,6 +19,28 @@ const normalizeUser = (user: LoginResponse): LoginResponse => ({
   avatar: normalizeAvatarUrl(user.avatar),
 });
 
+const LEGACY_CHAT_COOKIE_NAMES = new Set(['rc_token', 'rc_uid', 'rc_room_type']);
+
+const clearLegacyChatCookies = (): void => {
+  const hostnameParts = window.location.hostname.split('.');
+  const parentDomain = hostnameParts.length >= 2 && !/^\d+(?:\.\d+){3}$/.test(window.location.hostname)
+    ? `.${hostnameParts.slice(-2).join('.')}`
+    : null;
+  const domains = parentDomain ? ['', parentDomain] : [''];
+  const paths = ['/', '/home', '/api'];
+
+  document.cookie.split(';').forEach(cookie => {
+    const cookieName = cookie.split('=')[0].trim();
+    if (!cookieName.startsWith('rc_') && !LEGACY_CHAT_COOKIE_NAMES.has(cookieName)) return;
+
+    domains.forEach(domain => {
+      paths.forEach(path => {
+        document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=${path}${domain ? `;domain=${domain}` : ''}`;
+      });
+    });
+  });
+};
+
 interface AuthProviderProps {
   children: ReactNode;
 }
@@ -41,29 +63,6 @@ export const AuthProvider = ({children}: AuthProviderProps) => {
     setLoading(false);
   }, []);
   
-  const clearRocketChatCookies = () => {
-    const cookies = document.cookie.split(';');
-    
-    cookies.forEach(cookie => {
-      const cookieName = cookie.split('=')[0].trim();
-      
-      if (cookieName.startsWith('rc_') ||
-        cookieName === 'rc_token' ||
-        cookieName === 'rc_uid' ||
-        cookieName === 'rc_room_type') {
-        
-        const domains = ['', '.xlearnedu.com', '.dev.chat.xlearnedu.com', 'dev.chat.xlearnedu.com'];
-        const paths = ['/', '/home', '/api'];
-        
-        domains.forEach(domain => {
-          paths.forEach(path => {
-            document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=${path}${domain ? `;domain=${domain}` : ''}`;
-          });
-        });
-      }
-    });
-  };
-  
   const login = (userData: LoginResponse) => {
     const normalizedUser = normalizeUser(userData);
     const storedUser = localStorage.getItem('user');
@@ -80,7 +79,7 @@ export const AuthProvider = ({children}: AuthProviderProps) => {
     const newEmail = userData.email;
     
     if (previousEmail && previousEmail !== newEmail) {
-      clearRocketChatCookies();
+      clearLegacyChatCookies();
     }
     
     // `account` belonged to the pre-v2 login implementation. Leaving it in
@@ -100,20 +99,6 @@ export const AuthProvider = ({children}: AuthProviderProps) => {
   };
 
   const logout = async () => {
-    const rocketChatIframe = document.querySelector('iframe[title="RocketChat"]') as HTMLIFrameElement | null;
-    const rocketChatOrigin = import.meta.env.VITE_ROCKETCHAT_BASE_URL;
-    
-    if (rocketChatIframe?.contentWindow && rocketChatOrigin) {
-      try {
-        rocketChatIframe.contentWindow.postMessage({
-          event: 'call-api',
-          method: 'logout'
-        }, rocketChatOrigin);
-      } catch {
-        // Ignored
-      }
-    }
-
     try {
       // The refresh cookie identifies the server-side session. Calling this
       // endpoint before clearing local state prevents a logged-out browser
@@ -125,7 +110,7 @@ export const AuthProvider = ({children}: AuthProviderProps) => {
         console.warn('Server logout failed; local session was cleared', error);
       }
     } finally {
-      clearRocketChatCookies();
+      clearLegacyChatCookies();
       clearLocalSession();
       window.location.assign('/login');
     }

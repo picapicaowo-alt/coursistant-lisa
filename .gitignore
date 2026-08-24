@@ -27,7 +27,7 @@ node_modules/
 CLAUDE.md
 CLAUDE.local.md
 .claude/
-docs/
+/docs/
 *.png
 !lms/public/icons/login/login-img-xlearn.png
 lms/test-results/
