@@ -17,8 +17,18 @@ vi.mock('@/contexts/RequiredAuthContext', () => ({
 }));
 
 import PostComponent from './PostComponent';
+import {formatAnnouncementRelativeTime} from './announcementTime';
 
 describe('PostComponent dashboard links', () => {
+  it('treats zone-less announcement timestamps as UTC', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-24T09:00:00Z'));
+
+    expect(formatAnnouncementRelativeTime('2026-08-24T08:00:00')).toBe('an hour ago');
+
+    vi.useRealTimers();
+  });
+
   it('opens the exact announcement instead of only the course root', async () => {
     mocks.getRecentAnnouncements.mockResolvedValue({
       data: [{

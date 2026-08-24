@@ -5,10 +5,7 @@ import "./PostComponent.scss";
 import {dashboardApiService} from "@/apis/services/dashboard-api";
 import {RecentAnnouncement} from "@/apis";
 import {useRequiredAuth} from "@/contexts/RequiredAuthContext";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-
-dayjs.extend(relativeTime);
+import {formatAnnouncementRelativeTime} from "./announcementTime";
 
 /**
  * Recent Announcements.
@@ -93,7 +90,7 @@ const PostComponent: React.FC = () => {
                       />
                     ) : null}
                   </span>
-                  <p className="post-item-time">{dayjs(announcement.postedAt).fromNow()}</p>
+                  <p className="post-item-time">{formatAnnouncementRelativeTime(announcement.postedAt)}</p>
                 </div>
               </div>
               <div className="post-item-content-body">
