@@ -32,21 +32,63 @@
 .gradeControls { display: grid; grid-template-columns: 130px minmax(180px, 1fr) auto; align-items: end; gap: .75rem; }
 .gradeControls label { display: grid; gap: .35rem; color: t.$text-muted; font-size: t.$fs-caption; }
 .error { color: t.$danger !important; }
-.selectionActions, .rosterToolbar, .studentList li, .studentList label, .searchBox, .selectAll, .selectedCount { display: flex; align-items: center; gap: .55rem; }
+.selectionActions, .rosterToolbar, .studentList > li, .studentIdentity, .studentResultActions, .searchBox, .selectedCount { display: flex; align-items: center; gap: .55rem; }
 .selectionActions { flex-wrap: wrap; justify-content: flex-end; }
 .rosterToolbar { flex-wrap: wrap; margin-bottom: 1rem; }
 .searchBox { flex: 1; min-width: 14rem; padding: 0 .75rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; }
 .searchBox input { width: 100%; min-height: 2.5rem; border: 0; outline: 0; background: transparent; color: t.$text; }
-.selectAll { color: t.$text-muted; font-size: t.$fs-caption; }
 .selectedCount { margin-left: auto; color: t.$brand; font-size: t.$fs-caption; font-weight: t.$fw-semibold; }
+.bulkSelection { display: inline-flex; overflow: hidden; border: 1px solid t.$border; border-radius: t.$radius-control-sm; }
+.bulkSelection button { display: inline-flex; min-height: 2.5rem; align-items: center; gap: .4rem; padding: 0 .75rem; color: t.$text; font-size: t.$fs-caption; font-weight: t.$fw-semibold; cursor: pointer; }
+.bulkSelection button + button { border-left: 1px solid t.$border; }
+.bulkSelection button:disabled { cursor: not-allowed; opacity: .45; }
 .studentList { display: grid; margin: 0; padding: 0; list-style: none; }
-.studentList li { justify-content: space-between; min-height: 3.5rem; padding: .65rem 0; border-top: 1px solid t.$border; }
-.studentList label { min-width: 0; cursor: pointer; }
-.studentList label > span { display: grid; gap: .15rem; }
+.studentList > li { justify-content: space-between; min-height: 4rem; padding: .65rem 0; border-top: 1px solid t.$border; }
+.studentIdentity { min-width: 0; }
+.studentIdentity > span { display: grid; gap: .15rem; }
 .studentList small, .attemptStatus { color: t.$text-muted; font-size: t.$fs-caption; }
 .attemptStatus { flex: 0 0 auto; }
+.studentResultActions { justify-content: flex-end; }
+.reviewButton { display: inline-flex; min-height: 2.25rem; align-items: center; gap: .35rem; padding: 0 .7rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; color: t.$brand; font-size: t.$fs-caption; font-weight: t.$fw-semibold; cursor: pointer; }
+.reviewButton:hover { border-color: t.$brand; background: t.$brand-subtle; }
+.resultReview { margin-top: 1.25rem; padding: 1.2rem; border: 1px solid t.$brand; border-radius: t.$radius-card; background: t.$subcard-bg; }
+.resultReviewHeader, .reviewHeaderActions, .resultQuestionHeader, .optionLabels { display: flex; align-items: center; gap: .65rem; }
+.resultReviewHeader { justify-content: space-between; margin-bottom: 1rem; }
+.resultReviewHeader p, .resultReviewHeader h3 { margin: 0; }
+.resultReviewHeader p { color: t.$brand; font-size: .7rem; font-weight: t.$fw-semibold; text-transform: uppercase; letter-spacing: .06em; }
+.resultReviewHeader h3 { margin-top: .15rem; font-size: t.$fs-card-title; }
+.reviewHeaderActions label { display: grid; grid-template-columns: auto minmax(10rem, 1fr); align-items: center; gap: .45rem; color: t.$text-muted; font-size: t.$fs-caption; }
+.reviewHeaderActions select { min-height: 2.5rem; padding: 0 .7rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; color: t.$text; }
+.closeReviewButton { display: inline-grid; width: 2.5rem; height: 2.5rem; place-items: center; border-radius: t.$radius-control-sm; color: t.$text-muted; cursor: pointer; }
+.closeReviewButton:hover { background: t.$neutral-fill; color: t.$text; }
+.resultSummary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .65rem; }
+.resultSummary > div { display: grid; gap: .15rem; padding: .75rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; }
+.resultSummary span { color: t.$text-muted; font-size: .7rem; }
+.resultSummary strong { font-size: t.$fs-label; }
+.pendingNotice { margin: .8rem 0 0; color: t.$warning; font-size: t.$fs-caption; font-weight: t.$fw-semibold; }
+.reviewTimestamp { margin: .7rem 0 0; color: t.$text-muted; font-size: .72rem; }
+.resultQuestions { display: grid; gap: .8rem; margin: 1rem 0 0; padding: 0; list-style: none; }
+.resultQuestions > li { padding: 1rem; border: 1px solid t.$border; border-radius: t.$radius-control; background: t.$card-bg; }
+.resultQuestionHeader { align-items: flex-start; justify-content: space-between; }
+.resultQuestionHeader > div { min-width: 0; }
+.resultQuestionHeader > div > span { color: t.$brand; font-size: .7rem; font-weight: t.$fw-semibold; text-transform: uppercase; }
+.resultQuestionHeader p { margin: .25rem 0 0; }
+.resultQuestionHeader > strong { flex: 0 0 auto; color: t.$brand; }
+.shortAnswerResult { margin-top: .8rem; padding: .8rem; border-left: 3px solid t.$brand; background: t.$subcard-bg; }
+.shortAnswerResult > span { color: t.$text-muted; font-size: .7rem; font-weight: t.$fw-semibold; text-transform: uppercase; }
+.shortAnswerResult p { margin: .3rem 0 0; }
+.resultOptions { display: grid; gap: .45rem; margin: .8rem 0 0; padding: 0; list-style: none; }
+.resultOptions > li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .55rem; padding: .6rem .7rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; }
+.resultOptions > li[data-selected='true'] { border-color: t.$brand; background: t.$brand-subtle; }
+.resultOptions > li[data-correct='true'] { box-shadow: inset 3px 0 0 t.$success; }
+.resultOptions p { margin: 0; }
+.optionIndicator { color: t.$brand; }
+.optionLabels { flex-wrap: wrap; justify-content: flex-end; }
+.optionLabels em { padding: .12rem .4rem; border-radius: t.$radius-pill; background: t.$neutral-fill; color: t.$text-muted; font-size: .64rem; font-style: normal; font-weight: t.$fw-semibold; white-space: nowrap; }
+.resultOptions > li[data-correct='true'] .optionLabels em:last-child { background: t.$type-green-subtle; color: t.$type-green; }
 .inlineError { display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: t.$danger; }
 .inlineError button { min-height: 2.5rem; padding: 0 .85rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; cursor: pointer; }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 .primaryButton:focus-visible, .secondaryButton:focus-visible, .backLink:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid t.$brand-subtle; outline-offset: 2px; }
-@media (max-width: 850px) { .page { padding-top: 1rem; } .header { flex-wrap: wrap; } .headerActions { width: 100%; margin-left: 0; padding-left: 0; } .summaryGrid { grid-template-columns: repeat(2, 1fr); } .gradeControls { grid-template-columns: 1fr; } .cardHeader { flex-direction: column; } .card { padding: 1rem; } .selectionActions { width: 100%; } .selectionActions button { flex: 1; } .studentList li { align-items: flex-start; flex-direction: column; } .attemptStatus { padding-left: 1.55rem; } }
+@media (max-width: 850px) { .page { padding-top: 1rem; } .header { flex-wrap: wrap; } .headerActions { width: 100%; margin-left: 0; padding-left: 0; } .summaryGrid, .resultSummary { grid-template-columns: repeat(2, 1fr); } .gradeControls { grid-template-columns: 1fr; } .cardHeader { flex-direction: column; } .card { padding: 1rem; } .selectionActions { width: 100%; } .selectionActions button { flex: 1; } .bulkSelection { width: 100%; } .bulkSelection button { flex: 1; justify-content: center; } .selectedCount { margin-left: 0; } .studentList > li { align-items: flex-start; flex-direction: column; } .studentResultActions { width: 100%; justify-content: space-between; padding-left: 1.55rem; } .resultReviewHeader { align-items: flex-start; flex-direction: column; } .reviewHeaderActions { width: 100%; } .reviewHeaderActions label { flex: 1; } }
+@media (max-width: 520px) { .summaryGrid, .resultSummary { grid-template-columns: 1fr; } .studentResultActions { align-items: flex-start; flex-direction: column; } .resultOptions > li { grid-template-columns: auto minmax(0, 1fr); } .optionLabels { grid-column: 1 / -1; justify-content: flex-start; } .reviewHeaderActions { align-items: stretch; flex-direction: column; } .reviewHeaderActions label { grid-template-columns: 1fr; } }

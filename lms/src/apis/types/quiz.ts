@@ -127,6 +127,8 @@ export interface QuizAttempt {
 
 export interface QuizAttemptSummary {
   id: number;
+  /** The current backend omits this from list responses; staff roster code adds it from the userId filter. */
+  userId?: number;
   attemptNumber: number;
   status: QuizAttemptStatus;
   closeReason: string | null;

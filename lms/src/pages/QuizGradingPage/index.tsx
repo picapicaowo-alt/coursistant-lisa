@@ -1,17 +1,32 @@
-import {useEffect, useMemo, useState} from 'react';
-import {useMutation, useQueries, useQuery, useQueryClient} from '@tanstack/react-query';
-import {ArrowLeft, CheckCircle2, RotateCcw, Search, Send, Users} from 'lucide-react';
+import {useDeferredValue, useEffect, useMemo, useState} from 'react';
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
+import {ArrowLeft, CheckCircle2, CheckSquare2, Eye, RotateCcw, Search, Send, Square, Users, X} from 'lucide-react';
 import {Link, useParams} from 'react-router-dom';
+import type {QuizAttemptSummary} from '@/apis';
 import {unwrapData} from '@/apis';
 import {quizApiService} from '@/apis/services/quiz-api';
 import {courseApiService} from '@/apis/services/course-api';
+import MarkdownMessage from '@/components/MarkdownMessage';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
 import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
+import {formatUtcTimestamp} from '@/utils/datetime';
 import styles from './index.module.scss';
 
 interface GradeDraft {
   score: string;
   feedback: string;
+}
+
+interface ReviewTarget {
+  userId: number;
+  attemptId: number;
+}
+
+type OwnedQuizAttemptSummary = QuizAttemptSummary & {userId: number};
+
+interface AttemptRosterData {
+  attempts: OwnedQuizAttemptSummary[];
+  failedUserIds: number[];
 }
 
 const loadCourseStudents = async (courseId: number) => {
@@ -29,6 +44,40 @@ const loadCourseStudents = async (courseId: number) => {
   return [first.items, ...rest.map(page => page.items)].flat();
 };
 
+const loadStudentQuizAttempts = async (courseId: number, quizId: number, userId: number) => {
+  const pageSize = 100;
+  const attempts: OwnedQuizAttemptSummary[] = [];
+  let page = 1;
+  while (true) {
+    const batch = unwrapData(
+      await quizApiService.listAttempts(courseId, quizId, {userId, page, pageSize}),
+      `listAttempts for user ${userId}, page ${page}`,
+    );
+    attempts.push(...batch.map(attempt => ({...attempt, userId})));
+    if (batch.length < pageSize) return attempts;
+    page += 1;
+  }
+};
+
+const loadAllQuizAttempts = async (courseId: number, quizId: number, userIds: number[]): Promise<AttemptRosterData> => {
+  const attempts: OwnedQuizAttemptSummary[] = [];
+  const failedUserIds: number[] = [];
+  const concurrency = 12;
+
+  for (let start = 0; start < userIds.length; start += concurrency) {
+    const batchUserIds = userIds.slice(start, start + concurrency);
+    const results = await Promise.allSettled(
+      batchUserIds.map(userId => loadStudentQuizAttempts(courseId, quizId, userId)),
+    );
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled') attempts.push(...result.value);
+      else failedUserIds.push(batchUserIds[index]);
+    });
+  }
+
+  return {attempts, failedUserIds};
+};
+
 const QuizGradingPage = () => {
   const {courseId: courseIdParam, quizId: quizIdParam} = useParams();
   const courseId = Number(courseIdParam);
@@ -41,7 +90,9 @@ const QuizGradingPage = () => {
   const [drafts, setDrafts] = useState<Record<number, GradeDraft>>({});
   const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set());
   const [studentSearch, setStudentSearch] = useState('');
+  const deferredStudentSearch = useDeferredValue(studentSearch);
   const [message, setMessage] = useState<string | null>(null);
+  const [reviewTarget, setReviewTarget] = useState<ReviewTarget | null>(null);
 
   const quizQuery = useQuery({
     queryKey: ['quiz', courseId, quizId],
@@ -61,19 +112,17 @@ const QuizGradingPage = () => {
   const studentsQuery = useQuery({
     queryKey: ['course-students', courseId],
     queryFn: () => loadCourseStudents(courseId),
-    enabled: valid && access.canReleaseGrades,
+    enabled: valid && access.canGrade,
   });
-  const students = studentsQuery.data ?? [];
-  const studentAttemptQueries = useQueries({
-    queries: students.map(student => ({
-      queryKey: ['quiz-attempts', courseId, quizId, 'student', student.userId],
-      queryFn: async () => unwrapData(
-        await quizApiService.listAttempts(courseId, quizId, {userId: student.userId, page: 1, pageSize: 50}),
-        `listAttempts user ${student.userId}`,
-      ),
-      enabled: access.canReleaseGrades,
-      staleTime: 30_000,
-    })),
+  const studentUserIds = useMemo(
+    () => (studentsQuery.data ?? []).map(student => student.userId),
+    [studentsQuery.data],
+  );
+  const attemptsQuery = useQuery({
+    queryKey: ['quiz-attempts', courseId, quizId, 'grading-roster', studentUserIds],
+    queryFn: () => loadAllQuizAttempts(courseId, quizId, studentUserIds),
+    enabled: valid && access.canGrade && studentsQuery.isSuccess,
+    staleTime: 30_000,
   });
   const shortQuestions = useMemo(
     () => (questionsQuery.data ?? []).filter(question => question.type === 'ShortAnswer'),
@@ -92,6 +141,23 @@ const QuizGradingPage = () => {
       'listShortAnswers',
     ),
     enabled: access.canGrade && selectedQuestionId !== null,
+  });
+
+  const reviewResultQuery = useQuery({
+    queryKey: ['quiz-attempt-result', courseId, quizId, reviewTarget?.attemptId],
+    queryFn: async () => unwrapData(
+      await quizApiService.getAttemptResult(courseId, quizId, reviewTarget!.attemptId),
+      'getAttemptResult for grading',
+    ),
+    enabled: valid && access.canGrade && reviewTarget !== null,
+  });
+  const reviewAttemptQuery = useQuery({
+    queryKey: ['quiz-attempt-detail', courseId, quizId, reviewTarget?.attemptId],
+    queryFn: async () => unwrapData(
+      await quizApiService.getAttempt(courseId, quizId, reviewTarget!.attemptId),
+      'getAttempt for grading',
+    ),
+    enabled: valid && access.canGrade && reviewTarget !== null,
   });
 
   useEffect(() => {
@@ -125,6 +191,8 @@ const QuizGradingPage = () => {
       setMessage('Grade saved.');
       await queryClient.invalidateQueries({queryKey: ['quiz-short-answers', courseId, quizId, selectedQuestionId]});
       await queryClient.invalidateQueries({queryKey: ['quiz-grading-summary', courseId, quizId]});
+      await queryClient.invalidateQueries({queryKey: ['quiz-attempt-result', courseId, quizId, attemptId]});
+      await queryClient.invalidateQueries({queryKey: ['quiz-attempt-detail', courseId, quizId, attemptId]});
     },
     onError: () => setMessage('The grade could not be saved.'),
   });
@@ -147,36 +215,51 @@ const QuizGradingPage = () => {
         : `${userIds?.length ?? 'Released'} grade${userIds?.length === 1 ? '' : 's'} retracted.`);
       setSelectedUserIds(new Set());
       await queryClient.invalidateQueries({queryKey: ['quiz-grading-summary', courseId, quizId]});
+      await queryClient.invalidateQueries({queryKey: ['quiz-attempt-result', courseId, quizId]});
     },
     onError: () => setMessage('The grade release state could not be changed.'),
   });
 
-  if (access.isResolved && !access.canGrade) {
-    return <main className={styles.page}><p className={styles.error} role="alert">You do not have grading permission for this course.</p></main>;
-  }
-
   const selectedQuestion = shortQuestions.find(question => question.id === selectedQuestionId);
-  const studentRows = students.map((student, index) => {
-    const attempts = studentAttemptQueries[index]?.data ?? [];
-    const finalizedAttempts = attempts.filter(attempt => attempt.status !== 'InProgress');
+  const attemptsByUserId = useMemo(() => {
+    const grouped = new Map<number, QuizAttemptSummary[]>();
+    for (const attempt of attemptsQuery.data?.attempts ?? []) {
+      const current = grouped.get(attempt.userId) ?? [];
+      current.push(attempt);
+      grouped.set(attempt.userId, current);
+    }
+    return grouped;
+  }, [attemptsQuery.data?.attempts]);
+  const studentRows = useMemo(() => (studentsQuery.data ?? []).map(student => {
+    const attempts = attemptsByUserId.get(student.userId) ?? [];
+    const finalizedAttempts = attempts.filter(attempt => attempt.status === 'Submitted');
     return {
       student,
       attempts,
       finalizedAttempts,
-      latest: attempts[0],
-      isLoading: studentAttemptQueries[index]?.isPending ?? false,
-      isError: studentAttemptQueries[index]?.isError ?? false,
+      latest: finalizedAttempts[0] ?? attempts[0],
     };
-  });
-  const normalizedSearch = studentSearch.trim().toLowerCase();
-  const visibleStudentRows = normalizedSearch
-    ? studentRows.filter(({student}) => `${student.userName ?? ''} ${student.userEmail ?? ''} ${student.userId}`.toLowerCase().includes(normalizedSearch))
-    : studentRows;
-  const selectableUserIds = visibleStudentRows
+  }), [attemptsByUserId, studentsQuery.data]);
+  const visibleStudentRows = useMemo(() => {
+    const normalizedSearch = deferredStudentSearch.trim().toLowerCase();
+    return normalizedSearch
+      ? studentRows.filter(({student}) => `${student.userName ?? ''} ${student.userEmail ?? ''} ${student.userId}`.toLowerCase().includes(normalizedSearch))
+      : studentRows;
+  }, [deferredStudentSearch, studentRows]);
+  const allSelectableUserIds = useMemo(() => studentRows
     .filter(row => row.finalizedAttempts.length > 0)
-    .map(row => row.student.userId);
-  const allVisibleSelected = selectableUserIds.length > 0
-    && selectableUserIds.every(userId => selectedUserIds.has(userId));
+    .map(row => row.student.userId), [studentRows]);
+  const allEligibleSelected = allSelectableUserIds.length > 0
+    && allSelectableUserIds.every(userId => selectedUserIds.has(userId));
+  const reviewStudentRow = reviewTarget
+    ? studentRows.find(row => row.student.userId === reviewTarget.userId)
+    : undefined;
+  const reviewedAttempt = reviewStudentRow?.finalizedAttempts
+    .find(attempt => attempt.id === reviewTarget?.attemptId);
+
+  if (access.isResolved && !access.canGrade) {
+    return <main className={styles.page}><p className={styles.error} role="alert">You do not have grading permission for this course.</p></main>;
+  }
 
   const toggleStudent = (userId: number) => setSelectedUserIds(current => {
     const next = new Set(current);
@@ -205,31 +288,126 @@ const QuizGradingPage = () => {
 
       {message ? <p className={message.includes('could not') ? styles.error : styles.success} role="status">{message}</p> : null}
 
-      {access.canReleaseGrades ? (
+      {access.canGrade ? (
         <section className={styles.card} aria-labelledby="student-release-title">
           <div className={styles.cardHeader}>
-            <div><h2 id="student-release-title">Grade release by student</h2><p>Select learners with a finalized attempt, then release or retract only those grades.</p></div>
-            <div className={styles.selectionActions}>
+            <div><h2 id="student-release-title">Student results and grade release</h2><p>Review each finalized attempt before releasing grades to learners.</p></div>
+            {access.canReleaseGrades ? <div className={styles.selectionActions}>
               <button type="button" className={styles.secondaryButton} onClick={() => updateRelease.mutate({action: 'retract', userIds: [...selectedUserIds]})} disabled={updateRelease.isPending || selectedUserIds.size === 0}><RotateCcw size={16}/> Retract selected</button>
               <button type="button" className={styles.primaryButton} onClick={() => updateRelease.mutate({action: 'release', userIds: [...selectedUserIds]})} disabled={updateRelease.isPending || selectedUserIds.size === 0}><Send size={16}/> Release selected</button>
-            </div>
+            </div> : null}
           </div>
           <div className={styles.rosterToolbar}>
             <label className={styles.searchBox}><Search size={17}/><span className={styles.srOnly}>Search students</span><input value={studentSearch} onChange={event => setStudentSearch(event.target.value)} placeholder="Search students"/></label>
-            <label className={styles.selectAll}><input type="checkbox" checked={allVisibleSelected} disabled={!selectableUserIds.length} onChange={() => setSelectedUserIds(current => { const next = new Set(current); selectableUserIds.forEach(userId => allVisibleSelected ? next.delete(userId) : next.add(userId)); return next; })}/><span>Select visible submissions</span></label>
-            <span className={styles.selectedCount}><Users size={16}/> {selectedUserIds.size} selected</span>
+            {access.canReleaseGrades ? <>
+              <div className={styles.bulkSelection} aria-label="Bulk student selection">
+                <button
+                  type="button"
+                  onClick={() => setSelectedUserIds(new Set(allSelectableUserIds))}
+                  disabled={allSelectableUserIds.length === 0 || allEligibleSelected}
+                >
+                  <CheckSquare2 size={16}/> Select all eligible ({allSelectableUserIds.length})
+                </button>
+                <button type="button" onClick={() => setSelectedUserIds(new Set())} disabled={selectedUserIds.size === 0}>
+                  <Square size={16}/> Clear all
+                </button>
+              </div>
+              <span className={styles.selectedCount}><Users size={16}/> {selectedUserIds.size} selected</span>
+            </> : null}
           </div>
-          {studentsQuery.isPending ? <p className={styles.empty}>Loading course students…</p> : studentsQuery.isError ? <div className={styles.inlineError} role="alert"><p>Students could not be loaded.</p><button type="button" onClick={() => void studentsQuery.refetch()}>Try again</button></div> : visibleStudentRows.length === 0 ? <p className={styles.empty}>No matching active students.</p> : (
+          {studentsQuery.isPending || attemptsQuery.isPending ? <p className={styles.empty}>Loading student results…</p> : studentsQuery.isError || attemptsQuery.isError ? <div className={styles.inlineError} role="alert"><p>Student results could not be loaded.</p><button type="button" onClick={() => { void studentsQuery.refetch(); void attemptsQuery.refetch(); }}>Try again</button></div> : visibleStudentRows.length === 0 ? <p className={styles.empty}>No matching active students.</p> : (
             <ul className={styles.studentList}>
               {visibleStudentRows.map(row => {
                 const selectable = row.finalizedAttempts.length > 0;
+                const studentName = row.student.userName || `User ${row.student.userId}`;
                 return <li key={row.student.userId}>
-                  <label><input type="checkbox" checked={selectedUserIds.has(row.student.userId)} disabled={!selectable || row.isLoading || row.isError} onChange={() => toggleStudent(row.student.userId)}/><span><strong>{row.student.userName || `User ${row.student.userId}`}</strong><small>{row.student.userEmail || `User ID ${row.student.userId}`}</small></span></label>
-                  <span className={styles.attemptStatus}>{row.isLoading ? 'Loading attempts…' : row.isError ? 'Attempts unavailable' : row.latest ? `${row.finalizedAttempts.length} finalized · latest ${row.latest.status}` : 'No attempts'}</span>
+                  <div className={styles.studentIdentity}>
+                    {access.canReleaseGrades ? <input type="checkbox" aria-label={`Select ${studentName}`} checked={selectedUserIds.has(row.student.userId)} disabled={!selectable} onChange={() => toggleStudent(row.student.userId)}/> : null}
+                    <span><strong>{studentName}</strong><small>{row.student.userEmail || `User ID ${row.student.userId}`}</small></span>
+                  </div>
+                  <div className={styles.studentResultActions}>
+                    <span className={styles.attemptStatus}>{row.latest ? `${row.finalizedAttempts.length} finalized · latest ${row.latest.status}` : 'No attempts'}</span>
+                    {row.finalizedAttempts[0] ? <button
+                      type="button"
+                      className={styles.reviewButton}
+                      onClick={() => setReviewTarget({userId: row.student.userId, attemptId: row.finalizedAttempts[0].id})}
+                      aria-label={`Review result for ${studentName}`}
+                      aria-expanded={reviewTarget?.userId === row.student.userId}
+                    ><Eye size={16}/> Review result</button> : null}
+                  </div>
                 </li>;
               })}
             </ul>
           )}
+          {attemptsQuery.data?.failedUserIds.length ? (
+            <div className={styles.inlineError} role="alert">
+              <p>Attempt history could not be loaded for {attemptsQuery.data.failedUserIds.length} learner(s).</p>
+              <button type="button" onClick={() => void attemptsQuery.refetch()}>Try again</button>
+            </div>
+          ) : null}
+
+          {reviewTarget && reviewStudentRow ? (
+            <section className={styles.resultReview} aria-labelledby="attempt-review-title">
+              <div className={styles.resultReviewHeader}>
+                <div>
+                  <p>Attempt review</p>
+                  <h3 id="attempt-review-title">{reviewStudentRow.student.userName || `User ${reviewStudentRow.student.userId}`}</h3>
+                </div>
+                <div className={styles.reviewHeaderActions}>
+                  <label>
+                    <span>Attempt</span>
+                    <select value={reviewTarget.attemptId} onChange={event => setReviewTarget({...reviewTarget, attemptId: Number(event.target.value)})}>
+                      {reviewStudentRow.finalizedAttempts.map(attempt => <option key={attempt.id} value={attempt.id}>Attempt {attempt.attemptNumber} · {attempt.status}</option>)}
+                    </select>
+                  </label>
+                  <button type="button" className={styles.closeReviewButton} onClick={() => setReviewTarget(null)} aria-label="Close attempt review"><X size={18}/></button>
+                </div>
+              </div>
+
+              {reviewResultQuery.isPending || reviewAttemptQuery.isPending ? <p className={styles.empty}>Loading attempt result…</p> : reviewResultQuery.isError || reviewAttemptQuery.isError ? (
+                <div className={styles.inlineError} role="alert"><p>This attempt result could not be loaded.</p><button type="button" onClick={() => { void reviewResultQuery.refetch(); void reviewAttemptQuery.refetch(); }}>Try again</button></div>
+              ) : reviewResultQuery.data && reviewAttemptQuery.data ? <>
+                <div className={styles.resultSummary}>
+                  <div><span>Total score</span><strong>{reviewAttemptQuery.data.totalScore ?? '—'} / {quizQuery.data?.totalPoints ?? '—'}</strong></div>
+                  <div><span>Auto score</span><strong>{reviewAttemptQuery.data.autoScore ?? '—'}</strong></div>
+                  <div><span>Manual score</span><strong>{reviewAttemptQuery.data.manualScore ?? '—'}</strong></div>
+                  <div><span>Grade status</span><strong>{reviewResultQuery.data.gradeStatus || 'Not released'}</strong></div>
+                </div>
+                {!reviewAttemptQuery.data.manualGradingComplete ? <p className={styles.pendingNotice}>Short-answer grading is still incomplete.</p> : null}
+                {reviewedAttempt?.submittedAt ? <p className={styles.reviewTimestamp}>Submitted {formatUtcTimestamp(reviewedAttempt.submittedAt)}</p> : null}
+                <ol className={styles.resultQuestions}>
+                  {reviewResultQuery.data.questions.map((resultQuestion, index) => {
+                    const question = questionsQuery.data?.find(item => item.id === resultQuestion.questionId);
+                    const selectedOptions = new Set(resultQuestion.selectedOptionIds ?? []);
+                    const correctOptions = new Set(resultQuestion.correctOptionIds
+                      ?? question?.options.filter(option => option.isCorrect).map(option => option.id)
+                      ?? []);
+                    return <li key={resultQuestion.questionId}>
+                      <div className={styles.resultQuestionHeader}>
+                        <div><span>Question {question?.position ?? index + 1}</span><MarkdownMessage content={question?.stem || `Question ${index + 1}`}/></div>
+                        <strong>{resultQuestion.score ?? '—'} / {resultQuestion.points}</strong>
+                      </div>
+                      {resultQuestion.type === 'ShortAnswer' ? (
+                        <div className={styles.shortAnswerResult}><span>Student answer</span>{resultQuestion.textAnswer ? <MarkdownMessage content={resultQuestion.textAnswer}/> : <p>No answer submitted.</p>}</div>
+                      ) : question?.options.length ? (
+                        <ul className={styles.resultOptions}>
+                          {question.options.map(option => {
+                            const selected = selectedOptions.has(option.id);
+                            const correct = correctOptions.has(option.id);
+                            return <li key={option.id} data-selected={selected} data-correct={correct}>
+                              <span className={styles.optionIndicator} aria-hidden="true">{selected ? '●' : '○'}</span>
+                              <MarkdownMessage content={option.label}/>
+                              <span className={styles.optionLabels}>{selected ? <em>Student answer</em> : null}{correct ? <em>Correct answer</em> : null}</span>
+                            </li>;
+                          })}
+                        </ul>
+                      ) : <p className={styles.empty}>Answer details are unavailable.</p>}
+                    </li>;
+                  })}
+                </ol>
+              </> : null}
+            </section>
+          ) : null}
         </section>
       ) : null}
 

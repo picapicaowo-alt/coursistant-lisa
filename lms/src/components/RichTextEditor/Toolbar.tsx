@@ -64,6 +64,7 @@ interface ToolbarButtonProps {
 const ToolbarButton: React.FC<ToolbarButtonProps> = ({label, hint, active, onClick, children}) => (
   <button
     type="button"
+    onMouseDown={event => event.preventDefault()}
     onClick={onClick}
     aria-label={label}
     aria-pressed={active}

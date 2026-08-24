@@ -136,6 +136,10 @@ export class QuizApiService {
     return this.apiClient.get(`/v2/courses/${courseId}/quizzes/${quizId}/attempts/current`);
   }
 
+  getAttempt(courseId: number, quizId: number, attemptId: number): Promise<ApiResponse<QuizAttempt>> {
+    return this.apiClient.get(`/v2/courses/${courseId}/quizzes/${quizId}/attempts/${attemptId}`);
+  }
+
   listAttempts(
     courseId: number,
     quizId: number,

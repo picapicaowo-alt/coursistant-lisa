@@ -230,7 +230,7 @@ describe('AssignmentApiService 8081 routes', () => {
     expect(client.post).toHaveBeenNthCalledWith(2, '/v2/courses/4/assignments/9/rubric/restore-previous', undefined, {params: {confirmReplaceAfterGrading: true}});
   });
 
-  it('uses distinct student and group annotated-file routes', async () => {
+  it('uses the existing student and group annotated-file upload and download routes', async () => {
     const file = new File(['feedback'], 'feedback.pdf', {type: 'application/pdf'});
     const blob = new Blob(['feedback'], {type: 'application/pdf'});
     client.post.mockResolvedValue({status: 200, data: {}});

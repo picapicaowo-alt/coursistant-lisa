@@ -1,6 +1,6 @@
-import {FormEvent, useEffect, useMemo, useState} from 'react';
+import {FormEvent, useEffect, useMemo, useRef, useState} from 'react';
 import {useQuery, useQueryClient} from '@tanstack/react-query';
-import {ArrowLeft, CheckCircle2, Download, MessageSquare, RotateCcw, Search, Upload, X} from 'lucide-react';
+import {ArrowLeft, CheckCircle2, Download, FileText, MessageSquare, RotateCcw, Search, Trash2, Upload, X} from 'lucide-react';
 import {Link, useParams} from 'react-router-dom';
 import type {GradingRosterItem, UpsertGradePayload} from '@/apis';
 import {unwrapData} from '@/apis';
@@ -62,8 +62,18 @@ interface GradeDialogProps {
   isSaving: boolean;
   error: string | null;
   onClose: () => void;
-  onSave: (payload: UpsertGradePayload, annotatedFile?: File) => void;
+  onSave: (payload: UpsertGradePayload, annotatedFileChange: AnnotatedFileChange) => void;
 }
+
+type AnnotatedFileChange =
+  | {kind: 'keep'}
+  | {kind: 'upload'; file: File};
+
+const formatFileSize = (size: number) => {
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 export const GradeDialog = ({
   courseId,
@@ -78,6 +88,7 @@ export const GradeDialog = ({
   const [score, setScore] = useState(row.score === undefined ? '' : String(row.score));
   const [feedback, setFeedback] = useState('');
   const [annotatedFile, setAnnotatedFile] = useState<File | undefined>();
+  const annotatedFileInputRef = useRef<HTMLInputElement>(null);
   const gradingViewQuery = useQuery({
     queryKey: ['assignment-grading-view', courseId, assignmentId, row.studentUserId, row.groupId],
     queryFn: async () => unwrapData(
@@ -109,6 +120,9 @@ export const GradeDialog = ({
     event.preventDefault();
     const parsedScore = Number(score);
     if (!Number.isFinite(parsedScore)) return;
+    const annotatedFileChange: AnnotatedFileChange = annotatedFile
+      ? {kind: 'upload', file: annotatedFile}
+      : {kind: 'keep'};
     onSave({
       score: parsedScore,
       feedbackHtml: feedback.trim() || undefined,
@@ -116,7 +130,18 @@ export const GradeDialog = ({
       rubricVersionId: gradingViewQuery.data?.grade?.rubricVersionId
         ?? gradingViewQuery.data?.rubric?.versionId,
       aiAssisted: false,
-    }, annotatedFile);
+    }, annotatedFileChange);
+  };
+
+  const clearSelectedAnnotatedFile = () => {
+    setAnnotatedFile(undefined);
+    if (annotatedFileInputRef.current) annotatedFileInputRef.current.value = '';
+  };
+
+  const openAnnotatedFilePicker = () => {
+    if (!annotatedFileInputRef.current) return;
+    annotatedFileInputRef.current.value = '';
+    annotatedFileInputRef.current.click();
   };
 
   return (
@@ -200,11 +225,85 @@ export const GradeDialog = ({
           />
         </div>
 
-        <label className={styles.annotatedField}>
-          <span><Upload size={16}/> Annotated feedback file</span>
-          <input type="file" onChange={event => setAnnotatedFile(event.target.files?.[0])}/>
-          <small>{annotatedFile ? annotatedFile.name : row.hasAnnotatedFile ? 'Uploading a new file replaces the current annotated file.' : 'Optional. Add a marked-up copy for the learner.'}</small>
-        </label>
+        <div className={styles.annotatedField}>
+          <div className={styles.annotatedFieldHeader}>
+            <span><Upload size={17}/> Annotated feedback file</span>
+            <small>Optional</small>
+          </div>
+          <input
+            ref={annotatedFileInputRef}
+            className={styles.srOnly}
+            type="file"
+            accept=".pdf,.docx,.png,.jpg,.jpeg,.gif,.webp"
+            disabled={isSaving}
+            aria-label="Choose annotated feedback file"
+            onChange={event => {
+              const nextFile = event.target.files?.[0];
+              setAnnotatedFile(nextFile);
+            }}
+          />
+
+          {annotatedFile ? (
+            <div className={styles.annotatedFileCard}>
+              <span className={styles.annotatedFileIcon}><FileText size={20}/></span>
+              <span className={styles.annotatedFileDetails}>
+                <strong title={annotatedFile.name}>{annotatedFile.name}</strong>
+                <small>{formatFileSize(annotatedFile.size)} · Ready to upload</small>
+              </span>
+              <div className={styles.annotatedFileActions}>
+                <button
+                  type="button"
+                  className={styles.replaceFileButton}
+                  onClick={openAnnotatedFilePicker}
+                  disabled={isSaving}
+                >
+                  Replace
+                </button>
+                <button
+                  type="button"
+                  className={styles.removeFileButton}
+                  onClick={clearSelectedAnnotatedFile}
+                  disabled={isSaving}
+                  aria-label={`Remove selected file ${annotatedFile.name}`}
+                >
+                  <Trash2 size={16}/> Remove
+                </button>
+              </div>
+            </div>
+          ) : row.hasAnnotatedFile ? (
+            <div className={styles.annotatedFileCard}>
+              <span className={styles.annotatedFileIcon}><FileText size={20}/></span>
+              <span className={styles.annotatedFileDetails}>
+                <strong>Current annotated feedback file</strong>
+                <small>Saved with this grade · replacement is supported</small>
+              </span>
+              <div className={styles.annotatedFileActions}>
+                <button
+                  type="button"
+                  className={styles.replaceFileButton}
+                  onClick={openAnnotatedFilePicker}
+                  disabled={isSaving}
+                >
+                  Replace
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className={styles.annotatedUploadButton}
+              onClick={openAnnotatedFilePicker}
+              disabled={isSaving}
+            >
+              <Upload size={19}/>
+              <span>
+                <strong>Upload annotated file</strong>
+                <small>Choose a marked-up file for the learner</small>
+              </span>
+            </button>
+          )}
+          <p className={styles.annotatedFileHint}>PDF, DOCX, or image · Maximum 100 MB</p>
+        </div>
 
         <p className={styles.dialogNote}>
           Saving creates an Entered grade. The learner will not see it until grades are released.
@@ -259,7 +358,7 @@ const AssignmentGradingPage = () => {
     });
   }, [filter, rosterQuery.data?.items, search]);
 
-  const saveGrade = async (payload: UpsertGradePayload, annotatedFile?: File) => {
+  const saveGrade = async (payload: UpsertGradePayload, annotatedFileChange: AnnotatedFileChange) => {
     if (!selectedRow || courseId === null || assignmentId === null) return;
     setSaving(true);
     setActionError(null);
@@ -267,10 +366,14 @@ const AssignmentGradingPage = () => {
     try {
       if (selectedRow.groupId !== undefined) {
         await assignmentApiService.upsertGroupGrade(courseId, assignmentId, selectedRow.groupId, payload);
-        if (annotatedFile) await assignmentApiService.uploadGroupAnnotatedFile(courseId, assignmentId, selectedRow.groupId, annotatedFile);
+        if (annotatedFileChange.kind === 'upload') {
+          await assignmentApiService.uploadGroupAnnotatedFile(courseId, assignmentId, selectedRow.groupId, annotatedFileChange.file);
+        }
       } else if (selectedRow.studentUserId !== undefined) {
         await assignmentApiService.upsertStudentGrade(courseId, assignmentId, selectedRow.studentUserId, payload);
-        if (annotatedFile) await assignmentApiService.uploadStudentAnnotatedFile(courseId, assignmentId, selectedRow.studentUserId, annotatedFile);
+        if (annotatedFileChange.kind === 'upload') {
+          await assignmentApiService.uploadStudentAnnotatedFile(courseId, assignmentId, selectedRow.studentUserId, annotatedFileChange.file);
+        }
       } else {
         throw new Error('Roster row has no grading target.');
       }
@@ -278,7 +381,7 @@ const AssignmentGradingPage = () => {
       await queryClient.invalidateQueries({queryKey: ['assignment-grading-roster', courseId, assignmentId]});
       setSelectedRow(null);
     } catch {
-      setActionError('The grade could not be saved. Your score and feedback are still here.');
+      setActionError('The grade or annotated file could not be saved. Your score and feedback are still here.');
     } finally {
       setSaving(false);
     }
@@ -577,7 +680,7 @@ const AssignmentGradingPage = () => {
           onClose={() => {
             if (!isSaving) setSelectedRow(null);
           }}
-          onSave={(payload, annotatedFile) => void saveGrade(payload, annotatedFile)}
+          onSave={(payload, annotatedFileChange) => void saveGrade(payload, annotatedFileChange)}
         />
       ) : null}
     </div>

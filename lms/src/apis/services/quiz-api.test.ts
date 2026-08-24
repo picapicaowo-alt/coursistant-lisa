@@ -42,14 +42,16 @@ describe('QuizApiService', () => {
     expect(client.delete).toHaveBeenCalledWith('/v2/courses/4/quizzes/3', {params: {confirm: true}});
   });
 
-  it('loads attempt history and an individual attempt result', async () => {
+  it('loads attempt history, staff-readable attempt detail, and an individual result', async () => {
     client.get.mockResolvedValue({status: 200, data: []});
     await service.listAttempts(4, 3, {userId: 385, page: 1, pageSize: 50});
+    await service.getAttempt(4, 3, 12);
     await service.getAttemptResult(4, 3, 12);
     expect(client.get).toHaveBeenNthCalledWith(1, '/v2/courses/4/quizzes/3/attempts', {
       params: {userId: 385, page: 1, pageSize: 50},
     });
-    expect(client.get).toHaveBeenNthCalledWith(2, '/v2/courses/4/quizzes/3/attempts/12/result');
+    expect(client.get).toHaveBeenNthCalledWith(2, '/v2/courses/4/quizzes/3/attempts/12');
+    expect(client.get).toHaveBeenNthCalledWith(3, '/v2/courses/4/quizzes/3/attempts/12/result');
   });
 
   it('edits an existing question and releases only selected users', async () => {

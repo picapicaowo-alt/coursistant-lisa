@@ -1,4 +1,4 @@
-import {render, screen} from '@testing-library/react';
+import {fireEvent, render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {Editor} from '@tiptap/core';
 import {afterEach, describe, expect, it} from 'vitest';
@@ -7,9 +7,10 @@ import Toolbar from './Toolbar';
 
 let editor: Editor | null = null;
 
-const mountToolbar = () => {
+const mountToolbar = (content?: string) => {
   editor = new Editor({
     extensions: createEditorExtensions({placeholder: 'test', disabled: false}),
+    content,
   });
   render(<Toolbar editor={editor}/>);
 };
@@ -34,5 +35,17 @@ describe('RichTextEditor insert menu', () => {
     await user.click(screen.getByText('Insert'));
     await user.click(screen.getByRole('button', {name: 'File'}));
     expect(screen.getByRole('dialog', {name: 'Insert file'})).not.toBeNull();
+  });
+
+  it('removes bold formatting from the selected text', async () => {
+    const user = userEvent.setup();
+    mountToolbar('<p><strong>Bold feedback</strong></p>');
+    editor?.commands.selectAll();
+
+    const boldButton = screen.getByRole('button', {name: 'Bold'});
+    expect(fireEvent.mouseDown(boldButton)).toBe(false);
+    await user.click(boldButton);
+
+    expect(editor?.getHTML()).toBe('<p>Bold feedback</p>');
   });
 });
