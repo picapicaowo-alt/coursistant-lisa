@@ -303,8 +303,12 @@ const QuizEditorPage = () => {
       await Promise.all([
         queryClient.invalidateQueries({queryKey: ['quiz-questions', courseId, quizId]}),
         queryClient.invalidateQueries({queryKey: ['quiz', courseId, quizId]}),
-        queryClient.invalidateQueries({queryKey: ['quiz-grading', courseId, quizId]}),
-        queryClient.invalidateQueries({queryKey: ['course-grades', courseId]}),
+        queryClient.invalidateQueries({queryKey: ['quiz-grading-summary', courseId, quizId]}),
+        queryClient.invalidateQueries({queryKey: ['quiz-attempts', courseId, quizId]}),
+        queryClient.invalidateQueries({queryKey: ['quiz-my-result', courseId, quizId]}),
+        queryClient.invalidateQueries({queryKey: ['quiz-attempt-result', courseId, quizId]}),
+        queryClient.invalidateQueries({queryKey: ['course-my-grades', courseId]}),
+        queryClient.invalidateQueries({queryKey: ['course-quizzes', courseId]}),
       ]);
     },
     onError: () => setMessage('The answer key could not be corrected. Refresh if another editor changed it.'),
