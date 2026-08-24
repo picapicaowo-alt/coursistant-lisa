@@ -1,5 +1,8 @@
 import {describe, expect, it} from 'vitest';
-import {shouldAttemptTokenRefresh} from './api-client';
+import {
+  shouldAttemptTokenRefresh,
+  shouldEndSessionAfterAuthFailure,
+} from './api-client';
 
 describe('shouldAttemptTokenRefresh', () => {
   it('never refreshes an anonymous login request after a 401', () => {
@@ -25,5 +28,11 @@ describe('shouldAttemptTokenRefresh', () => {
   it('allows a client without refreshPath to reuse the LMS session rotation', () => {
     expect(shouldAttemptTokenRefresh(undefined, {url: '/chat'}, {hasRefreshDelegate: true})).toBe(true);
     expect(shouldAttemptTokenRefresh(undefined, {url: '/chat'})).toBe(false);
+  });
+
+  it('keeps the LMS session when an auxiliary service rejects its token', () => {
+    expect(shouldEndSessionAfterAuthFailure(true)).toBe(false);
+    expect(shouldEndSessionAfterAuthFailure(false)).toBe(true);
+    expect(shouldEndSessionAfterAuthFailure(undefined)).toBe(true);
   });
 });

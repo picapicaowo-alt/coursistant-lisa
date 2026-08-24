@@ -20,6 +20,11 @@ export interface ApiClientConfig {
   refreshDelegate?: () => Promise<void>;
   /** Called when the session cannot be recovered and the user must log in. */
   onSessionExpired?: () => void;
+  /**
+   * Auxiliary services may reject an otherwise valid LMS token. Keep the LMS
+   * session intact and report that service's 401 to its caller instead.
+   */
+  preserveSessionOnAuthFailure?: boolean;
 }
 
 export interface RequestConfig extends Omit<AxiosRequestConfig, 'url' | 'method'> {
@@ -47,6 +52,10 @@ export const shouldAttemptTokenRefresh = (
   && !request.skipAuth
   && request.url !== refreshPath
 );
+
+export const shouldEndSessionAfterAuthFailure = (
+  preserveSessionOnAuthFailure: boolean | undefined,
+): boolean => preserveSessionOnAuthFailure !== true;
 
 export class ApiClient {
   private readonly client: AxiosInstance;
@@ -203,7 +212,9 @@ export class ApiClient {
         original.headers.Authorization = `Bearer ${this.accessToken}`;
         return await this.client.request(original) as never;
       } catch {
-        this.endSession();
+        if (shouldEndSessionAfterAuthFailure(this.config.preserveSessionOnAuthFailure)) {
+          this.endSession();
+        }
       }
     }
 

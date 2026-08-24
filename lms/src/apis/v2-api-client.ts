@@ -26,5 +26,7 @@ export const agentApiClient = new ApiClient({
   timeout: 60_000,
   withCredentials: true,
   refreshDelegate: () => V2ApiClient.recoverSession(),
-  onSessionExpired: endBrowserSession,
+  // A separately deployed agent can reject a token that is still valid for
+  // the LMS. Its 401 must not clear the core browser session.
+  preserveSessionOnAuthFailure: true,
 });
