@@ -3,7 +3,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import type {AssignmentAttachment} from '@/apis';
 import {assignmentApiService} from '@/apis/services/assignment-api';
 import {openPreviewWindow, saveBlob, showBlobInPreviewWindow} from '@/utils/downloadBlob';
-import {InstructorAttachmentRow, StudentGradeSummary} from './index';
+import {InstructorAttachmentRow, RubricEmptyState, StudentGradeSummary} from './index';
 import {uploadRubricWithReplaceConfirmation} from './rubricUpload';
 
 vi.mock('@/apis/services/assignment-api', () => ({
@@ -63,6 +63,20 @@ describe('InstructorAttachmentRow', () => {
       expect(showBlobInPreviewWindow).toHaveBeenCalledWith(previewWindow, blob);
     });
     expect(close).not.toHaveBeenCalled();
+  });
+});
+
+describe('RubricEmptyState', () => {
+  it('does not show instructor upload guidance to students', () => {
+    render(<RubricEmptyState canConfigureAssignments={false}/>);
+
+    expect(screen.queryByText('Upload a PDF rubric to keep grading criteria with this assignment.')).toBeNull();
+  });
+
+  it('keeps the upload guidance available to assignment managers', () => {
+    render(<RubricEmptyState canConfigureAssignments/>);
+
+    expect(screen.getByText('Upload a PDF rubric to keep grading criteria with this assignment.')).toBeTruthy();
   });
 });
 

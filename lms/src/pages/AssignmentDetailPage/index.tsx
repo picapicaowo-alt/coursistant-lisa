@@ -111,6 +111,12 @@ export const InstructorAttachmentRow = ({courseId, assignmentId, attachment}: {
   );
 };
 
+export const RubricEmptyState = ({canConfigureAssignments}: {
+  canConfigureAssignments: boolean;
+}) => canConfigureAssignments
+  ? <p className={styles.secondaryText}>Upload a PDF rubric to keep grading criteria with this assignment.</p>
+  : null;
+
 const formatGradeNumber = (value: number) => new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 2,
 }).format(value);
@@ -450,14 +456,14 @@ const AssignmentDetailPage = () => {
               <div><h2>Rubric</h2><p className={styles.secondaryText}>{rubricQuery.data?.posted ? `Version ${rubricQuery.data.versionNo} · ${rubricQuery.data.totalVersions} total` : 'No rubric uploaded'}</p></div>
               {access.canConfigureAssignments ? <button type="button" className={styles.secondaryLink} onClick={() => rubricInputRef.current?.click()} disabled={uploadRubric.isPending}><Upload size={15}/>{uploadRubric.isPending ? 'Uploading…' : rubricQuery.data?.posted ? 'Replace PDF' : 'Upload PDF'}</button> : null}
             </div>
-            <input ref={rubricInputRef} className={styles.hiddenInput} type="file" accept="application/pdf,.pdf" onChange={event => {
+            {access.canConfigureAssignments ? <input ref={rubricInputRef} className={styles.hiddenInput} type="file" accept="application/pdf,.pdf" onChange={event => {
               const file = event.target.files?.[0];
               if (file && (!rubricQuery.data?.gradedAgainstPreviousRubricCount || window.confirm(`${rubricQuery.data.gradedAgainstPreviousRubricCount} grade(s) reference the current rubric. Replace it anyway?`))) uploadRubric.mutate(file);
               event.target.value = '';
-            }}/>
+            }}/> : null}
             {rubricQuery.isPending ? <p className={styles.secondaryText}>Loading rubric…</p> : rubricQuery.isError ? <p className={styles.errorBanner}>Rubric information could not be loaded.</p> : rubricQuery.data?.posted ? <div className={styles.rubricRow}><FileText size={20}/><button type="button" onClick={() => void previewRubric()}>{rubricQuery.data.originalName}</button><span>{rubricQuery.data.sizeBytes ? `${Math.max(1, Math.round(rubricQuery.data.sizeBytes / 1024))} KB` : ''}</span><button type="button" className={styles.secondaryLink} onClick={() => void previewRubric()}><Eye size={15}/>Preview</button><button type="button" className={styles.secondaryLink} onClick={() => void downloadRubric()}><Download size={15}/>Download</button>{access.canConfigureAssignments && rubricQuery.data.canRestorePrevious ? <button type="button" className={styles.secondaryLink} disabled={restoreRubric.isPending} onClick={() => {
               if (window.confirm('Restore the previous rubric version?')) restoreRubric.mutate();
-            }}><RotateCcw size={15}/>Restore previous</button> : null}</div> : <p className={styles.secondaryText}>Upload a PDF rubric to keep grading criteria with this assignment.</p>}
+            }}><RotateCcw size={15}/>Restore previous</button> : null}</div> : <RubricEmptyState canConfigureAssignments={access.canConfigureAssignments}/>}
           </section>
 
           {isStudent && (
