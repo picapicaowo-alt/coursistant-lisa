@@ -72,6 +72,9 @@ export const resolveNotificationPath = (
     );
     if (singularSubmission) return singularSubmission[1];
 
+    const singularGrades = deepLink.match(/^(\/course\/\d+\/grades)\/?$/);
+    if (singularGrades) return singularGrades[1];
+
     const singularSubject = deepLink.match(
       /^(\/course\/\d+(?:\/(?:assignments|quizzes|announcements|events|weeks|group-sets)\/\d+)?)(?:\/my-grade)?\/?$/,
     );

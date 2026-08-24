@@ -35,6 +35,20 @@ describe('resolveNotificationPath', () => {
   });
 
   it.each([
+    'ASSIGNMENT_GRADE_RELEASED',
+    'ASSIGNMENT_GRADE_CORRECTED',
+    'QUIZ_GRADE_RELEASED',
+    'QUIZ_GRADE_CORRECTED',
+  ] as const)('opens the course grades page for %s', notificationType => {
+    expect(resolveNotificationPath({
+      availability: 'AVAILABLE',
+      courseId: 7,
+      deepLink: '/course/7/grades',
+      notificationType,
+    })).toBe('/course/7/grades');
+  });
+
+  it.each([
     ['announcements', 'announcements'],
     ['events', 'events'],
     ['weeks', 'weeks'],
