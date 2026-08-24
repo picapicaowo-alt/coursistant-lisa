@@ -1,7 +1,13 @@
 ## API Service & Type Architecture
 
 > **Status:** Mixed — service/type naming ideas still apply; long Java backend templates below are reference only.  
-> **Current practice:** follow [`PROJECT_STANDARDS.md`](./PROJECT_STANDARDS.md) §6 and the live code under `src/apis/services` + `src/apis/types` (LMS v2 envelope, `Idempotency-Key`, blob preview/download).
+> **Current practice:** follow [`PROJECT_STANDARDS.md`](./PROJECT_STANDARDS.md) §7 and the live code under `src/apis/services` + `src/apis/types` (LMS v2 envelope, `Idempotency-Key`, blob preview/download).
+>
+> **Scope boundary:** this is a frontend repository. The Java/backend examples
+> below are historical context only and must not be implemented, deployed, or
+> used to change backend, AI, database, or infrastructure systems from this
+> repository. Frontend work consumes an approved contract and hands external
+> gaps to the owning team.
 
 ### Overview
 

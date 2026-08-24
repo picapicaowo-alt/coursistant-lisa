@@ -4,6 +4,13 @@ Living coding standards for **coursistant-lisa** (Coursistant LMS frontend).
 
 These rules started from the LmsHomePage / CourseWorkspacePage refactor guidelines and are extended for the current LMS v2 work (assignments, quiz, roster, notifications, AI workplace, Dev 8084).
 
+**Coursistant rule number one:** this repository owns the frontend only. Read
+[`../AGENTS.md`](../AGENTS.md) before making changes. A frontend task must not
+inspect, edit, deploy, migrate, or claim ownership of backend services, AI
+service implementations, databases, or infrastructure. Existing environment,
+proxy, and designated demo-account values remain unchanged unless the task
+explicitly requests that exact frontend configuration change.
+
 **Canonical repo:** `https://github.com/picapicaowo-alt/coursistant-lisa`  
 **Related:** `ARCHITECTURE.md`, `STATE_MANAGEMENT.md`, and `API_STANDARDS.md` are historical design notes — prefer this file when they conflict with current code.
 
@@ -128,30 +135,48 @@ Historical normalized-store designs in `STATE_MANAGEMENT.md` / `ARCHITECTURE.md`
 
 ---
 
-## 6. API conventions
+## 6. Hardcoded values and configuration ownership
 
-### 6.1 Layout
+- Do not add environment-specific hosts, ports, credentials, demo values, or
+  tokens to feature code.
+- Do not duplicate route paths, roles, statuses, storage keys, limits, or other
+  domain values across modules. Give repeated/domain-significant values one
+  typed owner.
+- Use `src/config/env.ts` for typed frontend configuration reads, existing route
+  config/helpers for shared paths, and `src/styles/_tokens.scss` for design
+  values.
+- Do not rename or move existing environment keys/values or demo-account values
+  as drive-by hardcode cleanup. They are frozen integration inputs until a task
+  explicitly scopes their migration.
+- Test fixtures and literal user-facing copy are allowed when they are local to
+  the behavior being tested/rendered and are not disguised configuration.
+
+---
+
+## 7. API conventions
+
+### 7.1 Layout
 
 - Contracts: `src/apis/types/*` (`Request` / `Response` naming; mirror LMS v2)
 - Calls: `src/apis/services/*`
 - Shared envelope: `ApiResponse` in `apis/types` — treat `code === "SUCCESS"` (string), not numeric HTTP-only success
 - Writes that the backend supports: send `Idempotency-Key` via the shared helper when the endpoint requires it
 
-### 6.2 Client behavior
+### 7.2 Client behavior
 
 - Use the shared `ApiClient` (token attach, refresh coalescing, session-expired callback).
 - Prefer relative `/api` in Dev so 8084 same-origin proxy works; do not hardcode secrets or long-lived tokens into the bundle.
 - Never log access tokens, refresh material, passwords, or full auth payloads.
 - Binary download/preview: use authenticated blob helpers — do not put Bearer tokens in URLs.
 
-### 6.3 Errors and empty states
+### 7.3 Errors and empty states
 
 - Distinguish transport failure vs domain codes (`NOT_FOUND`, empty submission, etc.).
 - UI must show recoverable error + retry where the user can act; do not blank the shell.
 
 ---
 
-## 7. TypeScript
+## 8. TypeScript
 
 - New files: `.ts` / `.tsx` only.
 - Prefer explicit types on public function params, API payloads, and component props.
@@ -161,7 +186,22 @@ Historical normalized-store designs in `STATE_MANAGEMENT.md` / `ARCHITECTURE.md`
 
 ---
 
-## 8. Styling
+## 9. Comments and documentation
+
+- Prefer expressive names and types; comments are for constraints that code
+  alone cannot explain.
+- Explain **why** a workaround, invariant, compatibility branch, or lifecycle
+  decision exists. Do not narrate syntax.
+- Use concise TSDoc/JSDoc on exported helpers when their contract, side effects,
+  error behavior, or ownership boundary is not evident from types.
+- Keep comments next to the rule they protect, link a durable issue/ADR when
+  needed, and remove comments when the constraint disappears.
+- Never leave commented-out implementations, change logs, personal notes, or
+  TODOs without an owner/reference in production source.
+
+---
+
+## 10. Styling
 
 - Default: SCSS modules next to the component.
 - Use design tokens via the injected `t` namespace / CSS variables — do not invent one-off brand colors.
@@ -170,7 +210,7 @@ Historical normalized-store designs in `STATE_MANAGEMENT.md` / `ARCHITECTURE.md`
 
 ---
 
-## 9. Testing
+## 11. Testing
 
 - Colocate `*.test.ts(x)` with the unit under test.
 - Prefer Testing Library queries that reflect user behavior.
@@ -180,24 +220,30 @@ Historical normalized-store designs in `STATE_MANAGEMENT.md` / `ARCHITECTURE.md`
 
 ---
 
-## 10. Security and privacy
+## 12. Security and privacy
 
 - No credentials, PEM keys, or `.env` secrets in git.
 - No shipping hardcoded API tokens or demo passwords in client code.
+- Do not alter existing designated demo-account values as unrelated cleanup.
 - Strip sensitive bodies from debug logs.
 - Course-scoped capabilities beat global role checks for teaching controls when both exist.
 
 ---
 
-## 11. Git and source of truth
+## 13. Git and source of truth
 
 - **Only** develop against `coursistant-lisa`. Do not treat `bink44/lms-frontend` or personal forks as upstream.
+- `main` is the latest production-ready frontend source; do not merge a branch
+  that cannot pass the complete frontend quality baseline and production build.
 - Prefer small, imperative commit subjects: `feat:`, `fix:`, `test:`, `chore:`.
 - Do not commit local QA screenshots (`local-*.png`, `dev-8084-*.png`) unless explicitly requested.
+- CI uses `npm ci`, so `package-lock.json` is canonical. Keep the retained
+  `yarn.lock` compatible with the same `package.json`; review and verify either
+  lockfile whenever it changes.
 
 ---
 
-## 12. Dev 8084
+## 14. Dev 8084
 
 - Review UI is built with `npm run build:dev` and deployed as static assets to the Dev host’s `coursistant-review-8084` release layout.
 - 8084 is **not** auto-deployed from GitHub. After merge-worthy work, build from this repo and deploy deliberately.
@@ -205,7 +251,7 @@ Historical normalized-store designs in `STATE_MANAGEMENT.md` / `ARCHITECTURE.md`
 
 ---
 
-## 13. Known gaps (improve when you touch the area)
+## 15. Known gaps (improve when you touch the area)
 
 1. **Legacy JSX** — chat, old roster/notification sections still `.jsx`. Profile and Settings are TSX.
 2. **Legacy type quarantine** — these files carry `// @ts-nocheck` until migration: `ChatContent.tsx`, `RichTextEditor/extensions/BlankNode.ts`, `DetailWorkspacePage/index.tsx`, `DetailWorkspacePage/components/AssignmentEdit/index.config.ts`, `stores/core/AggregateRootGenerator.test.ts`.
@@ -213,15 +259,22 @@ Historical normalized-store designs in `STATE_MANAGEMENT.md` / `ARCHITECTURE.md`
 4. **Typecheck** — `npm run typecheck` and `npm run typecheck:production` in `lms/`.
 5. **Dead dependencies** — remove unused UI libraries once confirmed unused.
 6. **Docs drift** — update this file when a new vertical establishes a better pattern than the references above.
+7. **MathJax transitive warning** — `better-react-mathjax` currently retains a
+   `speech-rule-engine@4` path that installs deprecated `@xmldom/xmldom@0.9.10`.
+   `npm audit` reports zero vulnerabilities, but upgrade this chain in a
+   dedicated dependency change rather than hiding the install warning.
 
 ---
 
-## 14. PR / change checklist
+## 16. PR / change checklist
 
 - [ ] New UI is `.tsx` with typed props
+- [ ] Change is frontend-only; environment/demo integration inputs are unchanged
 - [ ] API goes through `apis/services` + typed `apis/types`
 - [ ] Loading / empty / error states handled
 - [ ] Role or course capability respected
 - [ ] Tests added or updated for the behavior change
 - [ ] No secrets in logs or bundle
+- [ ] No new hardcoded deploy/domain/design value; comments explain only non-obvious constraints
+- [ ] Any lockfile change was reviewed and verified
 - [ ] Styles use modules/tokens (no new ad-hoc global CSS dumps)

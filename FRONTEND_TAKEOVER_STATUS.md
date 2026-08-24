@@ -1,6 +1,6 @@
 # Coursistant Frontend Takeover Status
 
-Updated: 2026-08-18
+Updated: 2026-08-24
 
 This repository is a continuation of the existing React + TypeScript LMS frontend. The takeover work preserves the original application and incrementally replaces incomplete or legacy flows with the current LMS v2 contracts on backend port 8081.
 
@@ -120,9 +120,9 @@ This repository is a continuation of the existing React + TypeScript LMS fronten
 - Added a local mock LMS server for safe UI testing without dev-database writes.
 - Expanded the mock server into an interactive week/material preview so every management action can be reviewed even when 8081 is unavailable.
 - Added service, authentication, upload, routing, deep-link, and store-loop regression tests.
-- Current result: 152 tests passed across 32 test files.
+- Current result: 360 tests passed across 85 test files.
 - Current production Vite build succeeds.
-- The new Quiz, assignment-submission, event, group, Syllabus, Roster, Average Score, API, routing, and Dashboard files have no TypeScript errors; repository-wide `tsc` remains blocked by documented legacy debt, primarily `ChatContent`, API refresh typing, and old workspace models.
+- Both the standard and strict production TypeScript gates pass with the documented legacy quarantine excluded.
 - Live 8081 notification unread-count and inbox GET flows were verified successfully.
 - Live course 31 renders successfully after the store-loop fix.
 - Browser verification covered student/instructor flows, notification navigation after Mark all read, keyboard activation, course creation, Syllabus role controls, Roster mutations, and 390px Dashboard/Course/Roster layouts with no Vite overlay.
