@@ -10,6 +10,7 @@
 .cardHeader p { margin-top: .25rem; color: t.$text-muted; }
 .formGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 .formGrid label { display: grid; gap: .4rem; color: t.$text-muted; font-size: t.$fs-caption; font-weight: t.$fw-semibold; }
+.markdownField { display: grid; gap: .4rem; color: t.$text-muted; font-size: t.$fs-caption; font-weight: t.$fw-semibold; }
 .formGrid input, .formGrid textarea, .formGrid select, .optionEditor input[type='text'], .optionEditor input:not([type]) { width: 100%; padding: .72rem .8rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; color: t.$text; font: inherit; }
 .full { grid-column: 1 / -1; }
 .primaryButton, .secondaryButton { display: inline-flex; min-height: 2.5rem; align-items: center; justify-content: center; gap: .4rem; padding: 0 .95rem; border-radius: t.$radius-control-sm; font-weight: t.$fw-semibold; cursor: pointer; }
@@ -28,6 +29,7 @@
 .optionEditor { display: grid; gap: .65rem; margin: 1rem 0 0; padding: 1rem; border: 0; border-radius: t.$radius-card; background: t.$subcard-bg; }
 .optionEditor legend { padding: 0 .25rem; color: t.$text-muted; font-size: t.$fs-caption; font-weight: t.$fw-semibold; }
 .optionEditor > div { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .65rem; }
+.optionMarkdownEditor { min-width: 0; }
 .optionEditor > div > input:last-of-type { width: 100%; padding: .65rem .75rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; }
 .optionEditor button:not(.secondaryButton) { border: 0; background: transparent; color: t.$danger; cursor: pointer; }
 .footer { display: flex; justify-content: flex-end; margin-top: 1rem; }

@@ -18,6 +18,11 @@ vi.mock('@/contexts/RequiredAuthContext', () => ({
 
 import WorkflowPanel from './WorkflowPanel';
 
+const pasteWorkflowText = async (user: ReturnType<typeof userEvent.setup>, text: string) => {
+  await user.click(screen.getByLabelText('Tell Workflow what to do'));
+  await user.paste(text);
+};
+
 describe('WorkflowPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -38,7 +43,7 @@ describe('WorkflowPanel', () => {
       .not.toBeInTheDocument();
     expect(screen.getByText('Student workflow')).toBeInTheDocument();
 
-    await user.type(screen.getByLabelText('Tell Workflow what to do'), 'Change the assignment deadline');
+    await pasteWorkflowText(user, 'Change the assignment deadline');
     await user.click(screen.getByRole('button', {name: 'Run'}));
 
     await waitFor(() => expect(agentApi.chat).toHaveBeenCalledWith({
@@ -93,7 +98,7 @@ describe('WorkflowPanel', () => {
     const question = '**Question:** evaluate $x^2$ with `square(x)`.';
     const {container} = render(<WorkflowPanel/>);
 
-    await user.type(screen.getByLabelText('Tell Workflow what to do'), question);
+    await pasteWorkflowText(user, question);
     await user.click(screen.getByRole('button', {name: 'Run'}));
 
     await waitFor(() => expect(agentApi.chat).toHaveBeenCalledWith({
@@ -117,7 +122,7 @@ describe('WorkflowPanel', () => {
     const user = userEvent.setup();
     render(<WorkflowPanel/>);
 
-    await user.type(screen.getByLabelText('Tell Workflow what to do'), 'Move Assignment A');
+    await pasteWorkflowText(user, 'Move Assignment A');
     await user.click(screen.getByRole('button', {name: 'Run'}));
 
     const dialog = await screen.findByRole('dialog', {name: 'Deadline change approval'});
@@ -181,14 +186,14 @@ describe('WorkflowPanel', () => {
     const user = userEvent.setup();
     render(<WorkflowPanel/>);
 
-    await user.type(
-      screen.getByLabelText('Tell Workflow what to do'),
+    await pasteWorkflowText(
+      user,
       'change the due date of Assignment 0 to August 25, 1:00 pm',
     );
     await user.click(screen.getByRole('button', {name: 'Run'}));
 
     const detailsDialog = await screen.findByRole('dialog', {name: 'Confirm assignment details'});
-    expect(screen.getByLabelText('Tell Workflow what to do')).toBeDisabled();
+    expect(screen.getByLabelText('Tell Workflow what to do')).toHaveAttribute('contenteditable', 'false');
     expect(within(detailsDialog).getByText(/Is everything correct/)).toBeInTheDocument();
     expect(screen.queryByRole('dialog', {name: 'Deadline change approval'})).not.toBeInTheDocument();
 
@@ -222,7 +227,7 @@ describe('WorkflowPanel', () => {
     const user = userEvent.setup();
     render(<WorkflowPanel/>);
 
-    await user.type(screen.getByLabelText('Tell Workflow what to do'), 'change Testing Quiz to August 31, 1 PM');
+    await pasteWorkflowText(user, 'change Testing Quiz to August 31, 1 PM');
     await user.click(screen.getByRole('button', {name: 'Run'}));
 
     const detailsDialog = await screen.findByRole('dialog', {name: 'Confirm assignment details'});
@@ -249,7 +254,7 @@ describe('WorkflowPanel', () => {
     const user = userEvent.setup();
     render(<WorkflowPanel/>);
 
-    await user.type(screen.getByLabelText('Tell Workflow what to do'), 'change Assignment 0 to August 25, 1:00 pm');
+    await pasteWorkflowText(user, 'change Assignment 0 to August 25, 1:00 pm');
     await user.click(screen.getByRole('button', {name: 'Run'}));
     await user.click(within(await screen.findByRole('dialog', {name: 'Confirm assignment details'})).getByRole('button', {name: 'Confirm'}));
 

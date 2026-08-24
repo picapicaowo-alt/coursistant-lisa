@@ -1,4 +1,4 @@
-import {FormEvent, KeyboardEvent, useEffect, useRef, useState} from 'react';
+import {FormEvent, useEffect, useRef, useState} from 'react';
 import {useRequiredAuth} from '@/contexts/RequiredAuthContext';
 import {
   aiAgentApiService,
@@ -19,6 +19,7 @@ import {
 import {getApiErrorCode} from '@/utils/apiError';
 import DynamicThinking from '@/components/DynamicThinking/DynamicThinking';
 import MarkdownMessage from '@/components/MarkdownMessage';
+import {RichTextEditor} from '@/components/RichTextEditor';
 import styles from './index.module.scss';
 
 const READ_ONLY_QUICK_PROMPTS = [
@@ -200,13 +201,6 @@ const WorkflowPanel = () => {
     void sendMessage(input);
   };
 
-  const handleInputKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      void sendMessage(input);
-    }
-  };
-
   const handleConfirmDetails = () => {
     if (!canChangeDeadlines || !awaitingDetailsConfirmation || isSending) return;
     void sendMessage(
@@ -305,15 +299,16 @@ const WorkflowPanel = () => {
       </div>
 
       <form className={styles.workflowInput} onSubmit={handleSubmit}>
-        <label className="sr-only" htmlFor="workflow-message">Tell Workflow what to do</label>
-        <textarea
-          id="workflow-message"
-          value={input}
-          onChange={event => setInput(event.target.value)}
-          onKeyDown={handleInputKeyDown}
+        <RichTextEditor
+          className={styles.workflowMarkdownEditor}
+          variant="composer"
+          showToolbar={false}
+          content={input}
+          onChange={setInput}
+          onSubmit={() => void sendMessage(input)}
           placeholder={inputPlaceholder}
           disabled={isSending || blockingDecision}
-          rows={3}
+          ariaLabel="Tell Workflow what to do"
         />
         <div className={styles.inputFooter}>
           <span>Enter to send · Shift+Enter for a new line</span>

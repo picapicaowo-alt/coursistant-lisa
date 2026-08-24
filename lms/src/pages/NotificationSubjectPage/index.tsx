@@ -4,6 +4,7 @@ import {ArrowLeft, CalendarDays, Clock3, MapPin, Users} from 'lucide-react';
 import {Link, useParams} from 'react-router-dom';
 import {courseApiService} from '@/apis/services/course-api';
 import {unwrapData} from '@/apis';
+import {RichTextEditor} from '@/components/RichTextEditor';
 import styles from './index.module.scss';
 
 export type NotificationSubjectKind = 'announcement' | 'event' | 'group-set' | 'week';
@@ -148,7 +149,17 @@ const NotificationSubjectPage = ({kind}: Props) => {
           </div>
         ) : query.data ? (
           <>
-            {query.data.description ? <p className={styles.description}>{query.data.description}</p> : null}
+            {query.data.description ? (
+              <div className={styles.description}>
+                <RichTextEditor
+                  content={query.data.description}
+                  disabled
+                  displayOnly
+                  showToolbar={false}
+                  ariaLabel={`${query.data.label} description`}
+                />
+              </div>
+            ) : null}
             <dl className={styles.metadata}>
               {query.data.metadata.map(item => (
                 <div key={`${item.icon}-${item.label}`}>

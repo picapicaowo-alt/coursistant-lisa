@@ -74,6 +74,16 @@ $shadow-focus: 0 0 0 3px rgba(86, 111, 232, 0.1);
             padding: 0;
         }
     }
+
+    &.composer {
+        min-height: 5.5rem;
+        border-radius: 0.875rem;
+    }
+
+    &.inline {
+        min-height: 2.75rem;
+        border-radius: 0.65rem;
+    }
 }
 
 .toolbarContainer {
@@ -511,6 +521,54 @@ $shadow-focus: 0 0 0 3px rgba(86, 111, 232, 0.1);
 
     video {
         width: min(100%, 44rem);
+    }
+
+    :global(.tiptap-mathematics-render) {
+        color: $text-primary;
+    }
+
+    :global(.tiptap-mathematics-render--editable) {
+        cursor: pointer;
+        border-radius: 0.25rem;
+
+        &:hover {
+            background: $primary-light;
+        }
+    }
+
+    :global(div.tiptap-mathematics-render) {
+        margin: 0.75rem 0;
+        overflow-x: auto;
+        text-align: center;
+    }
+}
+
+.composerEditor {
+    min-height: 5.5rem;
+    max-height: 22rem;
+    padding: 0.875rem 1rem;
+
+    pre {
+        background: #111827;
+        border-color: #1F2937;
+
+        code {
+            color: #F8FAFC;
+        }
+    }
+}
+
+.inlineEditor {
+    min-height: 2.75rem;
+    max-height: 14rem;
+    padding: 0.65rem 0.75rem;
+
+    p {
+        line-height: 1.45;
+    }
+
+    pre {
+        margin: 0.5rem 0;
     }
 }
 

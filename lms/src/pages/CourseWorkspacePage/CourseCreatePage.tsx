@@ -4,6 +4,7 @@ import {useNavigate} from 'react-router-dom';
 import {ApiError, unwrapData} from '@/apis';
 import {courseApiService} from '@/apis/services/course-api';
 import {EnglishDateInput} from '@/components/EnglishDateInput';
+import {RichTextEditor} from '@/components/RichTextEditor';
 import styles from './CourseCreatePage.module.scss';
 
 interface FormState {
@@ -118,10 +119,15 @@ const CourseCreatePage: React.FC = () => {
           <input className={styles.input} value={form.location} onChange={updateField('location')} placeholder="Engineering Building"/>
         </label>
 
-        <label className={styles.field}>
+        <div className={styles.field}>
           <span className={styles.label}>Description <span className={styles.optional}>optional</span></span>
-          <textarea className={styles.textarea} rows={4} value={form.description} onChange={updateField('description')}/>
-        </label>
+          <RichTextEditor
+            content={form.description}
+            onChange={description => setForm(current => ({...current, description}))}
+            placeholder="Describe the course…"
+            ariaLabel="Course description"
+          />
+        </div>
 
         {failure ? <p className={styles.error} role="alert">{failure}</p> : null}
 

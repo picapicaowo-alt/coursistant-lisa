@@ -1,16 +1,13 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 
 import FileUploadBox from 'src/sections/dashboard/new-content/create-content/file-upload';
+import {RichTextEditor} from 'src/components/RichTextEditor';
 
 function CreateAnnouncementModal({ onClose, setIsHavingContent, token, refresh }) {
-    const textareaRef = useRef(null);
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [saving, setSaving] = useState(false);
-    const handleSelectAll = () => {
-        textareaRef.current?.select();
-    };
 
     const publish = async () => {
         if (!title.trim() && !content.trim()) return;          // both empty
@@ -96,19 +93,16 @@ function CreateAnnouncementModal({ onClose, setIsHavingContent, token, refresh }
                 <hr className="my-4 border-gray-200" />
 
                 <div className="relative mb-8">
-                    <textarea
-                        value={content}
-                        onChange={e => setContent(e.target.value)}
-                        ref={textareaRef}
-                        className="w-full resize-none border-none outline-none placeholder-gray-400 text-sm pl-8 pt-1"
+                    <RichTextEditor
+                        content={content}
+                        onChange={setContent}
                         placeholder="Type description here ..."
-                        rows={4}
+                        ariaLabel="Announcement description"
                     />
                     <img
                         src="/icons/chat/announcement/Frame 1010109876.png"
-                        className="absolute top-2 left-2 w-4 h-4 cursor-pointer"
+                        className="absolute top-2 left-2 w-4 h-4 pointer-events-none"
                         alt="description icon"
-                        onClick={handleSelectAll}
                     />
                 </div>
 

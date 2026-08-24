@@ -66,7 +66,8 @@ describe('CourseEventsPage', () => {
 
     await user.click(await screen.findByRole('button', {name: 'Edit event'}));
     await user.clear(screen.getByLabelText('Location'));
-    await user.clear(screen.getByLabelText('Description'));
+    await user.click(screen.getByLabelText('Description'));
+    await user.keyboard('{Control>}a{/Control}{Backspace}');
     await user.click(screen.getByRole('button', {name: 'Save event'}));
 
     await waitFor(() => expect(api.updateCourseEvent).toHaveBeenCalledWith(

@@ -1,3 +1,5 @@
+import MarkdownMessage from 'src/components/MarkdownMessage';
+
 function AnnouncementCard({ ann }) {
     /* format dates */
     const created = new Date(ann.createdAt);
@@ -38,7 +40,7 @@ function AnnouncementCard({ ann }) {
             {/* Title & Description */}
             <div>
                 <h3 className="font-semibold mb-1">{ann.title}</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">{ann.content}</p>
+                <MarkdownMessage className="text-sm text-gray-600 leading-relaxed" content={ann.content} />
             </div>
 
             {/* Deadline Row */}

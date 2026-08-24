@@ -3,6 +3,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 
 import styles from "./styles.module.scss";
+import MarkdownMessage from "src/components/MarkdownMessage";
 
 const PostComponent = ({ posts, onSelectPost }) => {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ const PostComponent = ({ posts, onSelectPost }) => {
                 <div className={styles.postItemContentBody}>
                 <div className="text-sm text-gray-800">
                   <span className="text-blue-600 hover:underline cursor-pointer">Sylvia Reyes:</span>
-                  <span>{post.body}</span>
+                  <MarkdownMessage content={post.body} />
                 </div>
                 </div>
             </div>

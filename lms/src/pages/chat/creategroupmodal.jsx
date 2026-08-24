@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Users, Clock, Plus, List } from 'lucide-react';
+import {RichTextEditor} from '@/components/RichTextEditor';
 
 export default function CreateGroupModal({ isOpen, onClose, onOpenAutoAssign }) {
     const [groupName, setGroupName] = useState('');
@@ -143,14 +144,14 @@ export default function CreateGroupModal({ isOpen, onClose, onOpenAutoAssign }) 
                 <circle cx="10" cy="12" r="1" fill="#2D3748"/>
               </svg>
 
-                <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Type description here ..."
-                className="w-full min-h-[120px] text-gray-700 placeholder-gray-400 border-none outline-none resize-none"
+                <RichTextEditor
+                  content={description}
+                  onChange={setDescription}
+                  placeholder="Type description here ..."
+                  ariaLabel="Group description"
               />
               </div>
-              
+
             </div>
           </div>
   
@@ -190,4 +191,3 @@ export default function CreateGroupModal({ isOpen, onClose, onOpenAutoAssign }) 
       </div>
     );
   }
-  

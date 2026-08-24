@@ -116,6 +116,20 @@ let previewEvents = [{
   updatedAt: '2026-08-17T19:00:00Z',
 }];
 
+let nextAnnouncementId = 22;
+let previewAnnouncements = [{
+  id: 21,
+  courseId: 4,
+  courseCode: 'BIO-210',
+  title: 'Lab orientation update',
+  body: 'Please bring closed-toe shoes and your lab notebook to the first lab session.',
+  authorUserId: 7,
+  authorName: 'Demo Instructor',
+  postedAt: '2026-08-17T19:00:00Z',
+  editedAt: null,
+  read: false,
+}];
+
 let nextGroupSetId = 12;
 let nextGroupId = 113;
 let previewGroupSets = [{
@@ -496,6 +510,37 @@ const send = (response, status, data, code = 'SUCCESS', message = 'Success') => 
   response.end(JSON.stringify({status, code, message, timestamp: now(), data}));
 };
 
+const studySupportPreviewAnswer = [
+  '## Local Markdown preview',
+  '',
+  '**Markdown**, GFM, fenced code, and TeX are rendering through the shared content component.',
+  '',
+  '- [x] User question rendered',
+  '- [x] Assistant answer rendered',
+  '',
+  '```js',
+  'function add(a, b) {',
+  '  return a + b;',
+  '}',
+  '```',
+  '',
+  'Inline math: $E = mc^2$',
+  '',
+  'Block math:',
+  '',
+  '$$\\int_0^1 x^2\\,dx = \\frac{1}{3}$$',
+].join('\n');
+
+const sendStudySupportStream = response => {
+  response.writeHead(200, {
+    'Content-Type': 'text/event-stream; charset=utf-8',
+    'Cache-Control': 'no-store',
+    Connection: 'keep-alive',
+  });
+  response.write(`event: progress\ndata: ${JSON.stringify({phase: 'thinking', text: 'Rendering Markdown, code, and LaTeX'})}\n\n`);
+  response.end(`event: answer\ndata: ${JSON.stringify({answer: studySupportPreviewAnswer, queryId: 1, imageURL: null})}\n\n`);
+};
+
 const createPdfFixture = label => {
   const safeLabel = String(label).replace(/[()\\]/g, value => `\\${value}`);
   const stream = `BT /F1 18 Tf 72 720 Td (${safeLabel}) Tj ET`;
@@ -783,18 +828,49 @@ const server = createServer(async (request, response) => {
     return;
   }
 
-  if (request.method === 'GET' && url.pathname === '/api/v2/courses/4/announcements/21') {
-    send(response, 200, {
-      id: 21,
+  if (request.method === 'GET' && url.pathname === '/api/v2/courses/4/announcements') {
+    send(response, 200, previewAnnouncements.map(({body: _body, ...summary}) => summary));
+    return;
+  }
+
+  if (request.method === 'POST' && url.pathname === '/api/v2/courses/4/announcements') {
+    const body = await readBody(request);
+    const created = {
+      id: nextAnnouncementId++,
       courseId: 4,
-      title: 'Lab orientation update',
-      body: 'Please bring closed-toe shoes and your lab notebook to the first lab session.',
+      courseCode: 'BIO-210',
+      title: body.title,
+      body: body.body,
       authorUserId: 7,
       authorName: 'Demo Instructor',
-      postedAt: '2026-08-17T19:00:00Z',
+      postedAt: now(),
       editedAt: null,
       read: false,
-    });
+    };
+    previewAnnouncements.unshift(created);
+    send(response, 200, created);
+    return;
+  }
+
+  const announcementMatch = url.pathname.match(/^\/api\/v2\/courses\/4\/announcements\/(\d+)$/);
+  if (announcementMatch && request.method === 'GET') {
+    const item = previewAnnouncements.find(announcement => announcement.id === Number(announcementMatch[1]));
+    if (!item) send(response, 404, null, 'ANNOUNCEMENT_NOT_FOUND', 'Announcement not found');
+    else send(response, 200, item);
+    return;
+  }
+  if (announcementMatch && request.method === 'PATCH') {
+    const announcementId = Number(announcementMatch[1]);
+    const body = await readBody(request);
+    previewAnnouncements = previewAnnouncements.map(item => item.id === announcementId
+      ? {...item, title: body.title, body: body.body, editedAt: now()}
+      : item);
+    send(response, 200, previewAnnouncements.find(item => item.id === announcementId));
+    return;
+  }
+  if (announcementMatch && request.method === 'DELETE') {
+    previewAnnouncements = previewAnnouncements.filter(item => item.id !== Number(announcementMatch[1]));
+    send(response, 200, null);
     return;
   }
 
@@ -1686,6 +1762,37 @@ const server = createServer(async (request, response) => {
 
   if (request.method === 'GET' && url.pathname === '/api/v2/courses/4/assignments/37/submission') {
     send(response, 404, null, 'NOT_FOUND', 'No formal submission yet');
+    return;
+  }
+
+  if (request.method === 'POST' && /^\/(?:api\/)?query\/stream$/.test(url.pathname)) {
+    await readRawBody(request);
+    sendStudySupportStream(response);
+    return;
+  }
+
+  if (request.method === 'POST' && /^\/(?:api\/)?query$/.test(url.pathname)) {
+    await readRawBody(request);
+    send(response, 200, {
+      answer: studySupportPreviewAnswer,
+      queryId: 1,
+      imageURL: null,
+    });
+    return;
+  }
+
+  if (request.method === 'GET' && /^\/(?:api\/)?dialogue\/selectById\/1$/.test(url.pathname)) {
+    send(response, 200, {
+      id: 1,
+      summary: 'Local Markdown preview',
+      updateTime: now(),
+      chats: [],
+    }, 200);
+    return;
+  }
+
+  if (request.method === 'GET' && /^\/(?:api\/)?dialogue\/selectByUserId\/\d+$/.test(url.pathname)) {
+    send(response, 200, [], 200);
     return;
   }
 

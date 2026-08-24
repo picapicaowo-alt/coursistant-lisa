@@ -350,25 +350,16 @@
     border-radius: 1rem;
     background: #fff;
 
-    textarea {
-        display: block;
-        width: 100%;
+    .workflowMarkdownEditor {
         min-height: 5.5rem;
         flex: 1;
-        padding: 0.9rem 1rem 0.25rem;
-        resize: none;
         border: 0;
-        outline: 0;
-        color: #243451;
-        font: inherit;
+        border-radius: 0;
+        box-shadow: none;
 
-        &::placeholder {
-            color: #94a4bf;
-        }
-
-        &:disabled {
-            background: #f7f9fc;
-            cursor: not-allowed;
+        &:focus-within {
+            border: 0;
+            box-shadow: none;
         }
     }
 }
@@ -405,8 +396,7 @@
 
 .quickPrompts button:focus-visible,
 .modalActions button:focus-visible,
-.workflowInput button:focus-visible,
-.workflowInput textarea:focus-visible {
+.workflowInput button:focus-visible {
     outline: 3px solid #1d4ed8;
     outline-offset: 2px;
 }

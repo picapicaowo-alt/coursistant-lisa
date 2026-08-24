@@ -1,9 +1,12 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef} from 'react';
+import type {Editor} from '@tiptap/core';
 import {useEditor, EditorContent} from '@tiptap/react';
+import MarkdownMessage from '../MarkdownMessage';
 import Toolbar from './Toolbar';
 import styles from './index.module.scss';
 import {createEditorExtensions} from './extensions';
 import {normalizeSafeUrl} from './url';
+import 'katex/dist/katex.min.css';
 
 interface TextBlockProps {
   content?: string;
@@ -18,39 +21,33 @@ interface TextBlockProps {
   defaultToolbarVisible?: boolean;
   displayOnly?: boolean;
   ariaLabel?: string;
+  variant?: 'default' | 'composer' | 'inline';
+  className?: string;
+  onSubmit?: () => void;
+  outputFormat?: 'markdown' | 'html';
 }
 
+const MARKDOWN_SOURCE_PATTERN = /(^|\n)\s{0,3}(?:#{1,6}\s|>\s|```|~~~|[-+*]\s|\d+\.\s)|(?:\*\*[^*\n]+\*\*|__[^_\n]+__|~~[^~\n]+~~|`[^`\n]+`|\[[^\]\n]+\]\([^\n)]+\)|\$[^$\n]+\$|\$\$[\s\S]+?\$\$)/m;
+
+const LEGACY_HTML_PATTERN = /<(?:p|div|h[1-6]|ul|ol|li|blockquote|pre|code|strong|em|u|s|a|img|video|span|br|hr)\b/i;
+
+const editorMarkdown = (editor: Editor): string => {
+  return typeof editor.getMarkdown === 'function'
+    ? editor.getMarkdown()
+    : editor.getText({blockSeparator: '\n\n'});
+};
+
+const editorRequiresHtml = (editor: Editor): boolean => {
+  let required = false;
+  editor.state.doc.descendants(node => {
+    required = ['richImage', 'richVideo', 'blank'].includes(node.type.name)
+      || node.marks.some(mark => ['underline', 'textColor'].includes(mark.type.name));
+    return !required;
+  });
+  return required;
+};
+
 export const RichTextEditor: React.FC<TextBlockProps> = (props) => {
-  const [shouldRender, setShouldRender] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
-  
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    setShouldRender(true);
-    const frame = requestAnimationFrame(() => setIsInitialized(true));
-    return () => cancelAnimationFrame(frame);
-  }, []);
-  
-  if (!shouldRender) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.loadingPlaceholder}>
-          Loading editor...
-        </div>
-      </div>
-    );
-  }
-  
-  if (!isInitialized) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.loadingPlaceholder}>
-          Loading editor...
-        </div>
-      </div>
-    );
-  }
-  
   return <RichTextEditorClient {...props} />;
 };
 
@@ -67,16 +64,53 @@ const RichTextEditorClient: React.FC<TextBlockProps> = ({
                                                           defaultToolbarVisible = true,
                                                           displayOnly = false,
                                                           ariaLabel = 'Rich text editor',
+                                                          variant = 'default',
+                                                          className,
+                                                          onSubmit,
+                                                          outputFormat = 'markdown',
                                                         }) => {
   
   const [toolbarVisible, setToolbarVisible] = React.useState(defaultToolbarVisible);
+  const [markdownContent, setMarkdownContent] = React.useState('');
+  const onChangeRef = useRef(onChange);
+  const onSubmitRef = useRef(onSubmit);
+  const liveEditorRef = useRef<Editor | null>(null);
+  const lastEmittedContentRef = useRef<string | null>(null);
+  const recentEmittedContentRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  useEffect(() => {
+    onSubmitRef.current = onSubmit;
+  }, [onSubmit]);
   
   const editor = useEditor({
     extensions: createEditorExtensions({placeholder, disabled}),
     content,
+    contentType: LEGACY_HTML_PATTERN.test(content) ? 'html' : 'markdown',
     editable: !disabled,
+    onCreate: ({editor}) => {
+      liveEditorRef.current = editor;
+      setMarkdownContent(editorMarkdown(editor));
+    },
+    onDestroy: () => {
+      liveEditorRef.current = null;
+    },
     onUpdate: ({editor}) => {
-      onChange?.(editor.getHTML());
+      const markdown = editorMarkdown(editor);
+      const nextContent = outputFormat === 'html' || editorRequiresHtml(editor)
+        ? editor.getHTML()
+        : markdown;
+      lastEmittedContentRef.current = nextContent;
+      const recent = recentEmittedContentRef.current;
+      if (recent[recent.length - 1] !== nextContent) {
+        recent.push(nextContent);
+        if (recent.length > 100) recent.shift();
+      }
+      onChangeRef.current?.(nextContent);
+      setMarkdownContent(markdown);
     },
     onSelectionUpdate: ({editor}) => {
       if (onMouseUp && editor.state.selection.empty === false) {
@@ -85,10 +119,98 @@ const RichTextEditorClient: React.FC<TextBlockProps> = ({
     },
     editorProps: {
       attributes: {
-        class: styles.editor,
+        class: [
+          styles.editor,
+          variant === 'composer' ? styles.composerEditor : '',
+          variant === 'inline' ? styles.inlineEditor : '',
+        ].filter(Boolean).join(' '),
         'data-testid': 'text-block-editor',
         spellcheck: 'true',
         'aria-label': ariaLabel,
+        placeholder,
+      },
+      handleKeyDown: (_view, event) => {
+        if (event.key === 'Enter' && !event.shiftKey && !event.isComposing && onSubmitRef.current) {
+          const currentEditor = liveEditorRef.current;
+          if (!currentEditor) return false;
+
+          // A fenced-code opener should become a real code block before the
+          // composer's Enter-to-submit behavior runs. Once inside code or display
+          // math, Enter belongs to the document rather than the send action.
+          const {$from} = currentEditor.state.selection;
+          const textBeforeCursor = $from.parent.isTextblock
+            ? $from.parent.textBetween(0, $from.parentOffset, undefined, '\ufffc')
+            : '';
+          const codeFence = /^```([\w+-]*)$/.exec(textBeforeCursor);
+          if (codeFence) {
+            event.preventDefault();
+            const codeBlockType = currentEditor.state.schema.nodes.codeBlock;
+            if (!codeBlockType) return true;
+            const transaction = currentEditor.state.tr
+              .setBlockType(
+                $from.before(),
+                $from.after(),
+                codeBlockType,
+                {language: codeFence[1] || null},
+              )
+              .delete($from.start(), $from.pos);
+            currentEditor.view.dispatch(transaction);
+            currentEditor.view.focus();
+            return true;
+          }
+          if (currentEditor.isActive('codeBlock') || currentEditor.isActive('blockMath')) {
+            return false;
+          }
+
+          event.preventDefault();
+          onSubmitRef.current();
+          return true;
+        }
+
+        if (!(event.metaKey || event.ctrlKey) || event.altKey || event.key.toLowerCase() !== 'k') {
+          return false;
+        }
+
+        const currentEditor = liveEditorRef.current;
+        if (!currentEditor) return false;
+        event.preventDefault();
+        const previousUrl = currentEditor.getAttributes('link').href as string | undefined;
+        const url = window.prompt('Link URL', previousUrl ?? '');
+
+        if (url === null) return true;
+        if (url.trim() === '') {
+          currentEditor.chain().focus().extendMarkRange('link').unsetLink().run();
+          return true;
+        }
+        const safeUrl = normalizeSafeUrl(url, {allowRelative: true});
+        if (!safeUrl) {
+          window.alert('Enter a valid HTTP, HTTPS, email, or relative link.');
+          return true;
+        }
+        currentEditor.chain().focus().extendMarkRange('link').setLink({href: safeUrl}).run();
+        return true;
+      },
+      handlePaste: (_view, event) => {
+        if (event.clipboardData?.files.length) return false;
+        const text = event.clipboardData?.getData('text/plain') ?? '';
+        if (!text || !MARKDOWN_SOURCE_PATTERN.test(text)) return false;
+
+        const currentEditor = liveEditorRef.current;
+        if (!currentEditor) return false;
+        event.preventDefault();
+        currentEditor.chain().focus().insertContent(text, {contentType: 'markdown'}).run();
+        return true;
+      },
+      handleDoubleClickOn: (view, pos, node) => {
+        if (disabled || !['inlineMath', 'blockMath'].includes(node.type.name)) return false;
+
+        const latex = window.prompt('Edit LaTeX', node.attrs.latex as string);
+        if (latex === null || latex.trim() === '') return true;
+        view.dispatch(view.state.tr.setNodeMarkup(pos, node.type, {
+          ...node.attrs,
+          latex: latex.trim(),
+        }));
+        return true;
       },
     },
   });
@@ -113,10 +235,25 @@ const RichTextEditorClient: React.FC<TextBlockProps> = ({
   }, [editor, editorHtml, adjustHeight, index]);
   
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content);
+    if (editor) {
+      // React may deliver controlled-value echoes a character or two behind a fast
+      // ProseMirror transaction stream. Ignore values emitted by this editor, but
+      // still accept genuinely external updates (for example feedback loaded after
+      // the editor mounts), even if another field has already moved focus.
+      if (content === lastEmittedContentRef.current) return;
+      if (content !== '' && recentEmittedContentRef.current.includes(content)) return;
+      const currentContent = outputFormat === 'html' || editorRequiresHtml(editor)
+        ? editor.getHTML()
+        : editorMarkdown(editor);
+      if (content === currentContent) return;
+      editor.commands.setContent(content, {
+        emitUpdate: false,
+        contentType: LEGACY_HTML_PATTERN.test(content) ? 'html' : 'markdown',
+      });
+      lastEmittedContentRef.current = content;
+      setMarkdownContent(editorMarkdown(editor));
     }
-  }, [content, editor]);
+  }, [content, editor, outputFormat]);
   
   useEffect(() => {
     if (editor) {
@@ -124,41 +261,22 @@ const RichTextEditorClient: React.FC<TextBlockProps> = ({
     }
   }, [disabled, editor]);
   
-  useEffect(() => {
-    if (!editor) return;
-    
-    // Bold/italic/underline/strike already have Mod-* bindings in StarterKit's keymap, which
-    // runs on this same element before this listener. Re-handling them here would toggle each
-    // mark twice per keypress and cancel it out, so only unbound shortcuts belong below.
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
-      if (event.key.toLowerCase() !== 'k') return;
-      
-      event.preventDefault();
-      const previousUrl = editor.getAttributes('link').href as string | undefined;
-      const url = window.prompt('Link URL', previousUrl ?? '');
-      
-      if (url === null) return;
-      if (url.trim() === '') {
-        editor.chain().focus().extendMarkRange('link').unsetLink().run();
-        return;
-      }
-      const safeUrl = normalizeSafeUrl(url, {allowRelative: true});
-      if (!safeUrl) {
-        window.alert('Enter a valid HTTP, HTTPS, email, or relative link.');
-        return;
-      }
-      editor.chain().focus().extendMarkRange('link').setLink({href: safeUrl}).run();
-    };
-    
-    editor.view.dom.addEventListener('keydown', handleKeyDown);
-    return () => {
-      editor.view.dom.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [editor]);
+  const renderDisplayAsMarkdown = displayOnly
+    && Boolean(markdownContent)
+    && Boolean(editor)
+    && !editorRequiresHtml(editor);
+
+  const rootClassName = [
+    styles.container,
+    disabled && !displayOnly ? styles.disabled : '',
+    displayOnly ? styles.displayOnly : '',
+    variant === 'composer' ? styles.composer : '',
+    variant === 'inline' ? styles.inline : '',
+    className ?? '',
+  ].filter(Boolean).join(' ');
   
   return (
-    <div className={`${styles.container} ${disabled && !displayOnly ? styles.disabled : ''} ${displayOnly ? styles.displayOnly : ''}`}>
+    <div className={rootClassName}>
       {showToolbar && editor && (
         <Toolbar 
           editor={editor} 
@@ -167,7 +285,9 @@ const RichTextEditorClient: React.FC<TextBlockProps> = ({
           toggleToolbar={() => setToolbarVisible(!toolbarVisible)}
         />
       )}
-      <EditorContent editor={editor}/>
+      {renderDisplayAsMarkdown
+        ? <MarkdownMessage content={markdownContent}/>
+        : <EditorContent editor={editor}/>}
     </div>
   );
 };

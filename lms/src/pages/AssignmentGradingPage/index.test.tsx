@@ -116,7 +116,7 @@ describe('GradeDialog', () => {
 
     await waitFor(() => {
       expect(assignmentApiService.getStudentGradingView).toHaveBeenCalledWith(34, 48, 389);
-      expect(screen.getByPlaceholderText('Add clear, actionable feedback…')).toHaveValue('Clearer thesis.');
+      expect(screen.getByPlaceholderText('Add clear, actionable feedback…')).toHaveTextContent('Clearer thesis.');
     });
   });
 });

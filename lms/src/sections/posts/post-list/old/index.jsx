@@ -3,6 +3,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 
 import styles from "./styles.module.scss";
+import MarkdownMessage from "src/components/MarkdownMessage";
 
 const PostComponent = ({ posts }) => {
   const navigate = useNavigate();
@@ -32,9 +33,7 @@ const PostComponent = ({ posts }) => {
                 </div>
                 </div>
                 <div className={styles.postItemContentBody}>
-                <p>
-                    {post.body}
-                </p>
+                <MarkdownMessage content={post.body} />
                 </div>
             </div>
             <div className={styles.postItemFooter}>

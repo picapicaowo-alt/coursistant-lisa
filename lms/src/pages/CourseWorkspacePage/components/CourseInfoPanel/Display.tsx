@@ -1,6 +1,6 @@
 ﻿import React from 'react';
-import ReactMarkdown from 'react-markdown';
 import {useTranslation} from 'react-i18next';
+import {RichTextEditor} from '@/components/RichTextEditor';
 import styles from './Display.module.scss';
 import {useCourseWorkspaceStore} from "../../stores/useCourseWorkspaceStore";
 
@@ -57,7 +57,13 @@ export const Display: React.FC = () => {
       <div className={styles.infoSection}>
         <h3 className={styles.sectionTitle}>{t('display.courseDescription')}</h3>
         <div className={styles.markdownContent}>
-          <ReactMarkdown>{course.description}</ReactMarkdown>
+          <RichTextEditor
+            content={course.description}
+            disabled
+            displayOnly
+            showToolbar={false}
+            ariaLabel="Course description"
+          />
         </div>
       </div>
     </div>

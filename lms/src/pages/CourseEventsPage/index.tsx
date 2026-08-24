@@ -6,6 +6,8 @@ import type {CourseEvent, CourseEventPayload} from '@/apis';
 import {unwrapData} from '@/apis';
 import {courseApiService} from '@/apis/services/course-api';
 import {EnglishDateInput, EnglishTimeInput} from '@/components/EnglishDateInput';
+import MarkdownMessage from '@/components/MarkdownMessage';
+import {RichTextEditor} from '@/components/RichTextEditor';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
 import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
 import {getApiErrorCode, isConflict} from '@/utils/apiError';
@@ -185,14 +187,22 @@ const CourseEventsPage = () => {
             <label><span>Starts</span><EnglishTimeInput value={draft.startTime ?? ''} onChangeValue={value => setDraft(current => ({...current, startTime: value}))}/></label>
             <label><span>Ends</span><EnglishTimeInput value={draft.endTime ?? ''} onChangeValue={value => setDraft(current => ({...current, endTime: value}))}/></label>
             <label className={styles.full}><span>Location</span><input value={draft.location ?? ''} onChange={e => setDraft(current => ({...current, location: e.target.value}))}/></label>
-            <label className={styles.full}><span>Description</span><textarea rows={5} value={draft.description ?? ''} onChange={e => setDraft(current => ({...current, description: e.target.value}))}/></label>
+            <div className={`${styles.full} ${styles.markdownField}`}>
+              <span>Description</span>
+              <RichTextEditor
+                content={draft.description ?? ''}
+                onChange={description => setDraft(current => ({...current, description}))}
+                placeholder="Add an event description…"
+                ariaLabel="Description"
+              />
+            </div>
           </div>
           {invalidTime ? <p className={styles.error} role="alert">End time must be later than start time.</p> : null}
           <div className={styles.formFooter}><button type="submit" className={styles.primaryButton} disabled={saveEvent.isPending || !draft.name.trim() || !draft.date || invalidTime}>{saveEvent.isPending ? 'Saving…' : 'Save event'}</button></div>
         </form>
       ) : eventId !== null && selectedEvent ? (
         <section className={styles.card}>
-          {selectedEvent.description ? <p className={styles.description}>{selectedEvent.description}</p> : <p className={styles.muted}>No description was provided.</p>}
+          {selectedEvent.description ? <MarkdownMessage className={styles.description} content={selectedEvent.description}/> : <p className={styles.muted}>No description was provided.</p>}
           <dl className={styles.metadata}>
             <div><dt><CalendarDays size={18}/><span className={styles.srOnly}>Date</span></dt><dd>{selectedEvent.date}</dd></div>
             {selectedEvent.startTime ? <div><dt><Clock3 size={18}/><span className={styles.srOnly}>Time</span></dt><dd>{selectedEvent.startTime.slice(0, 5)}{selectedEvent.endTime ? ` – ${selectedEvent.endTime.slice(0, 5)}` : ''} {selectedEvent.timezone}</dd></div> : null}

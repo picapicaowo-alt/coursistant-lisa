@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { CornerUpLeft, CornerUpRight, MoreVertical } from "lucide-react";
+import MarkdownMessage from 'src/components/MarkdownMessage';
 
 const MessageItem = ({ message, currentMoreOpenedId, setCurrentMoreOpenedId }) => {
   const [showActions, setShowActions] = useState(false);
@@ -50,7 +51,7 @@ const MessageItem = ({ message, currentMoreOpenedId, setCurrentMoreOpenedId }) =
           <span className="text-sm text-gray-400">{message.time}</span>
         </div>
 
-        <div className="mt-1 whitespace-pre-wrap">{message.content}</div>
+        <MarkdownMessage className="mt-1" content={message.content} />
 
         {message.file && (
           <div className="mt-2 flex items-center gap-2 p-2 border border-gray-300 rounded bg-gray-50">

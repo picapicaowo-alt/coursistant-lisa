@@ -3,6 +3,8 @@ import {useTranslation} from "react-i18next";
 import styles from "./Editor.module.scss";
 import AssignmentsList from "../AssignmentsList";
 import {useCourseWorkspaceStore} from "../../stores/useCourseWorkspaceStore";
+import MarkdownMessage from "@/components/MarkdownMessage";
+import {RichTextEditor} from "@/components/RichTextEditor";
 
 interface EditorProps {
   activeUnitId: number;
@@ -41,17 +43,14 @@ export const Editor: React.FC<EditorProps> = ({
       </div>
       
       <div className={styles.unitDescription}>
-        <textarea
-          value={unit.description}
-          disabled={!isEditable}
-          onChange={(e) => {
-            if (!isEditable) return;
-            update("courseUnits", unit.id, {description: e.target.value});
-          }}
-          className={styles.textarea}
-          placeholder={t('form.descriptionLabel')}
-          rows={3}
-        />
+        {isEditable ? (
+          <RichTextEditor
+            content={unit.description}
+            onChange={description => update("courseUnits", unit.id, {description})}
+            placeholder={t('form.descriptionLabel')}
+            ariaLabel="Course unit description"
+          />
+        ) : <MarkdownMessage content={unit.description}/>}
       </div>
       
       <div className={styles.assignmentsSection}>

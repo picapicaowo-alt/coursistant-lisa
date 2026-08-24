@@ -1,4 +1,5 @@
 import React from "react";
+import MarkdownMessage from "src/components/MarkdownMessage";
 
 const Comment = ({
   author,
@@ -29,7 +30,7 @@ const Comment = ({
 
       {/* Body */}
       <div className="pl-13">
-        <p className="text-[rgba(45,55,72,1)] mt-1">{content}</p>
+        <MarkdownMessage className="text-[rgba(45,55,72,1)] mt-1" content={content} />
         <div className="flex items-center gap-2">
           {replies.length > 0 && (
             <span className="text-md text-[rgba(86,111,232,1)] mt-2 block">

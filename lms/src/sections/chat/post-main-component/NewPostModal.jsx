@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Maximize2 } from 'lucide-react';
+import {RichTextEditor} from 'src/components/RichTextEditor';
 
 export default function NewPostModal({ open, onClose }) {
   const [title, setTitle] = useState('');
@@ -10,8 +11,7 @@ export default function NewPostModal({ open, onClose }) {
   const [content, setContent] = useState('');
   const [charCount, setCharCount] = useState(0);
 
-  const handleContentChange = (e) => {
-    const newContent = e.target.value;
+  const handleContentChange = (newContent) => {
     setContent(newContent);
     setCharCount(newContent.length);
   };
@@ -153,12 +153,12 @@ export default function NewPostModal({ open, onClose }) {
               </button>
             </div>
             <div className="flex-1">
-              <textarea
-                className="w-full text-[15px] h-50 border-none outline-none resize-none"
-                value={content}
+              <RichTextEditor
+                content={content}
                 onChange={handleContentChange}
                 placeholder="Type description here ..."
-              ></textarea>
+                ariaLabel="Post description"
+              />
               <div className="text-right mt-8 text-gray-400">{charCount}/400</div>
             </div>
           </div>

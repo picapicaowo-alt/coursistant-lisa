@@ -4,7 +4,7 @@ import {useAssignmentSubmitStore} from "../../stores/useAssignmentSubmitStore";
 import {Header} from "./Header";
 import {useTranslation} from "react-i18next";
 import {PropertyForm} from "@/components/PropertyForm";
-import ReactMarkdown from "react-markdown";
+import {RichTextEditor} from "@/components/RichTextEditor";
 import {FileEntity} from "@/pages/DetailWorkspacePage/config";
 import {FileSection} from "@/components/FileSection";
 import {SubmissionForm} from "@/pages/DetailWorkspacePage/components/AssignmentSubmit/SubmissionForm";
@@ -30,7 +30,13 @@ export const AssignmentSubmit: React.FC = () => {
       <div className={styles.horizontalDivider}/>
       
       <PropertyForm title={t("assignment.description")}>
-        <ReactMarkdown>{assignment.description}</ReactMarkdown>
+        <RichTextEditor
+          content={assignment.description}
+          disabled
+          displayOnly
+          showToolbar={false}
+          ariaLabel="Assignment description"
+        />
       </PropertyForm>
       
       {attachments.length > 0 && (

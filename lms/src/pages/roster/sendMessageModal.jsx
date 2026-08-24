@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { X, Paperclip, Image, Bold, Italic, AlignLeft, Type, Underline, List, ListOrdered } from 'lucide-react';
+import {RichTextEditor} from 'src/components/RichTextEditor';
 
 const SendMessageModal = ({ isOpen, onClose }) => {
   const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
 
   if (!isOpen) return null;
 
@@ -86,9 +88,13 @@ const SendMessageModal = ({ isOpen, onClose }) => {
 
         {/* Message Body */}
         <div className="flex-1 px-4">
-          <textarea
+          <RichTextEditor
+            variant="composer"
+            showToolbar={false}
             placeholder="Type here..."
-            className="w-full h-full border-none outline-none resize-none text-gray-400 placeholder-gray-400 text-base"
+            content={message}
+            onChange={setMessage}
+            ariaLabel="Message body"
           />
         </div>
 

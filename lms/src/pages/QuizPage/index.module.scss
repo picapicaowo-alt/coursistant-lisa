@@ -185,14 +185,25 @@
   justify-content: space-between;
   gap: 1rem;
 
-  h3 {
-    font-size: 1.05rem;
-  }
-
-  span {
+  > span {
     flex: 0 0 auto;
     color: t.$text-muted;
   }
+}
+
+.questionPrompt {
+  display: flex;
+  min-width: 0;
+  gap: 0.4rem;
+  font-size: 1.05rem;
+
+  > strong {
+    flex: 0 0 auto;
+  }
+}
+
+.optionText {
+  min-width: 0;
 }
 
 .questionCard textarea {

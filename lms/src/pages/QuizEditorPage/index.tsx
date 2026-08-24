@@ -6,6 +6,8 @@ import type {CreateQuizQuestionRequest, QuizQuestion, QuizQuestionType, QuizResu
 import {unwrapData} from '@/apis';
 import {quizApiService} from '@/apis/services/quiz-api';
 import {EnglishDateTimeInput} from '@/components/EnglishDateInput';
+import MarkdownMessage from '@/components/MarkdownMessage';
+import {RichTextEditor} from '@/components/RichTextEditor';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
 import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
 import styles from './index.module.scss';
@@ -77,7 +79,15 @@ const QuestionFields = ({draft, setDraft, canChangeType}: QuestionFieldsProps) =
       <div className={styles.formGrid}>
         <label><span>Type</span><select value={draft.type} disabled={!canChangeType} onChange={event => setQuestionType(event.target.value as QuizQuestionType)}><option value="SingleChoice">Single choice</option><option value="MultipleSelect">Multiple select</option><option value="TrueFalse">True / false</option><option value="ShortAnswer">Short answer</option></select></label>
         <label><span>Points</span><input type="number" min="0" step="0.5" value={draft.points} onChange={event => setDraft(current => ({...current, points: Number(event.target.value)}))}/></label>
-        <label className={styles.full}><span>Question</span><textarea rows={3} value={draft.stem} onChange={event => setDraft(current => ({...current, stem: event.target.value}))}/></label>
+        <div className={`${styles.full} ${styles.markdownField}`}>
+          <span>Question</span>
+          <RichTextEditor
+            content={draft.stem}
+            onChange={stem => setDraft(current => ({...current, stem}))}
+            placeholder="Write the question…"
+            ariaLabel="Quiz question"
+          />
+        </div>
       </div>
       {draft.type !== 'ShortAnswer' ? (
         <fieldset className={styles.optionEditor}>
@@ -99,15 +109,18 @@ const QuestionFields = ({draft, setDraft, canChangeType}: QuestionFieldsProps) =
                   })),
                 }))}
               />
-              <input
-                value={option.label}
+              <RichTextEditor
+                className={styles.optionMarkdownEditor}
+                variant="inline"
+                showToolbar={false}
+                content={option.label}
                 disabled={draft.type === 'TrueFalse'}
-                aria-label={`Option ${index + 1}`}
                 placeholder={`Option ${index + 1}`}
-                onChange={event => setDraft(current => ({
+                ariaLabel={`Option ${index + 1}`}
+                onChange={label => setDraft(current => ({
                   ...current,
                   options: current.options?.map((item, optionIndex) => optionIndex === index
-                    ? {...item, label: event.target.value}
+                    ? {...item, label}
                     : item),
                 }))}
               />
@@ -346,7 +359,15 @@ const QuizEditorPage = () => {
         <div className={styles.cardHeader}><div><h2>Quiz settings</h2><p>Times use the course timezone.</p></div><button className={styles.primaryButton} disabled={saveQuiz.isPending || !title.trim() || !opensAt || !closesAt}>{saveQuiz.isPending ? 'Saving…' : isNew ? 'Create quiz' : 'Save settings'}</button></div>
         <div className={styles.formGrid}>
           <label className={styles.full}><span>Title</span><input value={title} onChange={event => setTitle(event.target.value)} required/></label>
-          <label className={styles.full}><span>Instructions</span><textarea value={instructions} onChange={event => setInstructions(event.target.value)} rows={4}/></label>
+          <div className={`${styles.full} ${styles.markdownField}`}>
+            <span>Instructions</span>
+            <RichTextEditor
+              content={instructions}
+              onChange={setInstructions}
+              placeholder="Add quiz instructions…"
+              ariaLabel="Quiz instructions"
+            />
+          </div>
           <label><span>Opens</span><EnglishDateTimeInput value={opensAt} onChangeValue={setOpensAt} required/></label>
           <label><span>Closes</span><EnglishDateTimeInput value={closesAt} onChangeValue={setClosesAt} required/></label>
           <label><span>Time limit (minutes)</span><input type="number" min="1" value={timeLimitMinutes} onChange={event => setTimeLimitMinutes(event.target.value)} placeholder="Unlimited"/></label>
@@ -361,7 +382,7 @@ const QuizEditorPage = () => {
           <section className={styles.card}>
             <div className={styles.cardHeader}><div><h2>Questions</h2><p>{questions.length} question{questions.length === 1 ? '' : 's'} · {quizQuery.data?.totalPoints ?? 0} points</p></div><button type="button" className={styles.primaryButton} onClick={() => publishQuiz.mutate()} disabled={publishQuiz.isPending || (!questions.length && quizQuery.data?.state !== 'Published')}>{quizQuery.data?.state === 'Published' ? 'Unpublish' : 'Publish quiz'}</button></div>
             {quizQuery.data?.hasAttempts ? <p className={styles.lockedNotice}>Questions are locked because learners have started this quiz.</p> : null}
-            {questions.length ? <ol className={styles.questionList}>{questions.map((question, index) => <li key={question.id}><div><strong>{question.stem}</strong><small>{question.type} · {question.points} pts</small></div><div className={styles.rowActions}><button type="button" aria-label={`Edit ${question.stem}`} disabled={quizQuery.data?.hasAttempts} onClick={() => { setEditingQuestionId(question.id); setEditingQuestionDraft(questionToDraft(question)); setMessage(null); }}><Pencil size={16}/></button><button type="button" aria-label={`Move ${question.stem} up`} disabled={index === 0 || quizQuery.data?.hasAttempts} onClick={() => moveQuestion(index, -1)}><ArrowUp size={16}/></button><button type="button" aria-label={`Move ${question.stem} down`} disabled={index === questions.length - 1 || quizQuery.data?.hasAttempts} onClick={() => moveQuestion(index, 1)}><ArrowDown size={16}/></button>{confirmDeleteQuestionId === question.id ? <><button type="button" className={styles.dangerText} onClick={() => deleteQuestion.mutate(question.id)}>Confirm</button><button type="button" onClick={() => setConfirmDeleteQuestionId(null)}>Cancel</button></> : <button type="button" aria-label={`Delete ${question.stem}`} disabled={quizQuery.data?.hasAttempts} onClick={() => setConfirmDeleteQuestionId(question.id)}><Trash2 size={16}/></button>}</div></li>)}</ol> : <p className={styles.empty}>Add the first question below.</p>}
+            {questions.length ? <ol className={styles.questionList}>{questions.map((question, index) => <li key={question.id}><div><MarkdownMessage content={question.stem}/><small>{question.type} · {question.points} pts</small></div><div className={styles.rowActions}><button type="button" aria-label={`Edit ${question.stem}`} disabled={quizQuery.data?.hasAttempts} onClick={() => { setEditingQuestionId(question.id); setEditingQuestionDraft(questionToDraft(question)); setMessage(null); }}><Pencil size={16}/></button><button type="button" aria-label={`Move ${question.stem} up`} disabled={index === 0 || quizQuery.data?.hasAttempts} onClick={() => moveQuestion(index, -1)}><ArrowUp size={16}/></button><button type="button" aria-label={`Move ${question.stem} down`} disabled={index === questions.length - 1 || quizQuery.data?.hasAttempts} onClick={() => moveQuestion(index, 1)}><ArrowDown size={16}/></button>{confirmDeleteQuestionId === question.id ? <><button type="button" className={styles.dangerText} onClick={() => deleteQuestion.mutate(question.id)}>Confirm</button><button type="button" onClick={() => setConfirmDeleteQuestionId(null)}>Cancel</button></> : <button type="button" aria-label={`Delete ${question.stem}`} disabled={quizQuery.data?.hasAttempts} onClick={() => setConfirmDeleteQuestionId(question.id)}><Trash2 size={16}/></button>}</div></li>)}</ol> : <p className={styles.empty}>Add the first question below.</p>}
           </section>
 
           {editingQuestionId !== null ? (

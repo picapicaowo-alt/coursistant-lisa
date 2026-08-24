@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import {RichTextEditor} from '@/components/RichTextEditor';
 
 const MessageInput = ({ onSend }) => {
   const [text, setText] = useState('');
@@ -24,17 +25,14 @@ const MessageInput = ({ onSend }) => {
     <div className="flex flex-col border border-gray-300 min-h-[100px] rounded-xl px-4 py-2">
   
         {/* Input on top */}
-        <textarea
+        <RichTextEditor
+            variant="composer"
+            showToolbar={false}
             placeholder="Group chat is being developed..."
-            className="flex-1 bg-transparent mt-2 focus:outline-none text-gray-700 placeholder-gray-400 mb-3 resize-none"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-                }
-            }}
+            content={text}
+            onChange={setText}
+            onSubmit={handleSend}
+            ariaLabel="Group chat message"
             disabled={true}
         />
   

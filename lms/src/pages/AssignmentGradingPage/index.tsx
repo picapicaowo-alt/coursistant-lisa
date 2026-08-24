@@ -7,8 +7,8 @@ import {unwrapData} from '@/apis';
 import {assignmentApiService} from '@/apis/services/assignment-api';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
 import {saveBlob} from '@/utils/downloadBlob';
-import {htmlToPlainText} from '@/utils/htmlText';
 import {StudentSubmissionHistory} from '@/pages/AssignmentDetailPage/StudentSubmissionHistory';
+import {RichTextEditor} from '@/components/RichTextEditor';
 import {buildGradeSelection, rosterRowKey} from './gradeSelection';
 import styles from './index.module.scss';
 
@@ -52,13 +52,6 @@ const getSubmissionLabel = (value: string) => {
   };
   return labels[value] ?? value.replace(/([a-z])([A-Z])/g, '$1 $2');
 };
-
-const escapeHtml = (value: string) => value
-  .replace(/&/g, '&amp;')
-  .replace(/</g, '&lt;')
-  .replace(/>/g, '&gt;')
-  .replace(/"/g, '&quot;')
-  .replace(/'/g, '&#039;');
 
 interface GradeDialogProps {
   courseId: number;
@@ -106,7 +99,7 @@ export const GradeDialog = ({
 
   useEffect(() => {
     const html = gradingViewQuery.data?.grade?.feedbackHtml;
-    if (html) setFeedback(htmlToPlainText(html));
+    if (html) setFeedback(html);
     const nextScore = gradingViewQuery.data?.grade?.score;
     if (nextScore !== undefined) setScore(String(nextScore));
   }, [gradingViewQuery.data?.grade?.feedbackHtml, gradingViewQuery.data?.grade?.score]);
@@ -117,7 +110,7 @@ export const GradeDialog = ({
     if (!Number.isFinite(parsedScore)) return;
     onSave({
       score: parsedScore,
-      feedbackHtml: feedback.trim() ? `<p>${escapeHtml(feedback.trim())}</p>` : undefined,
+      feedbackHtml: feedback.trim() || undefined,
       submissionVersionId: row.submissionVersionId,
       rubricVersionId: gradingViewQuery.data?.grade?.rubricVersionId
         ?? gradingViewQuery.data?.rubric?.versionId,
@@ -187,7 +180,7 @@ export const GradeDialog = ({
           </div>
         </label>
 
-        <label className={styles.feedbackField}>
+        <div className={styles.feedbackField}>
           <span>Feedback for the learner</span>
           {gradingViewQuery.isPending ? <p className={styles.dialogNote}>Loading existing feedback…</p> : null}
           {gradingViewQuery.isError ? (
@@ -196,13 +189,15 @@ export const GradeDialog = ({
               <button type="button" onClick={() => void gradingViewQuery.refetch()}>Try again</button>
             </div>
           ) : null}
-          <textarea
-            rows={5}
-            value={feedback}
-            onChange={event => setFeedback(event.target.value)}
+          <RichTextEditor
+            content={feedback}
+            onChange={setFeedback}
+            outputFormat="html"
+            showToolbar
             placeholder="Add clear, actionable feedback…"
+            ariaLabel="Feedback for the learner"
           />
-        </label>
+        </div>
 
         <label className={styles.annotatedField}>
           <span><Upload size={16}/> Annotated feedback file</span>

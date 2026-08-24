@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import styles from "./modal.module.scss";
 import axios from "axios";
 import { useAuth } from "../../contexts/AuthContext.js";
+import {RichTextEditor} from "@/components/RichTextEditor";
 
 const HOW_TO_JOIN = { FREE: "free", APPROVAL: "approval" };
 
@@ -29,18 +30,6 @@ export default function CreateGroupModal({
   const [totalErr, setTotalErr] = useState(null);
   const [numStudents, setNumStudents] = useState("");
   const [extraGroups, setExtraGroups] = useState(0);
-
-  const commonProps = {
-    contentEditable: true,
-    suppressContentEditableWarning: true,
-    ref: (el) => {
-      if (el && el.innerHTML !== desc) el.innerHTML = desc;
-    },
-    onInput: (e) => setDesc(e.currentTarget.innerHTML),
-    className:
-      "w-full min-h-[10rem] rounded p-2 focus:outline-none overflow-hidden",
-    "data-placeholder": "Type your description...",
-  };
 
   // initialize on open
   useEffect(() => {
@@ -470,12 +459,12 @@ export default function CreateGroupModal({
 
           {/* Description */}
           <div className="flex flex-col items-start relative">
-            <div {...commonProps} />
-            {desc === "" && (
-              <div className="absolute top-2 left-2 text-gray-400 pointer-events-none">
-                Type description here...
-              </div>
-            )}
+            <RichTextEditor
+              content={desc}
+              onChange={setDesc}
+              placeholder="Type description here..."
+              ariaLabel="Group description"
+            />
           </div>
         </div>
 

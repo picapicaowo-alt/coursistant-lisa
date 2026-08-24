@@ -5,6 +5,8 @@ import {Link, useParams} from 'react-router-dom';
 import type {QuizAttempt, QuizQuestion} from '@/apis';
 import {unwrapData} from '@/apis';
 import {quizApiService} from '@/apis/services/quiz-api';
+import MarkdownMessage from '@/components/MarkdownMessage';
+import {RichTextEditor} from '@/components/RichTextEditor';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
 import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
 import {
@@ -260,7 +262,10 @@ const QuizPage = () => {
 
       {quiz ? (
         <section className={styles.summaryCard}>
-          <p className={styles.instructions}>{quiz.instructions || 'No instructions were provided.'}</p>
+          <MarkdownMessage
+            className={styles.instructions}
+            content={quiz.instructions || 'No instructions were provided.'}
+          />
           <div className={styles.summaryGrid}>
             <span><Clock3 size={17}/> {quiz.timeLimitSeconds ? `${Math.round(quiz.timeLimitSeconds / 60)} minutes` : 'No time limit'}</span>
             <span>{quiz.attemptsAllowed} attempt{quiz.attemptsAllowed === 1 ? '' : 's'}</span>
@@ -279,7 +284,7 @@ const QuizPage = () => {
             <ol className={styles.questionSummary}>
               {questions.map(question => (
                 <li key={question.id}>
-                  <span>{question.stem}</span>
+                  <MarkdownMessage content={question.stem}/>
                   <small>{question.type} · {question.points} pts</small>
                 </li>
               ))}
@@ -296,13 +301,21 @@ const QuizPage = () => {
             const draft = drafts[question.id] ?? emptyAnswer();
             return (
               <article key={question.id} className={styles.questionCard}>
-                <div className={styles.questionHeading}><h3>{index + 1}. {question.stem}</h3><span>{question.points} pts</span></div>
+                <div className={styles.questionHeading}>
+                  <div className={styles.questionPrompt}>
+                    <strong>{index + 1}.</strong>
+                    <MarkdownMessage content={question.stem}/>
+                  </div>
+                  <span>{question.points} pts</span>
+                </div>
                 {question.type === 'ShortAnswer' ? (
-                  <textarea
-                    value={draft.textAnswer}
-                    onChange={event => updateDraft(question.id, current => ({...current, textAnswer: event.target.value}))}
-                    rows={5}
+                  <RichTextEditor
+                    variant="composer"
+                    showToolbar={false}
+                    content={draft.textAnswer}
+                    onChange={textAnswer => updateDraft(question.id, current => ({...current, textAnswer}))}
                     placeholder="Type your answer"
+                    ariaLabel={`Question ${index + 1} answer`}
                   />
                 ) : (
                   <div className={styles.options}>
@@ -324,7 +337,7 @@ const QuizPage = () => {
                                 : [option.id],
                             }))}
                           />
-                          <span>{option.label}</span>
+                          <MarkdownMessage className={styles.optionText} content={option.label}/>
                         </label>
                       );
                     })}
