@@ -2,6 +2,7 @@ import {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import type {RefObject} from 'react';
 import {createPortal} from 'react-dom';
 import {CalendarDays, ChevronLeft, ChevronRight, Clock3} from 'lucide-react';
+import {roundUpToMinutes} from '@/utils/dateTimeRange';
 import styles from './DateTimePickerPopover.module.scss';
 
 export type DateTimePickerKind = 'date' | 'time' | 'datetime';
@@ -103,7 +104,7 @@ export const DateTimePickerPopover = ({
 
   useEffect(() => {
     if (!open) return;
-    const now = new Date();
+    const now = roundUpToMinutes(new Date());
     const rawDate = kind === 'datetime' ? value.split('T')[0] : value;
     const nextDate = isDateKey(rawDate) ? rawDate : toDateKey(now);
     const rawTime = kind === 'datetime' ? (value.split('T')[1] ?? '') : value;

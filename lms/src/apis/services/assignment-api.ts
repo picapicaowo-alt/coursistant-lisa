@@ -235,31 +235,38 @@ export class AssignmentApiService {
   async releaseGrades(
     courseId: number,
     assignmentId: number,
-    request: GradeSelectionPayload
+    request: GradeSelectionPayload,
+    idempotencyKey: string = crypto.randomUUID(),
   ): Promise<ApiResponse<GradingRoster>> {
     return this.apiClient.post<GradingRoster>(
       `/v2/courses/${courseId}/assignments/${assignmentId}/grades/release`,
-      request
+      request,
+      idempotent(idempotencyKey),
     );
   }
 
   async releaseAllGrades(
     courseId: number,
-    assignmentId: number
+    assignmentId: number,
+    idempotencyKey: string = crypto.randomUUID(),
   ): Promise<ApiResponse<GradingRoster>> {
     return this.apiClient.post<GradingRoster>(
-      `/v2/courses/${courseId}/assignments/${assignmentId}/grades/release-all`
+      `/v2/courses/${courseId}/assignments/${assignmentId}/grades/release-all`,
+      undefined,
+      idempotent(idempotencyKey),
     );
   }
 
   async retractGrades(
     courseId: number,
     assignmentId: number,
-    request: GradeSelectionPayload
+    request: GradeSelectionPayload,
+    idempotencyKey: string = crypto.randomUUID(),
   ): Promise<ApiResponse<GradingRoster>> {
     return this.apiClient.post<GradingRoster>(
       `/v2/courses/${courseId}/assignments/${assignmentId}/grades/retract`,
-      request
+      request,
+      idempotent(idempotencyKey),
     );
   }
 

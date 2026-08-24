@@ -18,7 +18,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .cardHeader p, .muted { margin-top: .25rem; color: t.$text-muted; }
 .formGrid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 1rem; }
 .formGrid label:not(.checkbox), .inlineForm label, .groupEdit label:not(.confirmCheck), .assignForm label:not(.confirmCheck) { display: grid; gap: .35rem; color: t.$text-muted; font-size: t.$fs-caption; font-weight: t.$fw-semibold; }
-.formGrid input:not([type='checkbox']), .inlineForm input, .groupEdit input, .assignForm select, .memberActions select { min-height: 2.5rem; padding: 0 .7rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; color: t.$text; }
+.formGrid input:not([type='checkbox']), .formGrid select, .inlineForm input, .groupEdit input, .assignForm select, .memberActions select { min-height: 2.5rem; padding: 0 .7rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; background: t.$card-bg; color: t.$text; }
 .full { grid-column: 1 / -1; }
 .checkbox, .confirmCheck { display: flex; align-items: center; gap: .5rem; }
 .checkbox { align-self: end; min-height: 2.5rem; }

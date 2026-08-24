@@ -187,4 +187,36 @@ describe('QuizPage Question Attempt Gate', () => {
 
     expect(screen.getByText(/Grade released on/i)).toBeInTheDocument();
   });
+
+  it('shows an instant auto-score before instructor release', async () => {
+    quizApi.getQuiz.mockResolvedValue(response({...quizData, resultVisibility: 'InstantAutoScore'}));
+    quizApi.getCurrentAttempt.mockRejectedValue({code: 404, details: {code: 'QUIZ_ATTEMPT_NOT_FOUND'}});
+    quizApi.getMyResult.mockResolvedValue(response({
+      quizId: 10,
+      countedAttemptId: 501,
+      gradeStatus: 'Entered',
+      closeReason: 'MANUAL',
+      receiptId: 'REC-AUTO',
+      autoScore: 100,
+      manualScore: null,
+      totalScore: null,
+      manualGradingPending: false,
+      showCorrectAnswers: false,
+      releasedAt: null,
+      questions: [],
+    }));
+
+    render(
+      <QueryClientProvider client={new QueryClient({defaultOptions: {queries: {retry: false}}})}>
+        <MemoryRouter initialEntries={['/course/5/quizzes/10']}>
+          <Routes>
+            <Route path="/course/:courseId/quizzes/:quizId" element={<QuizPage/>}/>
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText('100 / 100')).toBeInTheDocument();
+    expect(screen.queryByText('Waiting for grading')).not.toBeInTheDocument();
+  });
 });

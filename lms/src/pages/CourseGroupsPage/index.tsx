@@ -5,8 +5,16 @@ import {Link, useNavigate, useParams} from 'react-router-dom';
 import type {CreateGroupSetPayload} from '@/apis';
 import {unwrapData} from '@/apis';
 import {courseApiService} from '@/apis/services/course-api';
+import {DurationSelect} from '@/components/DurationSelect';
 import {EnglishDateTimeInput} from '@/components/EnglishDateInput';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
+import {
+  addMinutesToDateTimeValue,
+  dateTimeDurationMinutes,
+  DEFAULT_DURATION_MINUTES,
+  LONG_DURATION_OPTIONS,
+  presetDuration,
+} from '@/utils/dateTimeRange';
 import styles from './index.module.scss';
 
 const defaultDraft = (): CreateGroupSetPayload => ({
@@ -52,6 +60,24 @@ const CourseGroupsPage = () => {
     setMessage(null);
     createGroupSet.mutate();
   };
+  const rangeDuration = dateTimeDurationMinutes(draft.joinOpensAt ?? '', draft.joinClosesAt ?? '');
+  const selectedDuration = presetDuration(rangeDuration, LONG_DURATION_OPTIONS);
+  const changeJoinOpensAt = (value: string) => {
+    const duration = rangeDuration ?? DEFAULT_DURATION_MINUTES;
+    setDraft(current => ({
+      ...current,
+      joinOpensAt: value || null,
+      joinClosesAt: value ? addMinutesToDateTimeValue(value, duration) : current.joinClosesAt,
+    }));
+  };
+  const changeDuration = (minutes: number) => {
+    setDraft(current => ({
+      ...current,
+      joinClosesAt: current.joinOpensAt
+        ? addMinutesToDateTimeValue(current.joinOpensAt, minutes)
+        : current.joinClosesAt,
+    }));
+  };
   const invalidWindow = Boolean(draft.joinOpensAt && draft.joinClosesAt && draft.joinClosesAt <= draft.joinOpensAt);
   const groupSets = groupSetsQuery.data ?? [];
 
@@ -71,8 +97,10 @@ const CourseGroupsPage = () => {
             <label className={styles.full}><span>Name</span><input required value={draft.name} onChange={event => setDraft(current => ({...current, name: event.target.value}))}/></label>
             <label><span>Default capacity</span><input type="number" min="1" value={draft.defaultCapacity ?? ''} placeholder="No limit" onChange={event => setDraft(current => ({...current, defaultCapacity: event.target.value ? Number(event.target.value) : null}))}/></label>
             <label className={styles.checkbox}><input type="checkbox" checked={Boolean(draft.locked)} onChange={event => setDraft(current => ({...current, locked: event.target.checked}))}/><span>Lock student changes</span></label>
-            <label><span>Join opens</span><EnglishDateTimeInput value={draft.joinOpensAt ?? ''} onChangeValue={value => setDraft(current => ({...current, joinOpensAt: value || null}))}/></label>
+            <label><span>Join opens</span><EnglishDateTimeInput value={draft.joinOpensAt ?? ''} onChangeValue={changeJoinOpensAt}/></label>
             <label><span>Join closes</span><EnglishDateTimeInput value={draft.joinClosesAt ?? ''} onChangeValue={value => setDraft(current => ({...current, joinClosesAt: value || null}))}/></label>
+            <DurationSelect minutes={selectedDuration} options={LONG_DURATION_OPTIONS} onChange={changeDuration} disabled={!draft.joinOpensAt}/>
+            <span/>
           </div>
           {invalidWindow ? <p className={styles.error} role="alert">Join close time must be later than join open time.</p> : null}
           <div className={styles.footer}><button className={styles.primaryButton} disabled={createGroupSet.isPending || !draft.name.trim() || invalidWindow}>{createGroupSet.isPending ? 'Creating…' : 'Create group set'}</button></div>

@@ -9,6 +9,7 @@ import MarkdownMessage from '@/components/MarkdownMessage';
 import {RichTextEditor} from '@/components/RichTextEditor';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
 import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
+import {formatUtcTimestamp} from '@/utils/datetime';
 import {
   formatQuizInstant,
   isMissingCurrentAttempt,
@@ -225,6 +226,8 @@ const QuizPage = () => {
   const questions = questionsQuery.data ?? [];
   const attempt = attemptQuery.data;
   const result = resultQuery.data;
+  const visibleResultScore = result?.totalScore
+    ?? (quiz?.resultVisibility === 'InstantAutoScore' ? result?.autoScore ?? null : null);
   const attempts = attemptsQuery.data ?? [];
   const attemptsRemaining = Math.max(0, (quiz?.attemptsAllowed ?? 0) - attempts.length);
   const windowStatus = quiz ? quizWindowStatus(quiz) : 'draft';
@@ -295,7 +298,7 @@ const QuizPage = () => {
         <section className={styles.attempt}>
           <div className={styles.attemptHeader}>
             <div><h2>Attempt {attempt.attemptNumber}</h2><p>Answers are saved one question at a time.</p></div>
-            {attempt.deadlineAt ? <span>Deadline {new Date(attempt.deadlineAt).toLocaleTimeString('en-US')}</span> : null}
+            {attempt.deadlineAt ? <span>Deadline {formatUtcTimestamp(attempt.deadlineAt, {hour: 'numeric', minute: '2-digit', timeZoneName: 'short'})}</span> : null}
           </div>
           {questions.map((question, index) => {
             const draft = drafts[question.id] ?? emptyAnswer();
@@ -368,9 +371,13 @@ const QuizPage = () => {
       ) : result ? (
         <section className={styles.card}>
           <div className={styles.resultHeader}><CheckCircle2 size={28}/><div><h2>Quiz submitted</h2><p>Receipt {result.receiptId || 'pending'}</p></div></div>
-          <p className={styles.score}>{result.totalScore === null ? 'Waiting for grading' : `${result.totalScore} / ${quiz?.totalPoints ?? 0}`}</p>
+          <p className={styles.score}>
+            {visibleResultScore === null
+              ? 'Waiting for grading'
+              : `${result.manualGradingPending ? 'Auto-score so far: ' : ''}${visibleResultScore} / ${quiz?.totalPoints ?? 0}`}
+          </p>
           {result.releasedAt ? (
-            <p className={styles.muted}>Grade released on {formatQuizInstant(result.releasedAt, quiz?.timezone || 'UTC')}</p>
+            <p className={styles.muted}>Grade released on {formatUtcTimestamp(result.releasedAt)}</p>
           ) : null}
           {result.manualGradingPending ? <p className={styles.muted}>A short-answer response still needs instructor grading.</p> : null}
           {attemptsRemaining > 0 ? (
@@ -406,7 +413,7 @@ const QuizPage = () => {
           <ol className={styles.historyList}>
             {attempts.map(item => (
               <li key={item.id}>
-                <div><strong>Attempt {item.attemptNumber}</strong><span>{item.submittedAt ? new Date(item.submittedAt).toLocaleString('en-US') : new Date(item.startedAt).toLocaleString('en-US')}</span></div>
+                <div><strong>Attempt {item.attemptNumber}</strong><span>{formatUtcTimestamp(item.submittedAt || item.startedAt)}</span></div>
                 <span className={styles.statusBadge} data-status={item.status}>{item.status}</span>
                 <button type="button" className={styles.secondaryButton} onClick={() => setSelectedHistoryAttemptId(current => current === item.id ? null : item.id)} aria-expanded={selectedHistoryAttemptId === item.id}>{selectedHistoryAttemptId === item.id ? 'Hide result' : 'View result'}</button>
               </li>

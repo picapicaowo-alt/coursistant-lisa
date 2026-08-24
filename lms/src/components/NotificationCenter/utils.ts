@@ -1,4 +1,5 @@
 import type {NotificationItem, NotificationType} from '@/apis';
+import {formatUtcTimestamp} from '@/utils/datetime';
 
 const NOTIFICATION_TITLES: Record<NotificationType, string> = {
   ANNOUNCEMENT_POSTED: 'New announcement',
@@ -84,12 +85,11 @@ export const resolveNotificationPath = (
 };
 
 export const formatNotificationTime = (value: string): string => {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('en-US', {
+  return formatUtcTimestamp(value, {
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
-  }).format(date);
+    timeZoneName: 'short',
+  });
 };

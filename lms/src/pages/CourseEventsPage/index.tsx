@@ -5,17 +5,29 @@ import {Link, useNavigate, useParams} from 'react-router-dom';
 import type {CourseEvent, CourseEventPayload} from '@/apis';
 import {unwrapData} from '@/apis';
 import {courseApiService} from '@/apis/services/course-api';
+import {DurationSelect} from '@/components/DurationSelect';
 import {EnglishDateInput, EnglishTimeInput} from '@/components/EnglishDateInput';
 import MarkdownMessage from '@/components/MarkdownMessage';
 import {RichTextEditor} from '@/components/RichTextEditor';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
 import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
 import {getApiErrorCode, isConflict} from '@/utils/apiError';
+import {
+  addMinutesToTimeValue,
+  defaultTimeRange,
+  DEFAULT_DURATION_MINUTES,
+  presetDuration,
+  SHORT_DURATION_OPTIONS,
+  timeDurationMinutes,
+} from '@/utils/dateTimeRange';
 import styles from './index.module.scss';
 
-const emptyEvent = (): CourseEventPayload => ({
-  name: '', date: '', startTime: '', endTime: '', location: '', description: '',
-});
+const emptyEvent = (): CourseEventPayload => {
+  const range = defaultTimeRange();
+  return {
+    name: '', date: range.date, startTime: range.start, endTime: range.end, location: '', description: '',
+  };
+};
 
 const toDraft = (event: CourseEvent): CourseEventPayload => ({
   name: event.name,
@@ -162,6 +174,22 @@ const CourseEventsPage = () => {
   };
   const openCreate = () => { setDraft(emptyEvent()); setEditorMode('create'); setMessage(null); };
   const openEdit = () => { if (selectedEvent) { setDraft(toDraft(selectedEvent)); setEditorMode('edit'); setMessage(null); } };
+  const rangeDuration = timeDurationMinutes(draft.startTime ?? '', draft.endTime ?? '');
+  const selectedDuration = presetDuration(rangeDuration, SHORT_DURATION_OPTIONS);
+  const changeStartTime = (value: string) => {
+    const duration = rangeDuration ?? DEFAULT_DURATION_MINUTES;
+    setDraft(current => ({
+      ...current,
+      startTime: value,
+      endTime: value ? addMinutesToTimeValue(value, duration) || current.endTime : current.endTime,
+    }));
+  };
+  const changeDuration = (minutes: number) => {
+    setDraft(current => ({
+      ...current,
+      endTime: current.startTime ? addMinutesToTimeValue(current.startTime, minutes) || current.endTime : current.endTime,
+    }));
+  };
   const invalidTime = Boolean(draft.startTime && draft.endTime && draft.endTime <= draft.startTime);
   const sortedEvents = [...(eventsQuery.data ?? [])].sort((a, b) => `${a.date}${a.startTime ?? ''}`.localeCompare(`${b.date}${b.startTime ?? ''}`));
   const failed = !validCourse || !validEvent || eventsQuery.isError || selectedEventQuery.isError;
@@ -179,13 +207,15 @@ const CourseEventsPage = () => {
 
       {editorMode ? (
         <form className={styles.card} onSubmit={submit}>
-          <div className={styles.cardHeader}><div><h2>{editorMode === 'create' ? 'Create event' : 'Edit event'}</h2><p>Times use the course timezone.</p></div><button type="button" className={styles.iconButton} aria-label="Close event editor" onClick={() => setEditorMode(null)}><X size={18}/></button></div>
+          <div className={styles.cardHeader}><div><h2>{editorMode === 'create' ? 'Create event' : 'Edit event'}</h2><p>Times use the course timezone. New events default to one hour.</p></div><button type="button" className={styles.iconButton} aria-label="Close event editor" onClick={() => setEditorMode(null)}><X size={18}/></button></div>
           <div className={styles.formGrid}>
             <label className={styles.full}><span>Name</span><input required value={draft.name} onChange={e => setDraft(current => ({...current, name: e.target.value}))}/></label>
             <label><span>Date</span><EnglishDateInput required value={draft.date} onChangeValue={value => setDraft(current => ({...current, date: value}))}/></label>
             <span/>
-            <label><span>Starts</span><EnglishTimeInput value={draft.startTime ?? ''} onChangeValue={value => setDraft(current => ({...current, startTime: value}))}/></label>
+            <label><span>Starts</span><EnglishTimeInput value={draft.startTime ?? ''} onChangeValue={changeStartTime}/></label>
             <label><span>Ends</span><EnglishTimeInput value={draft.endTime ?? ''} onChangeValue={value => setDraft(current => ({...current, endTime: value}))}/></label>
+            <DurationSelect minutes={selectedDuration} options={SHORT_DURATION_OPTIONS} onChange={changeDuration}/>
+            <span/>
             <label className={styles.full}><span>Location</span><input value={draft.location ?? ''} onChange={e => setDraft(current => ({...current, location: e.target.value}))}/></label>
             <div className={`${styles.full} ${styles.markdownField}`}>
               <span>Description</span>

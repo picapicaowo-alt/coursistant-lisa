@@ -7,6 +7,7 @@ import {unwrapData} from '@/apis';
 import {assignmentApiService} from '@/apis/services/assignment-api';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
 import {openPreviewWindow, saveBlob, showBlobInPreviewWindow} from '@/utils/downloadBlob';
+import {formatUtcTimestamp} from '@/utils/datetime';
 import styles from './index.module.scss';
 
 const formatSize = (bytes: number) => {
@@ -94,7 +95,7 @@ const AssignmentSubmissionPage = () => {
             <article className={styles.card} key={version.id}>
               <div className={styles.versionHeader}>
                 <div><p className={styles.eyebrow}>{index === 0 ? 'Current version' : 'Earlier version'}</p><h2>Version {version.versionNo}</h2></div>
-                <div className={styles.metadata}><span><Clock3 size={16}/>{new Date(version.submittedAt).toLocaleString('en-US')}</span><span>{version.submissionStatus}</span>{version.usedGraceBuffer ? <span>Grace buffer used</span> : null}</div>
+                <div className={styles.metadata}><span><Clock3 size={16}/>{formatUtcTimestamp(version.submittedAt)}</span><span>{version.submissionStatus}</span>{version.usedGraceBuffer ? <span>Grace buffer used</span> : null}</div>
               </div>
               {version.files.length ? (
                 <ul className={styles.fileList}>

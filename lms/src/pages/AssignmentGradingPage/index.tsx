@@ -6,7 +6,9 @@ import type {GradingRosterItem, UpsertGradePayload} from '@/apis';
 import {unwrapData} from '@/apis';
 import {assignmentApiService} from '@/apis/services/assignment-api';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
+import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
 import {saveBlob} from '@/utils/downloadBlob';
+import {formatUtcTimestamp} from '@/utils/datetime';
 import {StudentSubmissionHistory} from '@/pages/AssignmentDetailPage/StudentSubmissionHistory';
 import {RichTextEditor} from '@/components/RichTextEditor';
 import {buildGradeSelection, rosterRowKey} from './gradeSelection';
@@ -33,14 +35,13 @@ const getInitials = (value: string) => value
 
 const formatSubmissionTime = (value?: string) => {
   if (!value) return '—';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('en-US', {
+  return formatUtcTimestamp(value, {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(date);
+    timeZoneName: 'short',
+  });
 };
 
 const getSubmissionLabel = (value: string) => {
@@ -227,6 +228,7 @@ const AssignmentGradingPage = () => {
   const assignmentId = parseId(assignmentParam);
   const access = useCourseAccess(courseId);
   const queryClient = useQueryClient();
+  const idempotency = useIdempotencyCheckpoint();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<RosterFilter>('All');
   const [selectedRow, setSelectedRow] = useState<GradingRosterItem | null>(null);
@@ -301,8 +303,15 @@ const AssignmentGradingPage = () => {
 
     setReleasing(true);
     setActionError(null);
+    const operation = `assignment-release-all-${courseId}-${assignmentId}`;
+    const fingerprint = idempotencyFingerprint({courseId, assignmentId, action: 'release-all'});
     try {
-      await assignmentApiService.releaseAllGrades(courseId, assignmentId);
+      await assignmentApiService.releaseAllGrades(
+        courseId,
+        assignmentId,
+        idempotency.keyFor(operation, fingerprint),
+      );
+      idempotency.completeFingerprint(operation, fingerprint);
       await Promise.all([
         queryClient.invalidateQueries({queryKey: ['assignment-grading-roster', courseId, assignmentId]}),
         queryClient.invalidateQueries({queryKey: ['assignment', courseId, assignmentId]}),
@@ -325,12 +334,25 @@ const AssignmentGradingPage = () => {
 
     setReleasing(true);
     setActionError(null);
+    const operation = `assignment-grades-${action}-${courseId}-${assignmentId}`;
+    const fingerprint = idempotencyFingerprint({action, selection});
     try {
       if (action === 'release') {
-        await assignmentApiService.releaseGrades(courseId, assignmentId, selection);
+        await assignmentApiService.releaseGrades(
+          courseId,
+          assignmentId,
+          selection,
+          idempotency.keyFor(operation, fingerprint),
+        );
       } else {
-        await assignmentApiService.retractGrades(courseId, assignmentId, selection);
+        await assignmentApiService.retractGrades(
+          courseId,
+          assignmentId,
+          selection,
+          idempotency.keyFor(operation, fingerprint),
+        );
       }
+      idempotency.completeFingerprint(operation, fingerprint);
       await Promise.all([
         queryClient.invalidateQueries({queryKey: ['assignment-grading-roster', courseId, assignmentId]}),
         queryClient.invalidateQueries({queryKey: ['assignment', courseId, assignmentId]}),

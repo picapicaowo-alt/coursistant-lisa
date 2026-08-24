@@ -52,6 +52,16 @@ const renderPage = () => render(
   </QueryClientProvider>,
 );
 
+const renderListPage = () => render(
+  <QueryClientProvider client={new QueryClient({defaultOptions: {queries: {retry: false}}})}>
+    <MemoryRouter initialEntries={['/course/31/events']}>
+      <Routes>
+        <Route path="/course/:courseId/events" element={<CourseEventsPage/>}/>
+      </Routes>
+    </MemoryRouter>
+  </QueryClientProvider>,
+);
+
 describe('CourseEventsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -93,5 +103,24 @@ describe('CourseEventsPage', () => {
 
     await waitFor(() => expect(api.updateCourseEvent).toHaveBeenCalledTimes(2));
     expect(api.updateCourseEvent.mock.calls[0][3]).toBe(api.updateCourseEvent.mock.calls[1][3]);
+  });
+
+  it('defaults a new event to a rounded one-hour range and keeps duration linked', async () => {
+    api.listCourseEvents.mockResolvedValue(response([]));
+    renderListPage();
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', {name: 'Add event'}));
+
+    const starts = screen.getByLabelText('Starts') as HTMLInputElement;
+    const ends = screen.getByLabelText('Ends') as HTMLInputElement;
+    expect(starts.value).toMatch(/:\d{2} (AM|PM)$/);
+    expect(starts.value).toMatch(/:(00|30) (AM|PM)$/);
+    expect(screen.getByLabelText('Duration')).toHaveValue('60');
+
+    fireEvent.change(starts, {target: {value: '10:00 AM'}});
+    expect(ends).toHaveValue('11:00 AM');
+    await user.selectOptions(screen.getByLabelText('Duration'), '90');
+    expect(ends).toHaveValue('11:30 AM');
   });
 });

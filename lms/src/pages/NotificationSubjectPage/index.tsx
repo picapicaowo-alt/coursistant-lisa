@@ -5,6 +5,7 @@ import {Link, useParams} from 'react-router-dom';
 import {courseApiService} from '@/apis/services/course-api';
 import {unwrapData} from '@/apis';
 import {RichTextEditor} from '@/components/RichTextEditor';
+import {formatUtcTimestamp} from '@/utils/datetime';
 import styles from './index.module.scss';
 
 export type NotificationSubjectKind = 'announcement' | 'event' | 'group-set' | 'week';
@@ -43,7 +44,7 @@ const loadSubject = async (
       description: item.body,
       metadata: [
         {icon: 'users', label: item.authorName},
-        {icon: 'calendar', label: new Date(item.postedAt).toLocaleString('en-US')},
+        {icon: 'calendar', label: formatUtcTimestamp(item.postedAt)},
       ],
     };
   }

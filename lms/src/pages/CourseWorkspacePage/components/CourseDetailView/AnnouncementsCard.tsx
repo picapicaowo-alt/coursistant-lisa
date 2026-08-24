@@ -1,6 +1,7 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import type {CourseAnnouncementSummary} from '@/apis';
+import {formatUtcTimestamp, parseUtcTimestamp} from '@/utils/datetime';
 import styles from './index.module.scss';
 
 interface AnnouncementsCardProps {
@@ -11,11 +12,7 @@ interface AnnouncementsCardProps {
 }
 
 const formatAnnouncementDate = (postedAt: string): string => {
-  const date = new Date(postedAt);
-  if (Number.isNaN(date.getTime())) {
-    return postedAt;
-  }
-  return date.toLocaleDateString('en-US', {
+  return formatUtcTimestamp(postedAt, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -29,7 +26,7 @@ export const AnnouncementsCard: React.FC<AnnouncementsCardProps> = ({
   canManage = false,
 }) => {
   const ordered = [...announcements].sort(
-    (a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime(),
+    (a, b) => parseUtcTimestamp(b.postedAt).getTime() - parseUtcTimestamp(a.postedAt).getTime(),
   );
   const displayed = ordered.slice(0, 3);
 

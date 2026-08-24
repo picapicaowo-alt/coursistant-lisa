@@ -5,17 +5,21 @@ import {Link, useNavigate, useParams} from 'react-router-dom';
 import type {CreateQuizQuestionRequest, QuizQuestion, QuizQuestionType, QuizResultVisibility} from '@/apis';
 import {unwrapData} from '@/apis';
 import {quizApiService} from '@/apis/services/quiz-api';
+import {DurationSelect} from '@/components/DurationSelect';
 import {EnglishDateTimeInput} from '@/components/EnglishDateInput';
 import MarkdownMessage from '@/components/MarkdownMessage';
 import {RichTextEditor} from '@/components/RichTextEditor';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
 import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
+import {
+  addMinutesToDateTimeValue,
+  dateTimeDurationMinutes,
+  defaultDateTimeRange,
+  DEFAULT_DURATION_MINUTES,
+  LONG_DURATION_OPTIONS,
+  presetDuration,
+} from '@/utils/dateTimeRange';
 import styles from './index.module.scss';
-
-const localInputValue = (date: Date) => {
-  const shifted = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-  return shifted.toISOString().slice(0, 16);
-};
 
 const defaultQuestion = (): CreateQuizQuestionRequest => ({
   type: 'SingleChoice',
@@ -147,10 +151,11 @@ const QuizEditorPage = () => {
   const queryClient = useQueryClient();
   const access = useCourseAccess(Number.isInteger(courseId) ? courseId : null);
   const idempotency = useIdempotencyCheckpoint();
+  const defaultRange = useMemo(() => defaultDateTimeRange(), []);
   const [title, setTitle] = useState('');
   const [instructions, setInstructions] = useState('');
-  const [opensAt, setOpensAt] = useState(() => localInputValue(new Date()));
-  const [closesAt, setClosesAt] = useState(() => localInputValue(new Date(Date.now() + 7 * 86400_000)));
+  const [opensAt, setOpensAt] = useState(defaultRange.start);
+  const [closesAt, setClosesAt] = useState(defaultRange.end);
   const [timeLimitMinutes, setTimeLimitMinutes] = useState('');
   const [attemptsAllowed, setAttemptsAllowed] = useState(1);
   const [resultVisibility, setResultVisibility] = useState<QuizResultVisibility>('AfterRelease');
@@ -347,6 +352,17 @@ const QuizEditorPage = () => {
   }
 
   const questions = questionsQuery.data ?? [];
+  const rangeDuration = dateTimeDurationMinutes(opensAt, closesAt);
+  const selectedDuration = presetDuration(rangeDuration, LONG_DURATION_OPTIONS);
+  const invalidWindow = Boolean(opensAt && closesAt && closesAt <= opensAt);
+  const changeOpensAt = (value: string) => {
+    const duration = rangeDuration ?? DEFAULT_DURATION_MINUTES;
+    setOpensAt(value);
+    if (value) setClosesAt(addMinutesToDateTimeValue(value, duration));
+  };
+  const changeDuration = (minutes: number) => {
+    if (opensAt) setClosesAt(addMinutesToDateTimeValue(opensAt, minutes));
+  };
 
   return (
     <main className={styles.page}>
@@ -356,7 +372,7 @@ const QuizEditorPage = () => {
       </div>
 
       <form className={styles.card} onSubmit={submitSettings}>
-        <div className={styles.cardHeader}><div><h2>Quiz settings</h2><p>Times use the course timezone.</p></div><button className={styles.primaryButton} disabled={saveQuiz.isPending || !title.trim() || !opensAt || !closesAt}>{saveQuiz.isPending ? 'Saving…' : isNew ? 'Create quiz' : 'Save settings'}</button></div>
+        <div className={styles.cardHeader}><div><h2>Quiz settings</h2><p>Times use the course timezone. New quizzes default to a one-hour window.</p></div><button className={styles.primaryButton} disabled={saveQuiz.isPending || !title.trim() || !opensAt || !closesAt || invalidWindow}>{saveQuiz.isPending ? 'Saving…' : isNew ? 'Create quiz' : 'Save settings'}</button></div>
         <div className={styles.formGrid}>
           <label className={styles.full}><span>Title</span><input value={title} onChange={event => setTitle(event.target.value)} required/></label>
           <div className={`${styles.full} ${styles.markdownField}`}>
@@ -368,12 +384,15 @@ const QuizEditorPage = () => {
               ariaLabel="Quiz instructions"
             />
           </div>
-          <label><span>Opens</span><EnglishDateTimeInput value={opensAt} onChangeValue={setOpensAt} required/></label>
+          <label><span>Opens</span><EnglishDateTimeInput value={opensAt} onChangeValue={changeOpensAt} required/></label>
           <label><span>Closes</span><EnglishDateTimeInput value={closesAt} onChangeValue={setClosesAt} required/></label>
+          <DurationSelect minutes={selectedDuration} options={LONG_DURATION_OPTIONS} onChange={changeDuration}/>
+          <span/>
           <label><span>Time limit (minutes)</span><input type="number" min="1" value={timeLimitMinutes} onChange={event => setTimeLimitMinutes(event.target.value)} placeholder="Unlimited"/></label>
           <label><span>Attempts allowed</span><input type="number" min="1" value={attemptsAllowed} onChange={event => setAttemptsAllowed(Math.max(1, Number(event.target.value)))}/></label>
           <label className={styles.full}><span>Result visibility</span><select value={resultVisibility} onChange={event => setResultVisibility(event.target.value as QuizResultVisibility)}><option value="AfterRelease">After instructor release</option><option value="InstantAutoScore">Instant auto-score</option></select></label>
         </div>
+        {invalidWindow ? <p className={styles.error} role="alert">Close time must be later than open time.</p> : null}
         {message ? <p className={message.includes('not') || message.includes('could') ? styles.error : styles.success} role="status">{message}</p> : null}
       </form>
 

@@ -7,6 +7,7 @@ import {unwrapData} from '@/apis';
 import {courseApiService} from '@/apis/services/course-api';
 import {RichTextEditor} from '@/components/RichTextEditor';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
+import {formatUtcTimestamp} from '@/utils/datetime';
 import styles from '../CourseEventsPage/index.module.scss';
 
 const emptyDraft = (): CourseAnnouncementPayload => ({title: '', body: ''});
@@ -91,7 +92,7 @@ const CourseAnnouncementsPage = () => {
           {announcements.isPending ? <p className={styles.muted}>Loading announcements…</p> : announcements.isError ? <p className={styles.error}>Could not load announcements.</p> : items.length === 0 ? <p className={styles.muted}>No announcements have been posted.</p> : (
             <ul className={styles.eventList}>{items.map(item => (
               <li key={item.id}><div className={styles.announcementRow}>
-                <Link to={`/course/${courseId}/announcements/${item.id}`}><span className={styles.dateTile}><Megaphone size={18}/></span><span className={styles.eventText}><strong>{item.title}</strong><small>{item.authorName} · {new Date(item.postedAt).toLocaleString('en-US')}</small></span><span aria-hidden="true">→</span></Link>
+                <Link to={`/course/${courseId}/announcements/${item.id}`}><span className={styles.dateTile}><Megaphone size={18}/></span><span className={styles.eventText}><strong>{item.title}</strong><small>{item.authorName} · {formatUtcTimestamp(item.postedAt)}</small></span><span aria-hidden="true">→</span></Link>
                 {access.canPostAnnouncements ? <div className={styles.rowActions}><button type="button" className={styles.iconButton} aria-label={`Edit ${item.title}`} onClick={() => void beginEdit(item)}><Pencil size={16}/></button>{confirmDeleteId === item.id ? <><button type="button" className={styles.dangerButton} onClick={() => remove.mutate(item.id)}>Confirm</button><button type="button" className={styles.secondaryButton} onClick={() => setConfirmDeleteId(null)}>Cancel</button></> : <button type="button" className={styles.iconButton} aria-label={`Delete ${item.title}`} onClick={() => setConfirmDeleteId(item.id)}><Trash2 size={16}/></button>}</div> : null}
               </div></li>
             ))}</ul>

@@ -5,8 +5,16 @@ import {Link, useParams} from 'react-router-dom';
 import type {CourseSession, CourseSessionPayload, SessionDayOfWeek, SessionType} from '@/apis';
 import {unwrapData} from '@/apis';
 import {courseApiService} from '@/apis/services/course-api';
+import {DurationSelect} from '@/components/DurationSelect';
 import {EnglishTimeInput} from '@/components/EnglishDateInput';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
+import {
+  addMinutesToTimeValue,
+  DEFAULT_DURATION_MINUTES,
+  presetDuration,
+  SHORT_DURATION_OPTIONS,
+  timeDurationMinutes,
+} from '@/utils/dateTimeRange';
 import styles from '../CourseEventsPage/index.module.scss';
 
 const DAYS: {value: SessionDayOfWeek; label: string}[] = [
@@ -42,6 +50,22 @@ const CourseSchedulePage = () => {
   });
 
   const invalidTime = draft.endTime <= draft.startTime;
+  const rangeDuration = timeDurationMinutes(draft.startTime, draft.endTime);
+  const selectedDuration = presetDuration(rangeDuration, SHORT_DURATION_OPTIONS);
+  const changeStartTime = (value: string) => {
+    const duration = rangeDuration ?? DEFAULT_DURATION_MINUTES;
+    setDraft(current => ({
+      ...current,
+      startTime: value,
+      endTime: addMinutesToTimeValue(value, duration) || current.endTime,
+    }));
+  };
+  const changeDuration = (minutes: number) => {
+    setDraft(current => ({
+      ...current,
+      endTime: addMinutesToTimeValue(current.startTime, minutes) || current.endTime,
+    }));
+  };
   const ordered = [...(sessions.data ?? [])].sort((a, b) => `${a.dayOfWeek}${a.startTime}`.localeCompare(`${b.dayOfWeek}${b.startTime}`));
   const submit = (event: FormEvent) => { event.preventDefault(); setMessage(null); save.mutate(); };
 
@@ -51,12 +75,14 @@ const CourseSchedulePage = () => {
       {message ? <p className={message.includes('could not') ? styles.error : styles.success} role="status">{message}</p> : null}
 
       {editorOpen ? <form className={styles.card} onSubmit={submit}>
-        <div className={styles.cardHeader}><div><h2>{editingId === null ? 'Add class time' : 'Edit class time'}</h2><p>This repeats every week in the course timezone.</p></div><button type="button" className={styles.iconButton} aria-label="Close editor" onClick={() => setEditorOpen(false)}><X size={18}/></button></div>
+        <div className={styles.cardHeader}><div><h2>{editingId === null ? 'Add class time' : 'Edit class time'}</h2><p>This repeats every week in the course timezone. New class times default to one hour.</p></div><button type="button" className={styles.iconButton} aria-label="Close editor" onClick={() => setEditorOpen(false)}><X size={18}/></button></div>
         <div className={styles.formGrid}>
           <label><span>Type</span><select value={draft.type} onChange={event => setDraft(current => ({...current, type: event.target.value as SessionType}))}>{TYPES.map(type => <option key={type}>{type}</option>)}</select></label>
           <label><span>Day</span><select value={draft.dayOfWeek} onChange={event => setDraft(current => ({...current, dayOfWeek: event.target.value as SessionDayOfWeek}))}>{DAYS.map(day => <option key={day.value} value={day.value}>{day.label}</option>)}</select></label>
-          <label><span>Starts</span><EnglishTimeInput required value={draft.startTime} onChangeValue={value => setDraft(current => ({...current, startTime: value}))}/></label>
+          <label><span>Starts</span><EnglishTimeInput required value={draft.startTime} onChangeValue={changeStartTime}/></label>
           <label><span>Ends</span><EnglishTimeInput required value={draft.endTime} onChangeValue={value => setDraft(current => ({...current, endTime: value}))}/></label>
+          <DurationSelect minutes={selectedDuration} options={SHORT_DURATION_OPTIONS} onChange={changeDuration}/>
+          <span/>
           <label className={styles.full}><span>Location</span><input value={draft.location ?? ''} onChange={event => setDraft(current => ({...current, location: event.target.value}))}/></label>
         </div>
         {invalidTime ? <p className={styles.error}>End time must be later than start time.</p> : null}

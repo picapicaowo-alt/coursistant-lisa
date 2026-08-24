@@ -7,6 +7,34 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.extend(advancedFormat);
 
+const HAS_TIMEZONE = /(Z|[+-]\d{2}:?\d{2})$/i;
+
+/**
+ * Backend audit/receipt timestamps are UTC, but several legacy DTOs expose
+ * them as a zone-less `LocalDateTime`. Normalize those values before handing
+ * them to `Date`; otherwise a browser silently treats UTC as local wall time.
+ */
+export const parseUtcTimestamp = (value: string): Date => {
+  const normalized = value.includes(' ') ? value.replace(' ', 'T') : value;
+  return new Date(HAS_TIMEZONE.test(normalized) ? normalized : `${normalized}Z`);
+};
+
+export const formatUtcTimestamp = (
+  value: string,
+  options: Intl.DateTimeFormatOptions = {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  },
+): string => {
+  const date = parseUtcTimestamp(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat('en-US', options).format(date);
+};
+
 /**
  * Formats a deadline for display.
  *

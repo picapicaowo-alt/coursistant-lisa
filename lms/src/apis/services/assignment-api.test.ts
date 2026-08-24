@@ -160,10 +160,33 @@ describe('AssignmentApiService 8081 routes', () => {
   it('releases every entered grade through the idempotent backend operation', async () => {
     client.post.mockResolvedValue({status: 200, data: {assignmentId: 9}});
 
-    await service.releaseAllGrades(4, 9);
+    await service.releaseAllGrades(4, 9, 'release-all-1');
 
     expect(client.post).toHaveBeenCalledWith(
-      '/v2/courses/4/assignments/9/grades/release-all'
+      '/v2/courses/4/assignments/9/grades/release-all',
+      undefined,
+      {headers: {'Idempotency-Key': 'release-all-1'}},
+    );
+  });
+
+  it('sends retry-stable idempotency keys for selected grade release and retract', async () => {
+    const selection = {studentUserIds: [385]};
+    client.post.mockResolvedValue({status: 200, data: {changedCount: 1}});
+
+    await service.releaseGrades(4, 9, selection, 'release-selected-1');
+    await service.retractGrades(4, 9, selection, 'retract-selected-1');
+
+    expect(client.post).toHaveBeenNthCalledWith(
+      1,
+      '/v2/courses/4/assignments/9/grades/release',
+      selection,
+      {headers: {'Idempotency-Key': 'release-selected-1'}},
+    );
+    expect(client.post).toHaveBeenNthCalledWith(
+      2,
+      '/v2/courses/4/assignments/9/grades/retract',
+      selection,
+      {headers: {'Idempotency-Key': 'retract-selected-1'}},
     );
   });
 

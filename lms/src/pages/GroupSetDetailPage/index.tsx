@@ -5,8 +5,16 @@ import {Link, useNavigate, useParams} from 'react-router-dom';
 import type {CourseGroup, PatchGroupSetPayload} from '@/apis';
 import {unwrapData} from '@/apis';
 import {courseApiService} from '@/apis/services/course-api';
+import {DurationSelect} from '@/components/DurationSelect';
 import {EnglishDateTimeInput} from '@/components/EnglishDateInput';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
+import {
+  addMinutesToDateTimeValue,
+  dateTimeDurationMinutes,
+  DEFAULT_DURATION_MINUTES,
+  LONG_DURATION_OPTIONS,
+  presetDuration,
+} from '@/utils/dateTimeRange';
 import styles from './index.module.scss';
 
 interface GroupDraft { name: string; capacityOverride: number | null; }
@@ -155,6 +163,24 @@ const GroupSetDetailPage = () => {
     setGroupDraft({name: group.name, capacityOverride: group.capacityOverride});
     setConfirmGroupCapacity(false);
   };
+  const rangeDuration = dateTimeDurationMinutes(settingsDraft.joinOpensAt ?? '', settingsDraft.joinClosesAt ?? '');
+  const selectedDuration = presetDuration(rangeDuration, LONG_DURATION_OPTIONS);
+  const changeJoinOpensAt = (value: string) => {
+    const duration = rangeDuration ?? DEFAULT_DURATION_MINUTES;
+    setSettingsDraft(current => ({
+      ...current,
+      joinOpensAt: value || null,
+      joinClosesAt: value ? addMinutesToDateTimeValue(value, duration) : current.joinClosesAt,
+    }));
+  };
+  const changeDuration = (minutes: number) => {
+    setSettingsDraft(current => ({
+      ...current,
+      joinClosesAt: current.joinOpensAt
+        ? addMinutesToDateTimeValue(current.joinOpensAt, minutes)
+        : current.joinClosesAt,
+    }));
+  };
   const invalidWindow = Boolean(settingsDraft.joinOpensAt && settingsDraft.joinClosesAt && settingsDraft.joinClosesAt <= settingsDraft.joinOpensAt);
   const myGroupId = groupSet?.myGroup?.groupId ?? null;
 
@@ -178,8 +204,10 @@ const GroupSetDetailPage = () => {
             <label className={styles.full}><span>Name</span><input required value={settingsDraft.name ?? ''} onChange={e => setSettingsDraft(current => ({...current, name: e.target.value}))}/></label>
             <label><span>Default capacity</span><input type="number" min="1" value={settingsDraft.defaultCapacity ?? ''} placeholder="No limit" onChange={e => setSettingsDraft(current => ({...current, defaultCapacity: e.target.value ? Number(e.target.value) : null}))}/></label>
             <label className={styles.checkbox}><input type="checkbox" checked={Boolean(settingsDraft.locked)} onChange={e => setSettingsDraft(current => ({...current, locked: e.target.checked}))}/><span>Lock student changes</span></label>
-            <label><span>Join opens</span><EnglishDateTimeInput value={settingsDraft.joinOpensAt ?? ''} onChangeValue={value => setSettingsDraft(current => ({...current, joinOpensAt: value || null}))}/></label>
+            <label><span>Join opens</span><EnglishDateTimeInput value={settingsDraft.joinOpensAt ?? ''} onChangeValue={changeJoinOpensAt}/></label>
             <label><span>Join closes</span><EnglishDateTimeInput value={settingsDraft.joinClosesAt ?? ''} onChangeValue={value => setSettingsDraft(current => ({...current, joinClosesAt: value || null}))}/></label>
+            <DurationSelect minutes={selectedDuration} options={LONG_DURATION_OPTIONS} onChange={changeDuration} disabled={!settingsDraft.joinOpensAt}/>
+            <span/>
           </div>
           <label className={styles.confirmCheck}><input type="checkbox" checked={confirmSettingsImpact} onChange={e => setConfirmSettingsImpact(e.target.checked)}/><span>I confirm capacity/window reductions that affect current students.</span></label>
           {invalidWindow ? <p className={styles.error}>Join close time must be later than join open time.</p> : null}
