@@ -1,6 +1,6 @@
 // @ts-nocheck — legacy chat bundle; quarantined until chat migration (PROJECT_STANDARDS.md §13).
 import styles from '../sections/chat/chat-main-component/styles.module.scss';
-import {useState, useRef, useEffect, forwardRef, useImperativeHandle} from 'react';
+import {useState, useRef, useEffect, forwardRef, useImperativeHandle, useCallback} from 'react';
 import TypingText from "../utils/typing-text";
 import {renderMessageText} from '@/utils/render-message-text';
 import {useAuth} from '@/contexts/AuthContext.js';
@@ -10,6 +10,13 @@ import {useNavigate} from 'react-router-dom';
 import {useAiExamLockdown} from '@/hooks/useAiExamLockdown';
 import {loadActiveChatCourses} from '@/utils/chatCourses';
 import DynamicThinking from '@/components/DynamicThinking/DynamicThinking';
+import {readStudySupportAnswer} from '@/utils/studySupportResponse';
+import {studySupportEndpoint} from '@/utils/studySupportEndpoint';
+import {
+  buildStudySupportFormData,
+  buildStudySupportStreamBody,
+} from '@/utils/studySupportRequest';
+import {streamStudySupport} from '@/utils/studySupportStream';
 
 const STUDY_SUPPORT_THINKING_STEPS = [
   {id: 'understand', text: 'Understanding your question.'},
@@ -42,7 +49,6 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
     if (!handoffRef.current) {
       handoffRef.current = !!sessionStorage.getItem('pendingChat');
     }
-    const VITE_CHAT_API_DOMAIN = import.meta.env.VITE_CHAT_API_DOMAIN_NAME;
     const STATIC_BASE = (import.meta.env.VITE_STATIC_BASE_URL || '').replace(/\/+$/, '');
     const navigate = useNavigate();
     const {user} = useAuth();
@@ -114,10 +120,11 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
     const relevantCourseIds = selectedCourseId === 0
       ? courses.map(course => Number(course.id))
       : [selectedCourseId];
+    const requiresStudentExamLockdown = user?.level !== 'INSTRUCTOR';
     const examLockdown = useAiExamLockdown(
       relevantCourseIds,
       user?.id ?? null,
-      Boolean(isCoursesFetched && user?.accessToken && user?.id),
+      Boolean(requiresStudentExamLockdown && isCoursesFetched && user?.accessToken && user?.id),
     );
     const isExamStatusPending = (!isCoursesFetched && !courseFetchFailed) || examLockdown.status === 'checking';
     const isStudySupportUnavailable = isExamStatusPending
@@ -158,6 +165,8 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
     const fileInputRef = useRef(null);
     const [isWriting, setIsWriting] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
+    const [thinkingSteps, setThinkingSteps] = useState([]);
+    const thinkingStepId = useRef(0);
     const [lightboxSrc, setLightboxSrc] = useState(null);
     const chatIcons = [
       {src: "/icons/chat/cut.png", alt: "cut"},
@@ -168,6 +177,12 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
     ];
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
+
+    const scrollChatToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+      const container = containerRef.current;
+      if (!container) return;
+      container.scrollTo({top: container.scrollHeight, behavior});
+    }, []);
     
     const [selectedDialogueId, setSelectedDialogueId] = useState(getSavedDialogueId);
     
@@ -178,8 +193,8 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
     const [isRecentPromptsFetched, setIsRecentPromptsFetched] = useState(false);
     
     useEffect(() => {
-      bottomRef.current?.scrollIntoView({behavior: 'smooth'});
-    }, [messages]);
+      scrollChatToBottom();
+    }, [messages, scrollChatToBottom]);
     
     useEffect(() => {
       if (props.showHistory) {
@@ -203,14 +218,14 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
         const {scrollTop, scrollHeight, clientHeight} = container;
         const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
         if (isNearBottom) {
-          bottomRef.current?.scrollIntoView({behavior: 'smooth'});
+          scrollChatToBottom();
         }
       };
       
       const interval = setInterval(checkScrollPosition, 250); // Adjust as needed
       
       return () => clearInterval(interval);
-    }, [isWriting, isUserScrolled, messages]);
+    }, [isWriting, isUserScrolled, messages, scrollChatToBottom]);
     
     const isImageFile = (fileName) => {
       if (!fileName || typeof fileName !== 'string') return false;
@@ -259,7 +274,7 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
       if (isRecentPromptsFetched) return;
       console.log('Fetching recent prompts...');
       try {
-        const response = await axios.get(`${VITE_CHAT_API_DOMAIN}/dialogue/selectByUserId/${user.id}`, {
+        const response = await axios.get(studySupportEndpoint(`/dialogue/selectByUserId/${user.id}`), {
           headers: chatAuthHeaders(),
         });
         if (response.data.code === "200" || response.data.code === 200) {
@@ -288,7 +303,7 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
       setMessages([]);
       setIsWriting(false);
       try {
-        const response = await axios.get(`${VITE_CHAT_API_DOMAIN}/dialogue/selectById/${idNum}`, {
+        const response = await axios.get(studySupportEndpoint(`/dialogue/selectById/${idNum}`), {
           headers: chatAuthHeaders(),
         });
         if (response.data.code === "200" || response.data.code === 200) {
@@ -368,32 +383,52 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
       removeFile();
       
       setIsLoading(true);
+      setThinkingSteps([]);
       
-      const formData = new FormData();
-      formData.append('courseId', String(courseForSend));
-      formData.append('query', question);
-      formData.append('dialogueId', selectedDialogueId);
-      formData.append('userId', user.id);
-      
-      if (tempImageFileObj) formData.append('file', tempImageFileObj);
-      else if (tempFileObj) formData.append('file', tempFileObj);
+      const formData = buildStudySupportFormData({
+        courseId: courseForSend,
+        query: question,
+        dialogueId: selectedDialogueId,
+        file: tempImageFileObj || tempFileObj,
+      });
       
       try {
-        const response = await axios.post(`${VITE_CHAT_API_DOMAIN}/query`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            ...chatAuthHeaders(),
-          },
-        });
-        
-        setIsLoading(false);
-        
-        const raw = response.data?.data || {};
+        let responseBody;
+        if (tempImageFileObj || tempFileObj) {
+          const response = await axios.post(studySupportEndpoint('/query'), formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              ...chatAuthHeaders(),
+            },
+          });
+          responseBody = response.data;
+        } else {
+          responseBody = await streamStudySupport({
+            url: studySupportEndpoint('/query/stream'),
+            body: buildStudySupportStreamBody({
+              courseId: courseForSend,
+              query: question,
+              dialogueId: selectedDialogueId,
+            }),
+            headers: chatAuthHeaders(),
+            onProgress: progress => {
+              setThinkingSteps(current => [
+                ...current,
+                {id: `${progress.phase}-${thinkingStepId.current++}`, text: progress.text},
+              ]);
+            },
+          });
+        }
+
+        const answer = readStudySupportAnswer(responseBody);
+        const raw = responseBody?.data || responseBody || {};
         const newMessage = {
-          text: raw.answer,
+          text: answer,
           sender: 'chatbot',
           imageSrc: raw.imageURL ? toFullURL(raw.imageURL) : null,
         };
+        setIsLoading(false);
+        setThinkingSteps([]);
         setMessages(prev => [...prev, newMessage]);
         setIsWriting(true);
         
@@ -402,39 +437,55 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
         const queryIdNum = Number(queryIdRaw);
         
         if (Number.isFinite(queryIdNum) && queryIdNum > 0) {
-          const followUp = await axios.get(
-            `${VITE_CHAT_API_DOMAIN}/dialogue/selectById/${queryIdNum}`,
-            {headers: chatAuthHeaders()}
-          );
-          const promptData = followUp?.data?.data;
-          
-          if (selectedDialogueId === -1) {
-            setSelectedDialogueId(queryIdNum);
-            setRecentPrompts(prev => [
-              {
-                id: promptData?.id ?? queryIdNum,
-                text: promptData?.summary ?? (question.slice(0, 60) + (question.length > 60 ? '…' : '')),
-                group: transformDate(promptData?.updateTime) ?? 'Today',
-                updateTime: promptData?.updateTime
-              },
-              ...prev
-            ]);
-          } else {
-            setRecentPrompts(prev => [
-              {
-                id: promptData?.id ?? queryIdNum,
-                text: promptData?.summary ?? (question.slice(0, 60) + (question.length > 60 ? '…' : '')),
-                group: transformDate(promptData?.updateTime) ?? 'Today'
-              },
-              ...prev.filter(item => item.id !== (promptData?.id ?? queryIdNum))
-            ]);
+          try {
+            const followUp = await axios.get(
+              studySupportEndpoint(`/dialogue/selectById/${queryIdNum}`),
+              {headers: chatAuthHeaders()}
+            );
+            const promptData = followUp?.data?.data;
+
+            if (selectedDialogueId === -1) {
+              setSelectedDialogueId(queryIdNum);
+              setRecentPrompts(prev => [
+                {
+                  id: promptData?.id ?? queryIdNum,
+                  text: promptData?.summary ?? (question.slice(0, 60) + (question.length > 60 ? '…' : '')),
+                  group: transformDate(promptData?.updateTime) ?? 'Today',
+                  updateTime: promptData?.updateTime
+                },
+                ...prev
+              ]);
+            } else {
+              setRecentPrompts(prev => [
+                {
+                  id: promptData?.id ?? queryIdNum,
+                  text: promptData?.summary ?? (question.slice(0, 60) + (question.length > 60 ? '…' : '')),
+                  group: transformDate(promptData?.updateTime) ?? 'Today'
+                },
+                ...prev.filter(item => item.id !== (promptData?.id ?? queryIdNum))
+              ]);
+            }
+          } catch {
+            // The answer is already visible; history metadata failure must not
+            // turn a successful Study Support response into a user-facing error.
+            console.error('Failed to refresh Study Support history metadata.');
           }
         } else {
-          console.warn('Missing queryId in /query response:', dd);
+          console.warn('Missing queryId in /query response.');
         }
-      } catch (error) {
-        console.error('Error during submission:', error);
+      } catch {
+        console.error('Study Support request failed.');
         setIsLoading(false);
+        setThinkingSteps([]);
+        setIsWriting(false);
+        setMessages(prev => [
+          ...prev,
+          {
+            text: 'Study Support could not respond. Please try again.',
+            sender: 'chatbot',
+            imageSrc: null,
+          }
+        ]);
       }
     };
     
@@ -786,7 +837,10 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
                 ))}
                 
                 {isLoading ? (
-                  <DynamicThinking fallbackSteps={STUDY_SUPPORT_THINKING_STEPS}/>
+                  <DynamicThinking
+                    steps={thinkingSteps}
+                    fallbackSteps={STUDY_SUPPORT_THINKING_STEPS}
+                  />
                 ) : null}
                 <div ref={bottomRef}/>
               </>

@@ -1,0 +1,155 @@
+.markdown {
+    min-width: 0;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+    overflow-wrap: anywhere;
+    white-space: normal;
+
+    > *:first-child {
+        margin-top: 0;
+    }
+
+    > *:last-child {
+        margin-bottom: 0;
+    }
+
+    p,
+    ul,
+    ol,
+    blockquote,
+    pre,
+    .tableScroll {
+        margin: 0 0 0.65rem;
+    }
+
+    ul,
+    ol {
+        padding-left: 1.35rem;
+    }
+
+    li + li {
+        margin-top: 0.2rem;
+    }
+
+    li > p {
+        margin: 0;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        margin: 0.8rem 0 0.4rem;
+        color: inherit;
+        font-weight: t.$fw-bold;
+        line-height: 1.3;
+    }
+
+    h1 {
+        font-size: 1.35em;
+    }
+
+    h2 {
+        font-size: 1.2em;
+    }
+
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-size: 1.05em;
+    }
+
+    a {
+        color: inherit;
+        text-decoration: underline;
+        text-underline-offset: 0.14em;
+    }
+
+    blockquote {
+        padding-left: 0.85rem;
+        border-left: 3px solid t.$brand;
+        opacity: 0.85;
+    }
+
+    hr {
+        margin: 0.85rem 0;
+        border: 0;
+        border-top: 1px solid t.$border;
+    }
+
+    code {
+        border-radius: 0.3rem;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-size: 0.9em;
+    }
+
+    :not(pre) > code {
+        padding: 0.1rem 0.32rem;
+        background: rgba(t.$text, 0.1);
+    }
+
+    pre {
+        max-width: 100%;
+        padding: 0.8rem 0.9rem;
+        overflow-x: auto;
+        border: 1px solid t.$border;
+        border-radius: t.$radius-control-sm;
+        background: t.$text;
+        color: t.$card-bg;
+        line-height: 1.5;
+        tab-size: 2;
+        white-space: pre;
+    }
+
+    pre code {
+        padding: 0;
+        background: transparent;
+        color: inherit;
+        white-space: inherit;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    input[type="checkbox"] {
+        margin-right: 0.35rem;
+    }
+
+    :global(.katex-display) {
+        max-width: 100%;
+        margin: 0.65rem 0;
+        padding-block: 0.1rem;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+}
+
+.tableScroll {
+    max-width: 100%;
+    overflow-x: auto;
+
+    table {
+        width: max-content;
+        min-width: 100%;
+        border-collapse: collapse;
+    }
+
+    th,
+    td {
+        padding: 0.45rem 0.6rem;
+        border: 1px solid t.$border;
+        text-align: left;
+    }
+
+    th {
+        background: t.$subcard-bg;
+        color: t.$text;
+        font-weight: t.$fw-semibold;
+    }
+}

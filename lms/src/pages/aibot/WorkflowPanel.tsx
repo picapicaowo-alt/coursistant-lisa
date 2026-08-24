@@ -1,5 +1,4 @@
 import {FormEvent, KeyboardEvent, useEffect, useRef, useState} from 'react';
-import ReactMarkdown from 'react-markdown';
 import {useRequiredAuth} from '@/contexts/RequiredAuthContext';
 import {
   aiAgentApiService,
@@ -19,6 +18,7 @@ import {
 } from './workflowConversation';
 import {getApiErrorCode} from '@/utils/apiError';
 import DynamicThinking from '@/components/DynamicThinking/DynamicThinking';
+import MarkdownMessage from '@/components/MarkdownMessage';
 import styles from './index.module.scss';
 
 const READ_ONLY_QUICK_PROMPTS = [
@@ -49,22 +49,6 @@ const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
   return 'Workflow is temporarily unavailable. Please try again.';
 };
-
-/** CommonMark treats a single newline as a space; keep the agent's line breaks. */
-const withMarkdownLineBreaks = (text: string) =>
-  text.replace(/\r\n/g, '\n').replace(/([^\n])\n(?!\n)/g, '$1  \n');
-
-const AgentMarkdown = ({text}: {text: string}) => (
-  <ReactMarkdown
-    components={{
-      a: ({href, children}) => (
-        <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>
-      ),
-    }}
-  >
-    {withMarkdownLineBreaks(text)}
-  </ReactMarkdown>
-);
 
 const WorkflowPanel = () => {
   const {user} = useRequiredAuth();
@@ -105,19 +89,37 @@ const WorkflowPanel = () => {
     ]);
   };
 
+  const clearApprovalState = () => {
+    setPendingAction(null);
+    setPendingConfirmation('');
+    setAwaitingDetailsConfirmation(false);
+    setDetailsConfirmation('');
+    setDecisionError(null);
+  };
+
   const applyAgentResponse = (response: AiAgentResponse, options?: {afterDetailsConfirm?: boolean}) => {
     if (response.conversationId) {
       setConversationId(response.conversationId);
     }
 
+    if (!response.pendingAction && !response.reply.trim()) {
+      clearApprovalState();
+      addMessage('agent', 'The AI Agent returned an empty response. Please try again.');
+      return;
+    }
+
     if (response.pendingAction && !canChangeDeadlines) {
+      clearApprovalState();
       addMessage('agent', 'Students can view assignment deadlines, but only instructors can change them.');
-      setAwaitingDetailsConfirmation(false);
-      setDetailsConfirmation('');
       return;
     }
 
     if (response.pendingAction) {
+      if (!response.reply.trim()) {
+        clearApprovalState();
+        addMessage('agent', 'The AI Agent returned an incomplete approval request. No changes were made. Please try again.');
+        return;
+      }
       setPendingAction(response.pendingAction);
       setPendingConfirmation(response.reply);
       setAwaitingDetailsConfirmation(false);
@@ -131,6 +133,13 @@ const WorkflowPanel = () => {
     );
 
     if (needsDetailsConfirmation) {
+      if (!response.reply.trim()) {
+        clearApprovalState();
+        addMessage('agent', 'The AI Agent returned an incomplete confirmation request. No changes were made. Please try again.');
+        return;
+      }
+      setPendingAction(null);
+      setPendingConfirmation('');
       addMessage('agent', response.reply);
       setAwaitingDetailsConfirmation(true);
       setDetailsConfirmation(response.reply);
@@ -139,18 +148,16 @@ const WorkflowPanel = () => {
     }
 
     if (options?.afterDetailsConfirm && isGenericAssistantReset(response.reply)) {
+      clearApprovalState();
       addMessage(
         'agent',
         'Those details were confirmed. The next step is the deadline approval dialog, but the agent reset instead of continuing. Please send the full deadline change again.',
       );
-      setAwaitingDetailsConfirmation(false);
-      setDetailsConfirmation('');
       return;
     }
 
+    clearApprovalState();
     addMessage('agent', response.reply);
-    setAwaitingDetailsConfirmation(false);
-    setDetailsConfirmation('');
   };
 
   const sendMessage = async (
@@ -164,6 +171,9 @@ const WorkflowPanel = () => {
     addMessage('user', options?.displayText ?? trimmedMessage);
     setInput('');
     setDecisionError(null);
+    if (!options?.afterDetailsConfirm) {
+      clearApprovalState();
+    }
     setIsSending(true);
 
     try {
@@ -207,8 +217,7 @@ const WorkflowPanel = () => {
 
   const handleCancelDetails = () => {
     if (isSending) return;
-    setAwaitingDetailsConfirmation(false);
-    setDetailsConfirmation('');
+    clearApprovalState();
     addMessage('user', 'Cancel');
     addMessage('agent', 'The deadline change was cancelled. Send a new request when you are ready.');
   };
@@ -282,7 +291,7 @@ const WorkflowPanel = () => {
             key={message.id}
             className={`${styles.message} ${message.sender === 'user' ? styles.userMessage : styles.agentMessage} ${index === messages.length - 1 ? styles.lastMessage : ''}`}
           >
-            {message.sender === 'agent' ? <AgentMarkdown text={message.text}/> : message.text}
+            <MarkdownMessage content={message.text}/>
           </div>
         ))}
 

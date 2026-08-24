@@ -59,6 +59,18 @@ describe('AiAgentApiService', () => {
     });
   });
 
+  it('rejects an approval request that has no user-visible details', async () => {
+    post.mockResolvedValue(json({
+      reply: '',
+      pendingAction: {actionId: 'action-empty', type: 'ASSIGNMENT_DEADLINE_CHANGE'},
+    }));
+
+    await expect(service.chat({
+      message: 'Move Assignment A',
+      role: 'INSTRUCTOR',
+    })).rejects.toThrow('The AI Agent returned an approval request without details.');
+  });
+
   it('surfaces the API error without exposing a server trace', async () => {
     post.mockRejectedValue({
       code: 409,

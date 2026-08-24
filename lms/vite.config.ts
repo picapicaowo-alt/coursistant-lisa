@@ -17,6 +17,21 @@ export default defineConfig(({mode}) => {
   const apiPath = env.VITE_BASE_PATH || '/api'
   const aiAgentPath = env.VITE_AI_AGENT_API_DOMAIN_NAME || '/ai-agent'
   const aiAgentTarget = env.VITE_AI_AGENT_TARGET || 'https://dev.xlearnedu.com:8083'
+  const studySupportPath = env.VITE_STUDY_SUPPORT_API_DOMAIN_NAME || '/study-support'
+  const studySupportTarget = env.VITE_STUDY_SUPPORT_TARGET || 'https://dev.xlearnedu.com:8090'
+
+  const agentProxy = (pathPrefix: string, target: string) => ({
+    target,
+    changeOrigin: true,
+    secure: false,
+    rewrite: (path: string) => path.replace(new RegExp(`^${pathPrefix}`), ''),
+    configure: (proxy: {on: (event: string, handler: (request: {removeHeader: (name: string) => void}) => void) => void}) => {
+      proxy.on('proxyReq', proxyRequest => {
+        // Duplicate CORS filters reject the forwarded Origin. See ADR 0001.
+        proxyRequest.removeHeader('origin')
+      })
+    },
+  })
 
   return {
     plugins: [react(), tailwindcss()],
@@ -65,18 +80,8 @@ export default defineConfig(({mode}) => {
           // instead of being rejected as a foreign-domain cookie.
           cookieDomainRewrite: '',
         },
-        [aiAgentPath]: {
-          target: aiAgentTarget,
-          changeOrigin: true,
-          secure: false,
-          rewrite: path => path.replace(new RegExp(`^${aiAgentPath}`), ''),
-          configure: proxy => {
-            proxy.on('proxyReq', proxyRequest => {
-              // Duplicate CORS filters reject the forwarded Origin. See ADR 0001.
-              proxyRequest.removeHeader('origin')
-            })
-          },
-        },
+        [aiAgentPath]: agentProxy(aiAgentPath, aiAgentTarget),
+        [studySupportPath]: agentProxy(studySupportPath, studySupportTarget),
       },
     },
     test: {

@@ -108,6 +108,10 @@ const normalizeResponse = (body: unknown): AiAgentResponse => {
     throw new Error('The AI Agent returned an empty response.');
   }
 
+  if (pendingAction && !reply) {
+    throw new Error('The AI Agent returned an approval request without details.');
+  }
+
   return {
     reply,
     pendingAction,

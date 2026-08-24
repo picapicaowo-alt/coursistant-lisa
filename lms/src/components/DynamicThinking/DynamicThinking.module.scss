@@ -3,7 +3,7 @@
     padding: 0.85rem 1rem;
     border: 1px solid t.$border;
     border-radius: t.$radius-control;
-    background: t.$subcard-bg;
+    background: t.$card-bg;
     color: t.$text-muted;
     font-family: t.$font-family;
 }
@@ -17,7 +17,7 @@
 }
 
 .elapsed {
-    color: t.$text-placeholder;
+    color: t.$text-muted;
     font-variant-numeric: tabular-nums;
     font-weight: t.$fw-regular;
 }

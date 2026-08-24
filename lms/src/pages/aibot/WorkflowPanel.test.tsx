@@ -87,6 +87,24 @@ describe('WorkflowPanel', () => {
     expect(screen.queryByText(/\*\*Pending:\*\*/)).not.toBeInTheDocument();
   });
 
+  it('renders Markdown and TeX in user questions without changing the API text', async () => {
+    agentApi.chat.mockResolvedValue({reply: 'Received.', pendingAction: null});
+    const user = userEvent.setup();
+    const question = '**Question:** evaluate $x^2$ with `square(x)`.';
+    const {container} = render(<WorkflowPanel/>);
+
+    await user.type(screen.getByLabelText('Tell Workflow what to do'), question);
+    await user.click(screen.getByRole('button', {name: 'Run'}));
+
+    await waitFor(() => expect(agentApi.chat).toHaveBeenCalledWith({
+      message: question,
+      role: 'INSTRUCTOR',
+    }));
+    expect(screen.getByText('Question:').tagName).toBe('STRONG');
+    expect(screen.getByText('square(x)').tagName).toBe('CODE');
+    expect(container.querySelector('.katex')).toBeInTheDocument();
+  });
+
   it('requires an explicit Allow or Reject decision for a pending change', async () => {
     agentApi.chat.mockResolvedValue({
       reply: 'Change Assignment A from August 26 to August 27?',
@@ -133,6 +151,21 @@ describe('WorkflowPanel', () => {
     expect(await within(dialog).findByRole('alert')).toHaveTextContent('The LMS rejected this deadline change.');
     expect(within(dialog).getByRole('button', {name: 'Reject'})).toBeEnabled();
     expect(screen.getByRole('dialog', {name: 'Deadline change approval'})).toBeInTheDocument();
+  });
+
+  it('does not open a stale approval dialog for an incomplete pending action', async () => {
+    agentApi.chat.mockResolvedValue({
+      reply: '',
+      pendingAction: {actionId: 'action-empty', type: 'ASSIGNMENT_DEADLINE_CHANGE'},
+      confirmationRequired: true,
+    });
+    const user = userEvent.setup();
+    render(<WorkflowPanel/>);
+
+    await user.click(screen.getByRole('button', {name: 'Help me change an assignment deadline.'}));
+
+    expect(await screen.findByText(/incomplete approval request/i)).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('asks for a Confirm click instead of a yes reply, then opens the deadline dialog', async () => {

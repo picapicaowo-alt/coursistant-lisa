@@ -42,12 +42,19 @@ describe('useAiExamLockdown', () => {
     expect(unlocked.result.current.lockedCourseIds).toEqual([]);
   });
 
-  it('does not lock staff responses where hasOpenAttempt is null', async () => {
+  it('fails closed when a Student attempt state is null', async () => {
     api.listQuizzes.mockResolvedValue(response([{id: 310, hasOpenAttempt: null}]));
 
     const result = renderHook(() => useAiExamLockdown([31], 7, true), {wrapper: createWrapper()});
 
-    await waitFor(() => expect(result.result.current.status).toBe('unlocked'));
+    await waitFor(() => expect(result.result.current.status).toBe('error'));
+  });
+
+  it('skips the Student-only check when lockdown enforcement is disabled', () => {
+    const result = renderHook(() => useAiExamLockdown([31], 7, false), {wrapper: createWrapper()});
+
+    expect(result.result.current.status).toBe('unlocked');
+    expect(api.listQuizzes).not.toHaveBeenCalled();
   });
 
   it('fails closed when attempt status cannot be verified', async () => {

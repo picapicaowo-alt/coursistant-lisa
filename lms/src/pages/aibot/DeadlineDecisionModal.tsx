@@ -1,7 +1,7 @@
 import {useEffect, useRef} from 'react';
 import {createPortal} from 'react-dom';
-import ReactMarkdown from 'react-markdown';
 import type {DeadlineDecision} from '@/apis/services/ai-agent-api';
+import MarkdownMessage from '@/components/MarkdownMessage';
 import styles from './index.module.scss';
 
 interface DeadlineDecisionModalProps {
@@ -15,9 +15,6 @@ interface DeadlineDecisionModalProps {
   isSubmitting: boolean;
   onDecision: (decision: DeadlineDecision) => void;
 }
-
-const withMarkdownLineBreaks = (text: string) =>
-  text.replace(/\r\n/g, '\n').replace(/([^\n])\n(?!\n)/g, '$1  \n');
 
 const DeadlineDecisionModal = ({
   title = 'Deadline change approval',
@@ -80,15 +77,7 @@ const DeadlineDecisionModal = ({
         </div>
 
         <div id="deadline-decision-copy" className={styles.modalCopy}>
-          <ReactMarkdown
-            components={{
-              a: ({href, children}) => (
-                <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>
-              ),
-            }}
-          >
-            {withMarkdownLineBreaks(confirmationText)}
-          </ReactMarkdown>
+          <MarkdownMessage content={confirmationText}/>
         </div>
         <p id="deadline-decision-warning" className={styles.modalWarning}>
           {warningText}

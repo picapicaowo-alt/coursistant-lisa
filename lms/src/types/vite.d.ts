@@ -13,6 +13,8 @@ interface ImportMetaEnv {
   readonly VITE_SIGNUP_API_DOMAIN_NAME: string;
   readonly VITE_AI_AGENT_API_DOMAIN_NAME: string;
   readonly VITE_AI_AGENT_TARGET: string;
+  readonly VITE_STUDY_SUPPORT_API_DOMAIN_NAME: string;
+  readonly VITE_STUDY_SUPPORT_TARGET: string;
 }
 
 interface ImportMeta {

@@ -32,7 +32,10 @@ export const useAiExamLockdown = (
     })),
   });
 
-  if (!canCheck) return {status: 'checking', lockedCourseIds: []};
+  // Instructors are not subject to Student exam lockdown and legitimately
+  // receive `hasOpenAttempt: null`. Callers disable this query for them.
+  if (!enabled) return {status: 'unlocked', lockedCourseIds: []};
+  if (viewerId === null) return {status: 'checking', lockedCourseIds: []};
   // Treat both the initial check and explicit invalidation/refetch after quiz
   // start/submit as locked-down time; stale "unlocked" data must not win.
   if (results.some(result => result.isFetching)) return {status: 'checking', lockedCourseIds: []};
@@ -42,6 +45,14 @@ export const useAiExamLockdown = (
   );
 
   if (lockedCourseIds.length > 0) return {status: 'locked', lockedCourseIds};
-  if (results.some(result => result.isError)) return {status: 'error', lockedCourseIds: []};
+  // A Student response must be an explicit true/false. Treat null, omitted,
+  // or malformed attempt state as unverifiable instead of silently enabling
+  // Study Support during a possible open attempt.
+  const hasUnverifiableAttemptState = results.some(result =>
+    result.data?.some(quiz => typeof quiz.hasOpenAttempt !== 'boolean'),
+  );
+  if (hasUnverifiableAttemptState || results.some(result => result.isError)) {
+    return {status: 'error', lockedCourseIds: []};
+  }
   return {status: 'unlocked', lockedCourseIds: []};
 };
