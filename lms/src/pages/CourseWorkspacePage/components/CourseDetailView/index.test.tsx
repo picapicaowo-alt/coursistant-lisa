@@ -19,7 +19,7 @@ const emptyWorkspace = {
   announcements: [],
   isLoading: false,
   isError: true,
-  isForbidden: false,
+  isUnavailable: false,
   sessionsFailed: false,
   assignmentsFailed: false,
   quizzesFailed: false,
@@ -34,12 +34,12 @@ describe('CourseDetailView errors', () => {
     vi.mocked(useCourseWorkspaceData).mockReturnValue({...emptyWorkspace});
   });
 
-  it('shows a clear access message for a forbidden course without offering a retry', () => {
-    vi.mocked(useCourseWorkspaceData).mockReturnValue({...emptyWorkspace, isForbidden: true});
+  it('does not disclose whether an unavailable course is missing or forbidden', () => {
+    vi.mocked(useCourseWorkspaceData).mockReturnValue({...emptyWorkspace, isUnavailable: true});
 
     render(<CourseDetailView/>);
 
-    expect(screen.getByRole('alert')).toHaveTextContent('You do not have access to this course.');
+    expect(screen.getByRole('alert')).toHaveTextContent('This course does not exist, or you do not have access.');
     expect(screen.queryByRole('button', {name: 'Try again'})).not.toBeInTheDocument();
   });
 

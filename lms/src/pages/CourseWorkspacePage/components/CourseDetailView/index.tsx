@@ -34,7 +34,7 @@ interface CourseDetailViewProps {
 export const CourseDetailView: React.FC<CourseDetailViewProps> = ({canCreateAssignments = false, canManageEvents = false, canManageGroups = false, canPostAnnouncements = false, canViewOwnGrades = false}) => {
   const {
     course, weeks, sessions, assignments, quizzes, events, groupSets, announcements,
-    isLoading, isError, isForbidden, sessionsFailed, assignmentsFailed, quizzesFailed, eventsFailed, groupSetsFailed, announcementsFailed, refetch,
+    isLoading, isError, isUnavailable, sessionsFailed, assignmentsFailed, quizzesFailed, eventsFailed, groupSetsFailed, announcementsFailed, refetch,
   } = useCourseWorkspaceData();
 
   const [activeWeekId, setActiveWeekId] = useState<number | null>(null);
@@ -54,8 +54,8 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({canCreateAssi
   if (isError || !course) {
     return (
       <div className={styles.status} role="alert">
-        <p>{isForbidden ? 'You do not have access to this course.' : 'This course couldn\'t be loaded.'}</p>
-        {!isForbidden ? <button type="button" className={styles.retry} onClick={refetch}>Try again</button> : null}
+        <p>{isUnavailable ? 'This course does not exist, or you do not have access.' : 'This course couldn\'t be loaded.'}</p>
+        {!isUnavailable ? <button type="button" className={styles.retry} onClick={refetch}>Try again</button> : null}
       </div>
     );
   }

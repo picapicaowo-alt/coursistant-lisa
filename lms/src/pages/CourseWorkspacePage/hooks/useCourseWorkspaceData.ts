@@ -30,7 +30,7 @@ export interface CourseWorkspaceData {
   announcements: CourseAnnouncementSummary[];
   isLoading: boolean;
   isError: boolean;
-  isForbidden: boolean;
+  isUnavailable: boolean;
   sessionsFailed: boolean;
   assignmentsFailed: boolean;
   quizzesFailed: boolean;
@@ -52,7 +52,10 @@ const EMPTY_ANNOUNCEMENTS: CourseAnnouncementSummary[] = [];
 const shared = {
   staleTime: FIVE_MINUTES,
   gcTime: FIVE_MINUTES,
-  retry: 1,
+  retry: (failureCount: number, error: unknown) => (
+    ![403, 404].includes((error as {code?: number} | null)?.code ?? 0)
+    && failureCount < 1
+  ),
 } as const;
 
 export const useCourseWorkspaceData = (): CourseWorkspaceData => {
@@ -139,8 +142,8 @@ export const useCourseWorkspaceData = (): CourseWorkspaceData => {
     // otherwise report a load that never finishes.
     isLoading: enabled && (course.isPending || weeks.isPending),
     isError: !enabled || course.isError || weeks.isError,
-    isForbidden: [course.error, weeks.error].some(
-      error => (error as {code?: number} | null)?.code === 403,
+    isUnavailable: [course.error, weeks.error].some(
+      error => [403, 404].includes((error as {code?: number} | null)?.code ?? 0),
     ),
     sessionsFailed: sessions.isError,
     assignmentsFailed: assignments.isError,

@@ -51,7 +51,7 @@ describe('useCourseEdit', () => {
       announcements: [],
       isLoading: false,
       isError: false,
-      isForbidden: false,
+      isUnavailable: false,
       sessionsFailed: false,
       assignmentsFailed: false,
       quizzesFailed: false,
