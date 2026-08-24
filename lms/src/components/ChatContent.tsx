@@ -432,7 +432,7 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
         setMessages(prev => [...prev, newMessage]);
         setIsWriting(true);
         
-        const dd = response?.data?.data ?? {};
+        const dd = responseBody?.data ?? responseBody ?? {};
         const queryIdRaw = dd.queryId ?? dd.id ?? dd.dialogueId;
         const queryIdNum = Number(queryIdRaw);
         

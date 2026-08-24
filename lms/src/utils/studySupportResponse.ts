@@ -12,5 +12,14 @@ export const readStudySupportAnswer = (responseBody: unknown): string => {
     throw new Error('Study Support returned an empty response.');
   }
 
-  return answer.trim();
+  const userFacingAnswer = answer
+    // The agent can append diagnostic blocks for verbose clients. They are
+    // internal metadata, not part of the student-facing answer or progress UI.
+    .replace(/\/begin-(think|rss)\/[\s\S]*?\/end-\1\//gi, '')
+    .trim();
+
+  if (!userFacingAnswer) {
+    throw new Error('Study Support returned an empty response.');
+  }
+  return userFacingAnswer;
 };

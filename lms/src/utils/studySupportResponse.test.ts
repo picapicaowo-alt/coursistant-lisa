@@ -12,6 +12,28 @@ describe('readStudySupportAnswer', () => {
       .toBe('The streamed answer.');
   });
 
+  it('removes internal verbose metadata blocks from the visible answer', () => {
+    expect(readStudySupportAnswer({
+      answer: [
+        'The course introduces data structures in Java.',
+        '',
+        '/begin-think/',
+        'gate proceed mode normal',
+        '/end-think/',
+        '',
+        '/begin-rss/',
+        'documents 3',
+        '/end-rss/',
+      ].join('\n'),
+    })).toBe('The course introduces data structures in Java.');
+  });
+
+  it('rejects a response containing only internal metadata', () => {
+    expect(() => readStudySupportAnswer({
+      answer: '/begin-think/\ninternal only\n/end-think/',
+    })).toThrow('Study Support returned an empty response.');
+  });
+
   it.each([
     undefined,
     null,
