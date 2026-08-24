@@ -11,6 +11,13 @@ interface StreamStudySupportOptions {
   fetcher?: typeof fetch;
 }
 
+interface QueryStudySupportOptions {
+  url: string;
+  body: FormData;
+  headers: Record<string, string>;
+  fetcher?: typeof fetch;
+}
+
 interface SseFrame {
   event: string;
   data: unknown;
@@ -109,4 +116,25 @@ export const streamStudySupport = async ({
     throw new Error('Study Support stream ended without an answer.');
   }
   return answer;
+};
+
+export const queryStudySupportWithFile = async ({
+  url,
+  body,
+  headers,
+  fetcher = fetch,
+}: QueryStudySupportOptions): Promise<unknown> => {
+  const response = await fetcher(url, {
+    method: 'POST',
+    headers: {
+      ...headers,
+      Accept: 'application/json',
+    },
+    body,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Study Support returned HTTP ${response.status}.`);
+  }
+  return response.json();
 };

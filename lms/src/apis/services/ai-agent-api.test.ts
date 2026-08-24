@@ -106,4 +106,24 @@ describe('AiAgentApiService', () => {
       confirmationRequired: true,
     });
   });
+
+  it('never exposes verbose think or retrieval blocks in a workflow reply', async () => {
+    post.mockResolvedValue(json({
+      reply: [
+        'You teach two courses.',
+        '/begin-think/',
+        'model gpt-internal tokens 4000',
+        '/end-think/',
+        '/begin-rss/',
+        'private retrieval diagnostics',
+        '/end-rss/',
+      ].join('\n'),
+      pendingAction: null,
+    }));
+
+    await expect(service.chat({
+      message: 'List my courses.',
+      role: 'INSTRUCTOR',
+    })).resolves.toMatchObject({reply: 'You teach two courses.'});
+  });
 });

@@ -1,6 +1,7 @@
 // @ts-nocheck — legacy chat bundle; quarantined until chat migration (PROJECT_STANDARDS.md §13).
 import styles from '../sections/chat/chat-main-component/styles.module.scss';
 import {useState, useRef, useEffect, forwardRef, useImperativeHandle, useCallback} from 'react';
+import {FileText, Paperclip, X} from 'lucide-react';
 import TypingText from "../utils/typing-text";
 import {renderMessageText} from '@/utils/render-message-text';
 import {useAuth} from '@/contexts/AuthContext.js';
@@ -11,8 +12,9 @@ import DynamicThinking from '@/components/DynamicThinking/DynamicThinking';
 import {RichTextEditor} from '@/components/RichTextEditor';
 import {readStudySupportAnswer} from '@/utils/studySupportResponse';
 import {studySupportEndpoint} from '@/utils/studySupportEndpoint';
-import {buildStudySupportStreamBody} from '@/utils/studySupportRequest';
-import {streamStudySupport} from '@/utils/studySupportStream';
+import {buildStudySupportFormData, buildStudySupportStreamBody} from '@/utils/studySupportRequest';
+import {queryStudySupportWithFile, streamStudySupport} from '@/utils/studySupportStream';
+import {safeStudySupportProgress} from '@/utils/studySupportProgress';
 
 const STUDY_SUPPORT_THINKING_STEPS = [
   {id: 'understand', text: 'Understanding your question.'},
@@ -144,6 +146,8 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
     const thinkingStepId = useRef(0);
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const scrollChatToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
       const container = containerRef.current;
@@ -181,6 +185,7 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
       setMessages([]);
       setIsWriting(false);
       setInput('');
+      setSelectedFile(null);
     };
     
     // expose the method to parent
@@ -188,8 +193,10 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
       handleNewChat
     }));
 
-    const handleSend = async (overrideText, overrideCourseId) => {
-      const question = (overrideText ?? input)?.trim();
+    const handleSend = async (overrideText, overrideCourseId, overrideFile) => {
+      const fileForSend = overrideFile ?? (overrideText == null ? selectedFile : null);
+      const question = (overrideText ?? input)?.trim()
+        || (fileForSend ? 'Review the attached file.' : '');
       if (!question || isStudySupportUnavailable) return;
       
       const courseForSend = (typeof overrideCourseId === 'number')
@@ -213,32 +220,52 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
       if (overrideText == null) {
         setMessages(prev => [
           ...prev,
-          {text: question, sender: 'user'}
+          {text: question, sender: 'user', attachmentName: fileForSend?.name ?? null}
         ]);
       }
       
       // clear input ONLY if we’re sending from the chat box
-      if (overrideText == null) setInput('');
+      if (overrideText == null) {
+        setInput('');
+        setSelectedFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
 
       setIsLoading(true);
       setThinkingSteps([]);
 
       try {
-        const responseBody = await streamStudySupport({
-          url: studySupportEndpoint('/query/stream'),
-          body: buildStudySupportStreamBody({
-            courseId: courseForSend,
-            query: question,
-            dialogueId: -1,
-          }),
-          headers: chatAuthHeaders(),
-          onProgress: progress => {
-            setThinkingSteps(current => [
-              ...current,
-              {id: `${progress.phase}-${thinkingStepId.current++}`, text: progress.text},
-            ]);
-          },
-        });
+        const responseBody = fileForSend
+          ? await queryStudySupportWithFile({
+            url: studySupportEndpoint('/query'),
+            body: buildStudySupportFormData({
+              courseId: courseForSend,
+              query: question,
+              dialogueId: -1,
+              file: fileForSend,
+            }),
+            headers: chatAuthHeaders(),
+          })
+          : await streamStudySupport({
+            url: studySupportEndpoint('/query/stream'),
+            body: buildStudySupportStreamBody({
+              courseId: courseForSend,
+              query: question,
+              dialogueId: -1,
+            }),
+            headers: chatAuthHeaders(),
+            onProgress: progress => {
+              setThinkingSteps(current => {
+                const nextStep = safeStudySupportProgress(
+                  progress,
+                  `${progress.phase}-${thinkingStepId.current++}`,
+                );
+                return current.at(-1)?.text === nextStep.text
+                  ? current
+                  : [...current, nextStep];
+              });
+            },
+          });
 
         const answer = readStudySupportAnswer(responseBody);
         const newMessage = {
@@ -265,7 +292,7 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
     };
     
     const handleSendClick = () => {
-      if (!input.trim() || isStudySupportUnavailable) return;
+      if ((!input.trim() && !selectedFile) || isStudySupportUnavailable) return;
       
       if (props.isDashboard) {
         const payload = {text: input.trim(), courseId: selectedCourseId ?? 0};
@@ -403,6 +430,12 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
                     className={`max-w-[70%] px-4 py-2 rounded-xl text-base whitespace-pre-wrap break-words ${msg.sender === 'user' ? 'self-end bg-blue-100' : 'self-start bg-[rgb(203,209,241)]'
                     }`}
                   >
+                    {msg.attachmentName ? (
+                      <span className={styles.messageAttachment}>
+                        <FileText aria-hidden="true"/>
+                        {msg.attachmentName}
+                      </span>
+                    ) : null}
                     {/* text / typing animation */}
                     {isWriting && index === messages.length - 1 && msg.sender !== 'user' ? (
                       <TypingText text={msg.text} speed={5} onDone={() => setIsWriting(false)}/>
@@ -495,12 +528,57 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
                 ariaLabel="Ask Study Support"
               />
             </div>
+
+            {selectedFile ? (
+              <div className={styles.selectedFile} aria-label={`Attached file: ${selectedFile.name}`}>
+                <FileText aria-hidden="true"/>
+                <span title={selectedFile.name}>{selectedFile.name}</span>
+                <button
+                  type="button"
+                  aria-label={`Remove ${selectedFile.name}`}
+                  onClick={() => {
+                    setSelectedFile(null);
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                  }}
+                >
+                  <X aria-hidden="true"/>
+                </button>
+              </div>
+            ) : null}
             
             {/* footer */}
             <div className={styles.chatFooter}>
-              <span className="text-xs text-slate-500">Text questions only</span>
+              {!props.isDashboard ? (
+                <>
+                  <input
+                    ref={fileInputRef}
+                    className={styles.visuallyHidden}
+                    type="file"
+                    accept=".pdf,.doc,.docx,.txt,.md,image/*"
+                    aria-label="Choose a file for Study Support"
+                    onChange={event => setSelectedFile(event.target.files?.[0] ?? null)}
+                  />
+                  <button
+                    type="button"
+                    className={styles.chatFooterIconButton}
+                    aria-label="Attach a file"
+                    title="Attach a file"
+                    disabled={isStudySupportUnavailable || isLoading}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Paperclip className={styles.chatFooterIcon} aria-hidden="true"/>
+                  </button>
+                </>
+              ) : (
+                <span className="text-xs text-slate-500">Enter to send · Shift+Enter for a new line</span>
+              )}
               <div className={styles.spacer}/>
-              <button type="button" className={styles.chatFooterSend} onClick={handleSendClick} disabled={isStudySupportUnavailable}>
+              <button
+                type="button"
+                className={styles.chatFooterSend}
+                onClick={handleSendClick}
+                disabled={isStudySupportUnavailable || isLoading || (!input.trim() && !selectedFile)}
+              >
                 Send
                 <img src="/icons/chat/send-star.png" alt="send-star"/>
               </button>

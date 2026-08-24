@@ -20,6 +20,7 @@ import {getApiErrorCode} from '@/utils/apiError';
 import DynamicThinking from '@/components/DynamicThinking/DynamicThinking';
 import MarkdownMessage from '@/components/MarkdownMessage';
 import {RichTextEditor} from '@/components/RichTextEditor';
+import PanelExpandButton from './PanelExpandButton';
 import styles from './index.module.scss';
 
 const READ_ONLY_QUICK_PROMPTS = [
@@ -51,7 +52,17 @@ const getErrorMessage = (error: unknown): string => {
   return 'Workflow is temporarily unavailable. Please try again.';
 };
 
-const WorkflowPanel = () => {
+interface WorkflowPanelProps {
+  isExpanded?: boolean;
+  isHidden?: boolean;
+  onToggleExpand?: () => void;
+}
+
+const WorkflowPanel = ({
+  isExpanded = false,
+  isHidden = false,
+  onToggleExpand = () => undefined,
+}: WorkflowPanelProps) => {
   const {user} = useRequiredAuth();
   const role = getAgentRole(user.level);
   const canChangeDeadlines = role === 'INSTRUCTOR';
@@ -78,6 +89,7 @@ const WorkflowPanel = () => {
 
   const roleLabel = role === 'INSTRUCTOR' ? 'Instructor workflow' : 'Student workflow';
   const blockingDecision = Boolean(pendingAction) || awaitingDetailsConfirmation;
+  const showQuickPrompts = messages.length === 1 && !isSending;
 
   useEffect(() => {
     conversationEndRef.current?.scrollIntoView({behavior: 'smooth', block: 'nearest'});
@@ -251,32 +263,43 @@ const WorkflowPanel = () => {
       : 'Tell Workflow what to do…';
 
   return (
-    <section className={styles.toolCard} aria-labelledby="workflow-title">
+    <section
+      className={`${styles.toolCard} ${isExpanded ? styles.expandedCard : ''}`}
+      aria-labelledby="workflow-title"
+      hidden={isHidden}
+    >
       <div className={styles.toolHeader}>
         <div className={`${styles.toolIcon} ${styles.workflowIcon}`} aria-hidden="true">W</div>
-        <div>
+        <div className={styles.toolHeading}>
           <h2 id="workflow-title">Workflow</h2>
           <span className={`${styles.badge} ${styles.workflowBadge}`}>Actions · Planning · Organization</span>
         </div>
+        <PanelExpandButton
+          panelName="Workflow"
+          isExpanded={isExpanded}
+          onToggle={onToggleExpand}
+        />
       </div>
       <p className={styles.toolDescription}>
         Ask the AI Agent to inspect LMS data and complete supported tasks. Consequential changes always require approval.
       </p>
       <div className={styles.divider}/>
 
-      <div className={styles.quickPrompts} aria-label="Suggested workflow prompts">
-        <p>Try asking</p>
-        {quickPrompts.map(prompt => (
-          <button
-            type="button"
-            key={prompt}
-            onClick={() => void sendMessage(prompt)}
-            disabled={isSending || blockingDecision}
-          >
-            {prompt}
-          </button>
-        ))}
-      </div>
+      {showQuickPrompts ? (
+        <div className={styles.quickPrompts} role="group" aria-label="Suggested workflow prompts">
+          <p>Try asking</p>
+          {quickPrompts.map(prompt => (
+            <button
+              type="button"
+              key={prompt}
+              onClick={() => void sendMessage(prompt)}
+              disabled={isSending || blockingDecision}
+            >
+              {prompt}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       <div className={styles.workflowConversation} aria-live="polite" aria-busy={isSending}>
         <div className={styles.rolePill}>{roleLabel}</div>

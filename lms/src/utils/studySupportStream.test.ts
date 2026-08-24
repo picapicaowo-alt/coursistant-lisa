@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from 'vitest';
-import {streamStudySupport} from './studySupportStream';
+import {queryStudySupportWithFile, streamStudySupport} from './studySupportStream';
 
 const streamResponse = (chunks: string[], status = 200) => new Response(
   new ReadableStream({
@@ -68,5 +68,36 @@ describe('streamStudySupport', () => {
       onProgress: vi.fn(),
       fetcher,
     })).rejects.toThrow('ended without an answer');
+  });
+});
+
+describe('queryStudySupportWithFile', () => {
+  it('sends multipart data without overriding the browser boundary', async () => {
+    const body = new FormData();
+    const file = new File(['notes'], 'notes.txt', {type: 'text/plain'});
+    body.set('courseId', '37');
+    body.set('query', 'Summarize this file.');
+    body.set('file', file);
+    const fetcher = vi.fn().mockResolvedValue(new Response(
+      JSON.stringify({data: {answer: 'Summary'}}),
+      {status: 200, headers: {'Content-Type': 'application/json'}},
+    ));
+
+    await expect(queryStudySupportWithFile({
+      url: '/study-support/api/query',
+      body,
+      headers: {Authorization: 'Bearer test-token'},
+      fetcher,
+    })).resolves.toEqual({data: {answer: 'Summary'}});
+
+    expect(fetcher).toHaveBeenCalledWith('/study-support/api/query', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer test-token',
+        Accept: 'application/json',
+      },
+      body,
+    });
+    expect(fetcher.mock.calls[0][1].headers).not.toHaveProperty('Content-Type');
   });
 });

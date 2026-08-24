@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {readStudySupportAnswer} from './studySupportResponse';
+import {readStudySupportAnswer, sanitizeAgentAnswer} from './studySupportResponse';
 
 describe('readStudySupportAnswer', () => {
   it('returns a non-empty answer from the Study Support envelope', () => {
@@ -32,6 +32,19 @@ describe('readStudySupportAnswer', () => {
     expect(() => readStudySupportAnswer({
       answer: '/begin-think/\ninternal only\n/end-think/',
     })).toThrow('Study Support returned an empty response.');
+  });
+
+  it('removes a truncated internal block through end-of-text', () => {
+    expect(sanitizeAgentAnswer([
+      'The visible answer.',
+      '/begin-think/',
+      'model gpt-internal tokens 4000',
+    ].join('\n'))).toBe('The visible answer.');
+  });
+
+  it('removes orphaned verbose markers', () => {
+    expect(sanitizeAgentAnswer('Visible answer.\n/end-think/\n/end-rss/'))
+      .toBe('Visible answer.');
   });
 
   it.each([

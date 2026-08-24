@@ -1,6 +1,7 @@
 import {ApiClient} from '@/apis/api-client';
 import {agentApiClient} from '@/apis/v2-api-client';
 import {getApiErrorMessage} from '@/utils/apiError';
+import {sanitizeAgentAnswer} from '@/utils/studySupportResponse';
 
 export type AiAgentRole = 'STUDENT' | 'INSTRUCTOR';
 export type DeadlineDecision = 'ALLOW' | 'REJECT';
@@ -87,7 +88,8 @@ const parsePendingAction = (value: unknown): AiAgentPendingAction | null => {
 
 const normalizeResponse = (body: unknown): AiAgentResponse => {
   const candidate = unwrapPayload(body);
-  const reply = firstString(candidate.reply, candidate.message) ?? '';
+  const rawReply = firstString(candidate.reply, candidate.message) ?? '';
+  const reply = sanitizeAgentAnswer(rawReply);
   const pendingAction = parsePendingAction(
     candidate.pendingAction ?? candidate.pending_action,
   );

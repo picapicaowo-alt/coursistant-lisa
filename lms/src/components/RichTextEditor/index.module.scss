@@ -76,7 +76,7 @@ $shadow-focus: 0 0 0 3px rgba(86, 111, 232, 0.1);
     }
 
     &.composer {
-        min-height: 5.5rem;
+        min-height: var(--composer-min-height, 5.5rem);
         border-radius: 0.875rem;
     }
 
@@ -544,9 +544,18 @@ $shadow-focus: 0 0 0 3px rgba(86, 111, 232, 0.1);
 }
 
 .composerEditor {
-    min-height: 5.5rem;
-    max-height: 22rem;
-    padding: 0.875rem 1rem;
+    min-height: var(--composer-min-height, 5.5rem);
+    max-height: var(--composer-max-height, 22rem);
+    padding: var(--composer-padding, 0.875rem 1rem);
+
+    &:empty::before {
+        position: absolute;
+        color: $text-tertiary;
+        content: attr(data-placeholder);
+        font-size: 0.875rem;
+        font-style: normal;
+        pointer-events: none;
+    }
 
     pre {
         background: #111827;

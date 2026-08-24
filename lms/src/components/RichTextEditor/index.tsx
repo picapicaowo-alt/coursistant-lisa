@@ -126,8 +126,10 @@ const RichTextEditorClient: React.FC<TextBlockProps> = ({
         ].filter(Boolean).join(' '),
         'data-testid': 'text-block-editor',
         spellcheck: 'true',
+        role: 'textbox',
         'aria-label': ariaLabel,
-        placeholder,
+        'aria-multiline': 'true',
+        'data-placeholder': placeholder,
       },
       handleKeyDown: (_view, event) => {
         if (event.key === 'Enter' && !event.shiftKey && !event.isComposing && onSubmitRef.current) {
@@ -193,10 +195,14 @@ const RichTextEditorClient: React.FC<TextBlockProps> = ({
       handlePaste: (_view, event) => {
         if (event.clipboardData?.files.length) return false;
         const text = event.clipboardData?.getData('text/plain') ?? '';
-        if (!text || !MARKDOWN_SOURCE_PATTERN.test(text)) return false;
+        const shouldNormalizeComposerPaste = variant === 'composer' && Boolean(text);
+        if (!shouldNormalizeComposerPaste && (!text || !MARKDOWN_SOURCE_PATTERN.test(text))) return false;
 
         const currentEditor = liveEditorRef.current;
         if (!currentEditor) return false;
+        // Chat bubbles can place a white inline color in text/html. Composer
+        // pastes intentionally consume text/plain so copied user messages stay
+        // readable on the white input surface and are inserted exactly once.
         event.preventDefault();
         currentEditor.chain().focus().insertContent(text, {contentType: 'markdown'}).run();
         return true;

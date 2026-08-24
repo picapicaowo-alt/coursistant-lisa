@@ -69,4 +69,34 @@ describe('RichTextEditor inline Markdown authoring', () => {
     fireEvent.keyDown(editor, {key: 'Enter'});
     expect(onSubmit).not.toHaveBeenCalled();
   });
+
+  it('pastes copied chat text without carrying white rich-text styling', async () => {
+    const onChange = vi.fn();
+    const {container} = render(
+      <RichTextEditor
+        content=""
+        onChange={onChange}
+        showToolbar={false}
+        variant="composer"
+        ariaLabel="Workflow composer"
+      />,
+    );
+    const editor = await screen.findByLabelText('Workflow composer');
+    expect(editor).toHaveAttribute('data-placeholder', 'Start writing your content here...');
+
+    fireEvent.paste(editor, {
+      clipboardData: {
+        files: [],
+        getData: (type: string) => type === 'text/plain'
+          ? 'move the Assignment 0 deadline to next Friday at noon'
+          : '<span style="color: white">move the Assignment 0 deadline to next Friday at noon</span>',
+      },
+    });
+
+    await waitFor(() => expect(onChange).toHaveBeenLastCalledWith(
+      'move the Assignment 0 deadline to next Friday at noon',
+    ));
+    expect(container.querySelector('[style*="color"]')).not.toBeInTheDocument();
+    expect(editor).toHaveTextContent('move the Assignment 0 deadline to next Friday at noon');
+  });
 });

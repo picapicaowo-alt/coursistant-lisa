@@ -68,6 +68,18 @@ describe('WorkflowPanel', () => {
       role: 'INSTRUCTOR',
     }));
     expect(await screen.findByText('You teach two courses.')).toBeInTheDocument();
+    expect(screen.queryByText('Try asking')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'List my courses.'})).not.toBeInTheDocument();
+  });
+
+  it('toggles the focused Workflow view from the panel header', async () => {
+    const onToggleExpand = vi.fn();
+    const user = userEvent.setup();
+    render(<WorkflowPanel isExpanded={false} onToggleExpand={onToggleExpand}/>);
+
+    await user.click(screen.getByRole('button', {name: 'Expand Workflow'}));
+
+    expect(onToggleExpand).toHaveBeenCalledOnce();
   });
 
   it('renders markdown in agent replies instead of showing asterisks', async () => {

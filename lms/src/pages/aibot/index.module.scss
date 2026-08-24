@@ -5,6 +5,10 @@
     color: #1f2a3d;
 }
 
+.focusedPage {
+    padding: 1rem;
+}
+
 .pageHeader {
     max-width: 92rem;
     margin: 0 auto 1.75rem;
@@ -41,6 +45,11 @@
     align-items: stretch;
 }
 
+.focusedWorkspace {
+    max-width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+}
+
 .toolCard {
     display: flex;
     min-width: 0;
@@ -54,6 +63,14 @@
     box-shadow: 0 18px 50px rgb(56 81 120 / 0.07);
 }
 
+.toolCard[hidden] {
+    display: none;
+}
+
+.expandedCard {
+    min-height: calc(100vh - 9.5rem);
+}
+
 .toolHeader {
     display: flex;
     align-items: center;
@@ -64,6 +81,42 @@
         color: #192338;
         font-size: 1.5rem;
         font-weight: 600;
+    }
+}
+
+.toolHeading {
+    min-width: 0;
+}
+
+.expandButton {
+    display: grid;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: 0 0 auto;
+    padding: 0;
+    border: 1px solid #cbdaf2;
+    border-radius: 0.75rem;
+    margin-left: auto;
+    background: #f8faff;
+    color: #52698e;
+    cursor: pointer;
+    place-items: center;
+    transition: border-color 150ms ease, background 150ms ease, color 150ms ease;
+
+    svg {
+        width: 1.15rem;
+        height: 1.15rem;
+    }
+
+    &:hover {
+        border-color: #8ba8e0;
+        background: #eef4ff;
+        color: #2f58b5;
+    }
+
+    &:focus-visible {
+        outline: 3px solid #1d4ed8;
+        outline-offset: 2px;
     }
 }
 
@@ -341,21 +394,28 @@
 
 .workflowInput {
     display: flex;
-    min-height: 12.75rem;
+    min-height: 0;
+    align-items: flex-end;
+    padding: 0.4rem;
     margin-top: 1.1rem;
     margin-bottom: 0.6rem;
     overflow: hidden;
-    flex-direction: column;
+    flex-direction: row;
     border: 1px solid #cbd5e0;
     border-radius: 1rem;
     background: #fff;
 
     .workflowMarkdownEditor {
-        min-height: 5.5rem;
-        flex: 1;
+        min-width: 0;
+        min-height: 2.75rem;
+        max-height: 12rem;
+        flex: 1 1 auto;
         border: 0;
         border-radius: 0;
         box-shadow: none;
+        --composer-min-height: 2.75rem;
+        --composer-max-height: 12rem;
+        --composer-padding: 0.65rem 0.55rem;
 
         &:focus-within {
             border: 0;
@@ -368,17 +428,18 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    padding: 0.55rem 0.7rem 0.7rem 1rem;
+    flex: 0 0 auto;
+    gap: 0;
+    padding: 0;
 
     span {
-        color: #8796af;
-        font-size: 0.72rem;
+        display: none;
     }
 
     button {
         min-width: 5rem;
-        padding: 0.6rem 1rem;
+        min-height: 2.75rem;
+        padding: 0.55rem 1rem;
         border: 0;
         border-radius: 0.7rem;
         background: #465fe0;
@@ -435,12 +496,16 @@
         border-radius: 1rem;
     }
 
-    .toolDescription {
-        min-height: 0;
+    .expandedCard {
+        min-height: calc(100vh - 7rem);
     }
 
-    .inputFooter span {
-        display: none;
+    .toolHeading .badge {
+        white-space: normal;
+    }
+
+    .toolDescription {
+        min-height: 0;
     }
 
     .inputFooter {
