@@ -1,9 +1,11 @@
-# LMS_Frontend
+# LMS Frontend
 
-Coursistant LMS front-end source. Canonical remote: **https://github.com/picapicaowo-alt/coursistant-lisa**
+Coursistant LMS frontend. Its planned organization home is
+**https://github.com/Coursistant-Inc/lms-frontend**. This repository is the
+current authorized working source during the repository handoff.
 
-`main` is the production-ready frontend source. Application code lives under
-[`lms/`](./lms/).
+Until that handoff is explicitly completed, this repository's `main` is the
+production-ready frontend source. Application code lives under [`lms/`](./lms/).
 
 Start here:
 

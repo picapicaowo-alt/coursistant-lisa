@@ -29,6 +29,12 @@ For production, deploy the output of a clean `main` checkout after `npm ci` and
 `npm run build`. Environment and demo-account values are existing integration
 inputs and are not rewritten as part of normal frontend feature work.
 
-## Source of truth
+## Repository transition
 
-GitHub: https://github.com/picapicaowo-alt/coursistant-lisa
+- Planned organization home: https://github.com/Coursistant-Inc/lms-frontend
+- Current authorized working repository:
+  https://github.com/picapicaowo-alt/coursistant-lisa
+
+The current repository's `main` remains deployable during the handoff. Remotes,
+CI, and repository references must be migrated together after organization
+access is explicitly confirmed.

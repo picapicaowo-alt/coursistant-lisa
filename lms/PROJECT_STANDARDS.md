@@ -11,7 +11,13 @@ service implementations, databases, or infrastructure. Existing environment,
 proxy, and designated demo-account values remain unchanged unless the task
 explicitly requests that exact frontend configuration change.
 
-**Canonical repo:** `https://github.com/picapicaowo-alt/coursistant-lisa`  
+**Planned organization home:** `https://github.com/Coursistant-Inc/lms-frontend`
+
+**Current authorized working repository:** `https://github.com/picapicaowo-alt/coursistant-lisa`
+
+Until organization access and migration are explicitly confirmed, the current
+working repository's `main` remains the production-ready frontend source.
+
 **Related:** `ARCHITECTURE.md`, `STATE_MANAGEMENT.md`, and `API_STANDARDS.md` are historical design notes — prefer this file when they conflict with current code.
 
 ---
@@ -243,9 +249,13 @@ Historical normalized-store designs in `STATE_MANAGEMENT.md` / `ARCHITECTURE.md`
 
 ---
 
-## 13. Git and source of truth
+## 13. Git and repository transition
 
-- **Only** develop against `coursistant-lisa`. Do not treat `bink44/lms-frontend` or personal forks as upstream.
+- During the repository handoff, develop against the configured authorized
+  origin. Do not treat `bink44/lms-frontend` or unrelated personal forks as
+  upstream.
+- Move the remote to `Coursistant-Inc/lms-frontend` only as an explicit
+  migration that also verifies access, branch protections, CI, and documentation.
 - `main` is the latest production-ready frontend source; do not merge a branch
   that cannot pass the complete frontend quality baseline and production build.
 - Prefer small, imperative commit subjects: `feat:`, `fix:`, `test:`, `chore:`.

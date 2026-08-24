@@ -1,11 +1,12 @@
 ---
-description: Coursistant LMS frontend — subfolder canonical repo, stack, and scope rules
+description: Coursistant LMS frontend — repository transition, stack, and scope rules
 alwaysApply: true
 ---
 
 # Coursistant LMS Frontend (Subfolder Rules)
 
-- **Canonical repo:** `https://github.com/picapicaowo-alt/coursistant-lisa`
+- **Planned organization home:** `https://github.com/Coursistant-Inc/lms-frontend`
+- **Current authorized working repository:** `https://github.com/picapicaowo-alt/coursistant-lisa`
 - **App root:** `lms/`
 - **Standards doc:** `lms/PROJECT_STANDARDS.md` — read before editing frontend code.
 
@@ -20,7 +21,9 @@ alwaysApply: true
 
 ## 2. Strict Prohibitions
 - Do NOT add new `.jsx` / `.js` source files.
-- Do NOT point remotes at `bink44/lms-frontend` or personal forks.
+- Keep the configured authorized origin until the organization migration is
+  explicitly approved; do not point remotes at `bink44/lms-frontend` or
+  unrelated forks.
 - Keep SCSS Modules and existing design tokens as the default. MUI or another
   UI kit requires an explicit frontend architecture decision and a shared UI
   integration boundary; do not add ad-hoc kit imports in feature pages.

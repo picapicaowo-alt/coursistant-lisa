@@ -17,11 +17,17 @@ automation working in it.
 - When a frontend change exposes an external contract problem, record the
   expected/observed behavior for handoff. Do not repair the external system.
 
-## Source of truth
+## Repository ownership and transition
 
-- Canonical repository: `picapicaowo-alt/coursistant-lisa`.
-- `main` must remain understandable, tested, and directly buildable as the
-  production frontend source.
+- Planned organization home: `Coursistant-Inc/lms-frontend`.
+- Current authorized working repository during the handoff:
+  `picapicaowo-alt/coursistant-lisa`.
+- Until organization access and migration are explicitly confirmed, the
+  current working repository's `main` is the production-ready frontend source.
+  It must remain understandable, tested, and directly buildable.
+- Treat repository migration as a deliberate handoff: update remotes, branch
+  protections, CI, and these references together. Do not infer that access has
+  been granted or switch remotes opportunistically.
 - Follow `lms/PROJECT_STANDARDS.md`. Historical documents never override the
   live code and that standard.
 
