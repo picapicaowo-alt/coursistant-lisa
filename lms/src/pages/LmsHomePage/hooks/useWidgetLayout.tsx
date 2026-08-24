@@ -19,6 +19,11 @@ interface UseWidgetLayoutResult {
   screenSize: ScreenSizeInfo;
 }
 
+/**
+ * Binds the responsive grid calculation to the currently registered widgets.
+ * Component elements and refs stay stable so width-driven layout changes do
+ * not remount widgets or discard their local UI state.
+ */
 export const useWidgetLayout = (): UseWidgetLayoutResult => {
   const chatRef = useRef<HTMLDivElement>(null);
   const assignmentsRef = useRef<HTMLDivElement>(null);
@@ -68,7 +73,9 @@ export const useWidgetLayout = (): UseWidgetLayoutResult => {
   
   const layout = useMemo(() => {
     if (!containerRef.current || !mounted) return [];
-    
+
+    // Layout constants can outlive a removed/feature-gated widget. Filtering at
+    // this boundary prevents stale configuration from reserving an empty cell.
     const activeKeys = new Set(widgetConfigs.map(widget => widget.key));
     return calculateLayout({
       screenSize,

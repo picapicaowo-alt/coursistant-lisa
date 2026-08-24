@@ -21,6 +21,11 @@ const ROLE_PRIORITY: Record<string, number> = {
 
 const getRolePriority = (role?: string) => (role && ROLE_PRIORITY[role]) || 4;
 
+/**
+ * Owns the server-paged roster and every membership mutation for the page.
+ * Filters are part of the Query key; successful writes invalidate every page
+ * for this course so counts and role groupings cannot drift apart.
+ */
 export const useRoster = () => {
   const {courseId} = useParams();
   const queryClient = useQueryClient();
@@ -44,6 +49,8 @@ export const useRoster = () => {
     enabled: id !== null,
     staleTime: 30_000,
     retry: (failureCount, error) => (
+      // A permission denial is stable for the current session and retrying it
+      // only delays the page's explicit forbidden state.
       (error as {code?: number})?.code === 403 ? false : failureCount < 1
     ),
   });
@@ -72,6 +79,8 @@ export const useRoster = () => {
   });
   const total = query.data?.total ?? 0;
   const rawMembers = query.data?.items ?? [];
+  // The API owns filtering and pagination; this local sort only gives each
+  // returned page a stable teaching-role order.
   const members = [...rawMembers].sort((a, b) => {
     const pA = getRolePriority(a.courseRole);
     const pB = getRolePriority(b.courseRole);

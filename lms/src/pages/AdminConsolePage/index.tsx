@@ -93,6 +93,8 @@ const AdminConsolePage: React.FC = () => {
   const queryClient = useQueryClient();
   const isSystemAdmin = user.role === 'SYSTEM_ADMIN';
   const isTenantAdmin = user.role === 'TENANT_ADMIN';
+  // Scope is derived from authenticated context, never from an editable form;
+  // the API still performs the authoritative permission and tenant checks.
   const scope = isSystemAdmin ? 'system' : 'tenant';
   const [tab, setTab] = useState<'users' | 'tenants' | 'operations'>('users');
   const [message, setMessage] = useState<string | null>(null);

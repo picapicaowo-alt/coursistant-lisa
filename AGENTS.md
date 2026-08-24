@@ -34,6 +34,12 @@ automation working in it.
 - Components render UI. Hooks coordinate behavior. API services own browser
   requests. TanStack Query owns server state; Zustand owns complex client/page
   state; `useState` owns local transient state.
+- SCSS Modules and the existing design tokens are the default styling path.
+  MUI or another UI kit is not permanently prohibited, but adding one requires
+  an explicit frontend architecture decision covering token/theme mapping,
+  shared component ownership, accessibility, bundle cost, and migration scope.
+  Approved kit components must enter through the shared UI layer rather than
+  ad-hoc imports in feature pages.
 - Do not add deploy-specific URLs, credentials, demo values, duplicated route
   strings, role/status strings, or design colors directly in feature code. Use
   the existing environment key, config module, typed domain constant, route
@@ -41,8 +47,9 @@ automation working in it.
   integration values as drive-by cleanup.
 - Comments explain constraints, invariants, compatibility decisions, and the
   reason behind non-obvious code. Do not narrate syntax or leave stale history
-  in source comments. Public helpers and tricky boundaries should use concise
-  TSDoc/JSDoc.
+  in source comments. Add concise TSDoc/JSDoc at tricky API, permission,
+  lifecycle, concurrency, cache, and state-transition boundaries; there is no
+  comment quota, and self-evident code should remain self-evident.
 - Never add `any`, `as any`, `@ts-nocheck`, ignored lint errors, secrets, or
   production `console.log` calls to avoid doing the real work.
 

@@ -95,11 +95,14 @@ const NotificationCenter = () => {
       'getUnreadNotificationCount'
     ),
     staleTime: 30_000,
+    // Keep the global badge fresh even while the inbox panel is closed.
     refetchInterval: 60_000,
   });
 
   const inboxQuery = useInfiniteQuery({
     queryKey: ['notifications'],
+    // The full inbox is comparatively expensive and has no visible consumer
+    // until the user opens the panel.
     enabled: isOpen,
     initialPageParam: 1,
     queryFn: async ({pageParam}) => unwrapData(
@@ -120,6 +123,8 @@ const NotificationCenter = () => {
   const markReadMutation = useMutation({
     mutationFn: (notificationId: number) => notificationApiService.markRead(notificationId),
     onSuccess: async () => {
+      // Announcement widgets can surface the same notification read state, so
+      // reading from the inbox invalidates both representations.
       await Promise.all([
         queryClient.invalidateQueries({queryKey: ['notification-unread-count']}),
         queryClient.invalidateQueries({queryKey: ['notifications']}),
@@ -156,6 +161,8 @@ const NotificationCenter = () => {
   }, [isOpen]);
 
   const openNotification = (notification: NotificationItem) => {
+    // Navigation must not wait for a best-effort read receipt. A read failure
+    // can be reconciled by the next poll without blocking the destination.
     if (!notification.readAt) markReadMutation.mutate(notification.notificationId);
 
     const target = resolveNotificationPath(notification);

@@ -27,11 +27,17 @@ explicitly requests that exact frontend configuration change.
 | Client / page state | Zustand (+ Immer where stores already use it) |
 | HTTP | Axios via `src/apis/api-client.ts` / `v2-api-client.ts` |
 | Routing | `react-router-dom` |
-| Styles | SCSS modules + design tokens (`src/styles/_tokens.scss`) + Tailwind utilities when needed |
+| Styles | SCSS modules + design tokens (`src/styles/_tokens.scss`) by default; Tailwind utilities when needed |
 | Tests | Vitest + Testing Library |
 | i18n | `i18next` / `react-i18next` |
 
-Do **not** introduce new UI kits (e.g. do not start using MUI even though it may still be in `package.json`). Prefer existing SCSS modules and tokens.
+SCSS Modules and the existing design tokens are the default because they match
+the current component ownership and visual language. MUI or another UI kit is
+not permanently banned, but it must not be introduced piecemeal. Adoption
+requires an explicit frontend architecture decision that defines theme/token
+mapping, shared wrappers or primitives, accessibility expectations, bundle
+impact, and migration scope. Once approved, feature pages consume the shared UI
+layer instead of importing a kit ad hoc.
 
 ---
 
@@ -194,6 +200,11 @@ Historical normalized-store designs in `STATE_MANAGEMENT.md` / `ARCHITECTURE.md`
   decision exists. Do not narrate syntax.
 - Use concise TSDoc/JSDoc on exported helpers when their contract, side effects,
   error behavior, or ownership boundary is not evident from types.
+- Treat permission sources, lifecycle/state transitions, optimistic concurrency,
+  idempotency, pagination, cache invalidation, and compatibility fallbacks as
+  comment-worthy when the reason is not evident locally.
+- There is no target number of comments. Do not add boilerplate documentation
+  to obvious pass-through methods merely to increase coverage.
 - Keep comments next to the rule they protect, link a durable issue/ADR when
   needed, and remove comments when the constraint disappears.
 - Never leave commented-out implementations, change logs, personal notes, or
@@ -206,6 +217,8 @@ Historical normalized-store designs in `STATE_MANAGEMENT.md` / `ARCHITECTURE.md`
 - Default: SCSS modules next to the component.
 - Use design tokens via the injected `t` namespace / CSS variables — do not invent one-off brand colors.
 - Tailwind is allowed for layout utilities; do not mix three competing systems in one component without reason.
+- A new UI kit needs the architecture decision described in section 1 and a
+  shared integration boundary; page-level experimental imports are not allowed.
 - Keep interactive affordances keyboard-reachable; do not rely on color alone for state.
 
 ---

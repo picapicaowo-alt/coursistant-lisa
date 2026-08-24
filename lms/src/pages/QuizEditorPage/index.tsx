@@ -300,6 +300,8 @@ const QuizEditorPage = () => {
       setAnswerKeyOptionIds([]);
       setAnswerKeyReason('');
       setMessage('Answer key corrected. Submitted attempts were regraded atomically.');
+      // A correction can change authoring totals, grading progress, historical
+      // results, learner gradebooks, and list summaries in one operation.
       await Promise.all([
         queryClient.invalidateQueries({queryKey: ['quiz-questions', courseId, quizId]}),
         queryClient.invalidateQueries({queryKey: ['quiz', courseId, quizId]}),
@@ -371,6 +373,8 @@ const QuizEditorPage = () => {
     const questions = questionsQuery.data ?? [];
     const target = index + offset;
     if (target < 0 || target >= questions.length) return;
+    // Reordering is persisted as the full permutation so the API never has to
+    // infer position from a stale client-side index.
     const ids = questions.map(question => question.id);
     [ids[index], ids[target]] = [ids[target], ids[index]];
     reorderQuestions.mutate(ids);

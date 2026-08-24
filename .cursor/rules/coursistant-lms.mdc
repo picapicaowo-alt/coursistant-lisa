@@ -21,7 +21,9 @@ alwaysApply: true
 ## 2. Strict Prohibitions
 - Do NOT add new `.jsx` / `.js` source files.
 - Do NOT point remotes at `bink44/lms-frontend` or personal forks.
-- Do NOT introduce MUI or other new UI kits.
+- Keep SCSS Modules and existing design tokens as the default. MUI or another
+  UI kit requires an explicit frontend architecture decision and a shared UI
+  integration boundary; do not add ad-hoc kit imports in feature pages.
 - Do NOT commit QA screenshots (`local-*.png`, `dev-8084-*.png`) unless asked.
 - Do NOT rewrite legacy chat/profile JSX unless explicitly scoped for migration.
 

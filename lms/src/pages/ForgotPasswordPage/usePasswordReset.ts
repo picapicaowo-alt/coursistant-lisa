@@ -16,6 +16,11 @@ interface PasswordResetLocationState {
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CODE_LENGTH = 6;
 
+/**
+ * Coordinates both self-service and forced password-reset entry paths.
+ * A forced reset may begin at the code step with router-provided identity, but
+ * the same final request verifies the code and changes the password atomically.
+ */
 const usePasswordReset = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -68,6 +73,8 @@ const usePasswordReset = () => {
 
   const confirmCode = (event: FormEvent) => {
     event.preventDefault();
+    // This step validates shape only. The code is intentionally not consumed
+    // until resetPassword verifies it together with the new password.
     if (code.trim().length !== CODE_LENGTH) {
       setError(t('forgotPasswordErrors.codeRequired'));
       return;

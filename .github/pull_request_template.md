@@ -7,8 +7,9 @@
 - [ ] Frontend-only; no backend, AI service, database, or infrastructure change
 - [ ] Existing environment and demo-account values are unchanged, or the exact requested exception is explained
 - [ ] Existing React/TypeScript pattern was followed before adding a new abstraction
+- [ ] SCSS Modules/design tokens remain the default, or an approved UI-kit architecture decision is linked
 - [ ] No new deploy-specific URL, credential, duplicated domain constant, or ad-hoc design value
-- [ ] Comments explain only non-obvious constraints and remain accurate
+- [ ] Non-obvious API, permission, lifecycle, concurrency, cache, and state-transition constraints are documented and remain accurate
 
 ## Verification
 

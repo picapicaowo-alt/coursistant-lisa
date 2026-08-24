@@ -18,6 +18,12 @@ import {
   V2ApiClient,
 } from '@/apis';
 
+/**
+ * Thin transport boundary for the quiz contract.
+ *
+ * Multi-step workflows and Query cache coordination stay in page hooks so
+ * this service remains a predictable mapping from typed calls to endpoints.
+ */
 export class QuizApiService {
   private apiClient = V2ApiClient;
 
@@ -41,6 +47,7 @@ export class QuizApiService {
     return this.apiClient.post(`/v2/courses/${courseId}/quizzes`, request, idempotent(idempotencyKey));
   }
 
+  /** `request.expectedVersion` protects staff edits from overwriting a newer draft. */
   patchQuiz(
     courseId: number,
     quizId: number,
@@ -96,6 +103,8 @@ export class QuizApiService {
     request: PatchQuizAnswerKeyRequest,
     idempotencyKey: string = crypto.randomUUID(),
   ): Promise<ApiResponse<QuizQuestion>> {
+    // Answer-key correction is deliberately separate from question editing:
+    // existing attempts may need their automatic scores recalculated.
     return this.apiClient.patch(
       `/v2/courses/${courseId}/quizzes/${quizId}/questions/${questionId}/answer-key`,
       request,
@@ -113,6 +122,7 @@ export class QuizApiService {
     questionIds: number[],
     idempotencyKey: string = crypto.randomUUID(),
   ): Promise<ApiResponse<QuizQuestion[]>> {
+    // The endpoint accepts the complete ordered permutation, not a single move.
     return this.apiClient.put(
       `/v2/courses/${courseId}/quizzes/${quizId}/questions/order`,
       {questionIds},
@@ -125,6 +135,7 @@ export class QuizApiService {
     quizId: number,
     idempotencyKey: string = crypto.randomUUID(),
   ): Promise<ApiResponse<QuizAttempt>> {
+    // A stable key prevents retries or double-clicks from opening two attempts.
     return this.apiClient.post(
       `/v2/courses/${courseId}/quizzes/${quizId}/attempts`,
       undefined,
@@ -133,6 +144,8 @@ export class QuizApiService {
   }
 
   getCurrentAttempt(courseId: number, quizId: number): Promise<ApiResponse<QuizAttempt>> {
+    // The API reports “no active attempt” as a domain error. Student pages may
+    // normalize that specific response to null; staff callers must not.
     return this.apiClient.get(`/v2/courses/${courseId}/quizzes/${quizId}/attempts/current`);
   }
 
@@ -145,6 +158,8 @@ export class QuizApiService {
     quizId: number,
     options?: {userId?: number; page?: number; pageSize?: number},
   ): Promise<ApiResponse<QuizAttemptSummary[]>> {
+    // `userId` is an optional staff-side roster filter. Authorization remains
+    // owned by the API; this client only forwards the requested scope.
     return this.apiClient.get(`/v2/courses/${courseId}/quizzes/${quizId}/attempts`, {
       params: options,
     });
@@ -163,6 +178,8 @@ export class QuizApiService {
     questionId: number,
     answer: {selectedOptionIds?: number[]; textAnswer?: string},
   ): Promise<ApiResponse<QuizAutosaveResponse>> {
+    // PUT makes each question its own replaceable checkpoint. Consumers should
+    // use the returned revision/deadline data as the authoritative save state.
     return this.apiClient.put(
       `/v2/courses/${courseId}/quizzes/${quizId}/attempts/${attemptId}/answers/${questionId}`,
       answer,
@@ -175,6 +192,7 @@ export class QuizApiService {
     attemptId: number,
     idempotencyKey: string = crypto.randomUUID(),
   ): Promise<ApiResponse<QuizReceipt>> {
+    // Submission is terminal for an attempt, so retries reuse one idempotency key.
     return this.apiClient.post(
       `/v2/courses/${courseId}/quizzes/${quizId}/attempts/${attemptId}/submit`,
       undefined,
@@ -183,6 +201,8 @@ export class QuizApiService {
   }
 
   getMyResult(courseId: number, quizId: number): Promise<ApiResponse<QuizResult>> {
+    // Result availability is controlled by the quiz visibility/release policy;
+    // callers must handle a valid “not available yet” response as an empty state.
     return this.apiClient.get(`/v2/courses/${courseId}/quizzes/${quizId}/my-result`);
   }
 
@@ -221,6 +241,8 @@ export class QuizApiService {
     userIds?: number[],
     idempotencyKey: string = crypto.randomUUID(),
   ): Promise<ApiResponse<void>> {
+    // Omitting userIds means all currently eligible users; a supplied list is a
+    // targeted release. Preserve that distinction instead of sending `[]`.
     return this.apiClient.post(
       `/v2/courses/${courseId}/quizzes/${quizId}/grades/release`,
       userIds ? {userIds} : {},
@@ -234,6 +256,7 @@ export class QuizApiService {
     userIds?: number[],
     idempotencyKey: string = crypto.randomUUID(),
   ): Promise<ApiResponse<void>> {
+    // As with release, no userIds means the whole applicable set.
     return this.apiClient.post(
       `/v2/courses/${courseId}/quizzes/${quizId}/grades/retract`,
       userIds ? {userIds} : {},

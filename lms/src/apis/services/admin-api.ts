@@ -13,6 +13,12 @@ import {
   V2ApiClient,
 } from '@/apis';
 
+/**
+ * Frontend transport for privileged administration operations.
+ *
+ * The authenticated role chooses the endpoint scope; the API remains the
+ * authority for tenant membership and every destructive-operation constraint.
+ */
 export class AdminApiService {
   private apiClient = V2ApiClient;
 
@@ -41,6 +47,8 @@ export class AdminApiService {
   }
 
   createManagedUser(scope: 'system' | 'tenant', request: CreateManagedUserRequest): Promise<ApiResponse<number>> {
+    // Callers derive scope from the authenticated admin role. It must never
+    // come from a form value or other user-controlled input.
     return this.apiClient.post(`/v2/${scope}/managed-users`, request, idempotent());
   }
 

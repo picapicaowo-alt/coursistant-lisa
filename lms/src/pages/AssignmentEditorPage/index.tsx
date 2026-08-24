@@ -197,6 +197,11 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
     };
   };
 
+  /**
+   * Persists the editor as a resumable record → attachments → publish workflow.
+   * Each successful stage advances `checkpointAssignment`, so retrying a later
+   * failure does not create a second assignment or re-upload completed files.
+   */
   const persist = async (publish: boolean) => {
     if (savingRef.current) return;
 
@@ -217,6 +222,8 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
         const dueChanged = toDateTimeInput(saved.dueAtLocal) !== dueAt;
         const lateChanged = toDateTimeInput(saved.lateUntilLocal) !== lateUntil;
         if (dueChanged || lateChanged) {
+          // Moving a deadline earlier can retroactively change submission state;
+          // preview the impact before sending the confirmed versioned update.
           const preview = unwrapData(await assignmentApiService.previewDueDateChange(courseId, saved.id, {
             dueAt: nextDueAt,
             ...(nextLateUntil ? {lateUntil: nextLateUntil} : {}),

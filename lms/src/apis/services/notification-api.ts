@@ -7,6 +7,7 @@ import type {
 import {V2ApiClient} from '@/apis';
 import {idempotent} from '@/apis/types/common';
 
+/** Current-user notification transport; read state is shared by every UI surface. */
 export class NotificationApiService {
   private apiClient = V2ApiClient;
 
@@ -17,6 +18,7 @@ export class NotificationApiService {
   async getNotifications(
     params: NotificationPageParams = {page: 1, size: 20}
   ): Promise<ApiResponse<NotificationPage>> {
+    // Notification pages are one-based, unlike several zero-based LMS lists.
     return this.apiClient.get<NotificationPage>('/v2/me/notifications', {params});
   }
 
@@ -38,6 +40,8 @@ export class NotificationApiService {
   async markAllRead(
     idempotencyKey: string = crypto.randomUUID()
   ): Promise<ApiResponse<UnreadNotificationCount>> {
+    // The response is the authoritative badge count; notifications remain in
+    // the inbox and are refreshed separately by the caller.
     return this.apiClient.patch<UnreadNotificationCount>(
       '/v2/me/notifications/read-all',
       undefined,

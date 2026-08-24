@@ -75,6 +75,8 @@ const QuizPage = () => {
   const questionsQuery = useQuery({
     queryKey: ['quiz-questions', courseId, quizId],
     queryFn: async () => unwrapData(await quizApiService.listQuestions(courseId, quizId), 'listQuestions'),
+    // Students receive question content only after an active attempt has been
+    // confirmed. Staff use the same endpoint for authoring/review without one.
     enabled: valid && (isStaff || (access.isResolved && isStudentInProgress)),
     retry: (failureCount, error) => {
       if (isQuizAttemptNotFound(error) || isQuizAttemptNotInProgress(error) || isQuizWindowClosed(error) || isQuizNotFound(error)) {
@@ -93,6 +95,8 @@ const QuizPage = () => {
         throw error;
       }
     },
+    // Do not probe result visibility while an attempt is still active. Once no
+    // current attempt exists, an unavailable result becomes a normal empty state.
     enabled: valid && access.isResolved && !isStaff && attemptQuery.data === null,
     retry: false,
   });
@@ -150,6 +154,8 @@ const QuizPage = () => {
   });
 
   const saveAnswer = useMutation({
+    // Each question is an independent checkpoint; changing another draft must
+    // not resend or overwrite answers already acknowledged by the API.
     mutationFn: ({question, draft}: {question: QuizQuestion; draft: AnswerDraft}) =>
       quizApiService.autosaveAnswer(
         courseId,

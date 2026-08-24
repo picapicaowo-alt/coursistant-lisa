@@ -57,6 +57,20 @@ explicitly requested.
 - Link an issue or ADR for compatibility workarounds that outlive one change.
 - Delete obsolete comments in the same change that makes them obsolete.
 
+There is no comment quota. Prioritize API contracts, permission sources,
+lifecycle and state transitions, optimistic concurrency, idempotency, cache
+invalidation, pagination, and compatibility fallbacks when their purpose is not
+clear from names and types. Leave straightforward rendering and pass-through
+calls uncluttered.
+
+## Styling and UI dependencies
+
+SCSS Modules and the repository design tokens are the default styling path.
+MUI or another UI kit may be adopted only through an explicit frontend
+architecture decision covering theme/token mapping, shared component ownership,
+accessibility, bundle impact, and migration scope. Do not trial a kit through
+direct imports scattered across feature pages.
+
 ## Dependency and lockfile policy
 
 `package-lock.json` is canonical for CI because CI runs `npm ci`. `yarn.lock` is

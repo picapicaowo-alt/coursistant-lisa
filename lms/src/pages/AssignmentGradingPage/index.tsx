@@ -364,6 +364,9 @@ const AssignmentGradingPage = () => {
     setActionError(null);
 
     try {
+      // Grade data and the optional annotated file are separate resources. Save
+      // the grade first, keep the dialog draft on either failure, and refresh
+      // the roster only after both operations complete.
       if (selectedRow.groupId !== undefined) {
         await assignmentApiService.upsertGroupGrade(courseId, assignmentId, selectedRow.groupId, payload);
         if (annotatedFileChange.kind === 'upload') {

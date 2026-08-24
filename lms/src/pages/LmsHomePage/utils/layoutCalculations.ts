@@ -46,6 +46,11 @@ export const getWidgetLayoutInfo = (
   };
 };
 
+/**
+ * Builds a deterministic responsive layout from widget preferences.
+ * Small screens intentionally become a single vertical reading order; wider
+ * screens honor preferred positions when possible and compact around clashes.
+ */
 export const calculateLayout = ({
                                   screenSize,
                                   containerWidth,
@@ -151,6 +156,8 @@ function findFirstAvailablePosition(
     ? Math.max(...occupiedSpaces.map(s => s.bottom))
     : 0;
   
+  // One extra candidate row guarantees the scan can place the widget below all
+  // occupied space even when every existing cell is full.
   const gridHeight = maxY + h + 1;
   const grid: boolean[][] = Array(gridHeight).fill(null).map(() => Array(columns).fill(false));
   
@@ -192,6 +199,8 @@ function optimizePosition(
   let optimizedX = x;
   let optimizedY = y;
   
+  // Compact upward before moving left so reading order remains primarily
+  // vertical while unused gaps are removed.
   for (let testY = y - 1; testY >= 0; testY--) {
     let canMove = true;
     for (const occupied of occupiedSpaces) {

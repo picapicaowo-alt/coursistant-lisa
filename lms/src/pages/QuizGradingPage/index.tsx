@@ -60,6 +60,11 @@ const loadStudentQuizAttempts = async (courseId: number, quizId: number, userId:
   }
 };
 
+/**
+ * Builds the grading roster from per-student attempt endpoints without letting
+ * one unavailable student hide every successful result. Concurrency is capped
+ * to keep large courses from issuing an unbounded burst of browser requests.
+ */
 const loadAllQuizAttempts = async (courseId: number, quizId: number, userIds: number[]): Promise<AttemptRosterData> => {
   const attempts: OwnedQuizAttemptSummary[] = [];
   const failedUserIds: number[] = [];
@@ -272,6 +277,8 @@ const QuizGradingPage = () => {
 
   const selectedQuestion = shortQuestions.find(question => question.id === selectedQuestionId);
   const attemptsByUserId = useMemo(() => {
+    // Attempt summaries do not carry the staff filter userId, so the loader
+    // attaches it before results from separate student requests are combined.
     const grouped = new Map<number, QuizAttemptSummary[]>();
     for (const attempt of attemptsQuery.data?.attempts ?? []) {
       const current = grouped.get(attempt.userId) ?? [];
