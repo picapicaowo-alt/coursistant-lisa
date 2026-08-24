@@ -1,5 +1,6 @@
 import React from 'react';
-import {Editor} from '@tiptap/react';
+import {useEditorState} from '@tiptap/react';
+import type {Editor} from '@tiptap/react';
 import {Level} from '@tiptap/extension-heading';
 import {
   Check,
@@ -79,6 +80,22 @@ const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = tru
   const colorMenuRef = React.useRef<HTMLDetailsElement>(null);
   const insertMenuRef = React.useRef<HTMLDetailsElement>(null);
   const [insertOpen, setInsertOpen] = React.useState(false);
+  const formattingState = useEditorState({
+    editor,
+    selector: ({editor: currentEditor}) => ({
+      headingLevel: Number(currentEditor?.getAttributes('heading').level ?? 0),
+      bold: currentEditor?.isActive('bold') ?? false,
+      italic: currentEditor?.isActive('italic') ?? false,
+      underline: currentEditor?.isActive('underline') ?? false,
+      strike: currentEditor?.isActive('strike') ?? false,
+      bulletList: currentEditor?.isActive('bulletList') ?? false,
+      orderedList: currentEditor?.isActive('orderedList') ?? false,
+      link: currentEditor?.isActive('link') ?? false,
+      blockquote: currentEditor?.isActive('blockquote') ?? false,
+      code: currentEditor?.isActive('code') ?? false,
+      textColor: String(currentEditor?.getAttributes('textColor').color ?? '').toLowerCase(),
+    }),
+  });
 
   if (!editor || disabled) return null;
 
@@ -109,7 +126,11 @@ const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = tru
     editor.chain().focus().extendMarkRange('link').setLink({href: url}).run();
   };
 
-  const activeColor = String(editor.getAttributes('textColor').color ?? '').toLowerCase();
+  const activeColor = formattingState?.textColor ?? '';
+
+  const toggleInlineMark = (mark: 'bold' | 'italic' | 'underline' | 'strike' | 'code') => {
+    editor.chain().focus().toggleMark(mark, {}, {extendEmptyMarkRange: true}).run();
+  };
 
   const applyColor = (value: string) => {
     if (value) editor.chain().focus().setMark('textColor', {color: value}).run();
@@ -162,7 +183,7 @@ const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = tru
             <select
               aria-label="Text style"
               title="Text style"
-              value={editor.isActive('heading') ? editor.getAttributes('heading').level : 0}
+              value={formattingState?.headingLevel ?? 0}
               onChange={event => {
                 const level = Number(event.target.value);
                 if (level === 0) editor.chain().focus().setParagraph().run();
@@ -175,25 +196,25 @@ const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = tru
           </div>
 
           <div className={styles.toolbarGroup}>
-            <ToolbarButton label="Bold" hint={shortcut('B')} active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
+            <ToolbarButton label="Bold" hint={shortcut('B')} active={formattingState?.bold} onClick={() => toggleInlineMark('bold')}>
               <strong>B</strong>
             </ToolbarButton>
-            <ToolbarButton label="Italic" hint={shortcut('I')} active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}>
+            <ToolbarButton label="Italic" hint={shortcut('I')} active={formattingState?.italic} onClick={() => toggleInlineMark('italic')}>
               <em>I</em>
             </ToolbarButton>
-            <ToolbarButton label="Underline" hint={shortcut('U')} active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}>
+            <ToolbarButton label="Underline" hint={shortcut('U')} active={formattingState?.underline} onClick={() => toggleInlineMark('underline')}>
               <u>U</u>
             </ToolbarButton>
-            <ToolbarButton label="Strikethrough" hint={shortcut('S', {shift: true})} active={editor.isActive('strike')} onClick={() => editor.chain().focus().toggleStrike().run()}>
+            <ToolbarButton label="Strikethrough" hint={shortcut('S', {shift: true})} active={formattingState?.strike} onClick={() => toggleInlineMark('strike')}>
               <s>S</s>
             </ToolbarButton>
           </div>
 
           <div className={styles.toolbarGroup}>
-            <ToolbarButton label="Bullet list" hint={shortcut('8', {shift: true})} active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
+            <ToolbarButton label="Bullet list" hint={shortcut('8', {shift: true})} active={formattingState?.bulletList} onClick={() => editor.chain().focus().toggleBulletList().run()}>
               <List size={17}/>
             </ToolbarButton>
-            <ToolbarButton label="Numbered list" hint={shortcut('7', {shift: true})} active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
+            <ToolbarButton label="Numbered list" hint={shortcut('7', {shift: true})} active={formattingState?.orderedList} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
               <ListOrdered size={17}/>
             </ToolbarButton>
           </div>
@@ -231,13 +252,13 @@ const Toolbar: React.FC<ToolbarProps> = ({editor, disabled, toolbarVisible = tru
                 </div>
               </div>
             </details>
-            <ToolbarButton label="Insert link" hint={shortcut('K')} active={editor.isActive('link')} onClick={toggleLink}>
+            <ToolbarButton label="Insert link" hint={shortcut('K')} active={formattingState?.link} onClick={toggleLink}>
               <Link2 size={16}/>
             </ToolbarButton>
-            <ToolbarButton label="Blockquote" hint={shortcut('B', {shift: true})} active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}>
+            <ToolbarButton label="Blockquote" hint={shortcut('B', {shift: true})} active={formattingState?.blockquote} onClick={() => editor.chain().focus().toggleBlockquote().run()}>
               <Quote size={16}/>
             </ToolbarButton>
-            <ToolbarButton label="Inline code" hint={shortcut('E')} active={editor.isActive('code')} onClick={() => editor.chain().focus().toggleCode().run()}>
+            <ToolbarButton label="Inline code" hint={shortcut('E')} active={formattingState?.code} onClick={() => toggleInlineMark('code')}>
               <CodeXml size={17}/>
             </ToolbarButton>
           </div>

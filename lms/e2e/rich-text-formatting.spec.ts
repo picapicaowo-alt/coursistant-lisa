@@ -113,9 +113,23 @@ test('teacher can remove bold formatting and a newly selected annotated file', a
   await expect(editor).toContainText('Bold feedback');
   await expect(editor.locator('strong')).toHaveCount(1);
 
+  const boldButton = page.getByRole('button', {name: 'Bold'});
+  await editor.locator('strong').click();
+  await page.keyboard.press('End');
+  await expect(boldButton).toHaveAttribute('aria-pressed', 'true');
+  await boldButton.click();
+
+  await expect(editor).toContainText('Bold feedback');
+  await expect(editor.locator('strong')).toHaveCount(0);
+  await expect(boldButton).toHaveAttribute('aria-pressed', 'false');
+
+  await editor.selectText();
+  await boldButton.click();
+  await expect(editor.locator('strong')).toHaveCount(1);
+
   await editor.locator('strong').selectText();
   await expect.poll(async () => page.evaluate(() => window.getSelection()?.toString())).toBe('Bold feedback');
-  await page.getByRole('button', {name: 'Bold'}).click();
+  await boldButton.click();
 
   await expect(editor).toContainText('Bold feedback');
   await expect(editor.locator('strong')).toHaveCount(0);
