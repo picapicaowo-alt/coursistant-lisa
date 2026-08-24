@@ -82,7 +82,7 @@ describe('AssignmentApiService 8081 routes', () => {
   });
 
   it('uses DELETE for staged and instructor attachment removal', async () => {
-    client.delete.mockResolvedValue({status: 200});
+    client.delete.mockResolvedValue({status: 200, data: null});
 
     await service.deleteStagingFile(4, 9, 101);
     await service.deleteAttachment(4, 9, 33);
@@ -169,7 +169,7 @@ describe('AssignmentApiService 8081 routes', () => {
 
   it('covers assignment deletion, unpublish, and due-date impact preview', async () => {
     client.post.mockResolvedValue({status: 200, data: {}});
-    client.delete.mockResolvedValue({status: 200});
+    client.delete.mockResolvedValue({status: 200, data: null});
     const preview = {dueAt: '2026-09-01T10:00', clearLateUntil: true};
     await service.unpublishAssignment(4, 9);
     await service.previewDueDateChange(4, 9, preview);

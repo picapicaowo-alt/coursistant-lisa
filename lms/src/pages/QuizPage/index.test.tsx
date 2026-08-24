@@ -141,7 +141,7 @@ describe('QuizPage Question Attempt Gate', () => {
     await user.click(startButton);
 
     await waitFor(() => {
-      expect(quizApi.startAttempt).toHaveBeenCalledWith(5, 10);
+      expect(quizApi.startAttempt).toHaveBeenCalledWith(5, 10, expect.any(String));
     });
 
     await waitFor(() => {

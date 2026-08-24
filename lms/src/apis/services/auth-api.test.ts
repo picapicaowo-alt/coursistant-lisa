@@ -5,7 +5,7 @@ import {AuthApiService} from './auth-api';
 
 describe('AuthApiService registration', () => {
   it('requests a registration verification code without an authenticated session', async () => {
-    const post = vi.fn().mockResolvedValue({status: 200});
+    const post = vi.fn().mockResolvedValue({status: 200, data: null});
     const service = new AuthApiService({post} as unknown as typeof V2ApiClient);
 
     await service.sendRegistrationVerification('student@example.com');
@@ -22,7 +22,7 @@ describe('AuthApiService registration', () => {
   });
 
   it('registers through the current v1 auth contract', async () => {
-    const post = vi.fn().mockResolvedValue({status: 200});
+    const post = vi.fn().mockResolvedValue({status: 200, data: null});
     const service = new AuthApiService({post} as unknown as typeof V2ApiClient);
     const request = {
       name: 'Student One',
@@ -44,7 +44,7 @@ describe('AuthApiService registration', () => {
   });
 
   it('uses the current verification, reset, and authenticated password routes', async () => {
-    const client = {post: vi.fn().mockResolvedValue({status: 200}), put: vi.fn().mockResolvedValue({status: 200})};
+    const client = {post: vi.fn().mockResolvedValue({status: 200, data: null}), put: vi.fn().mockResolvedValue({status: 200, data: null})};
     const service = new AuthApiService(client as unknown as typeof V2ApiClient);
     const reset = {email: 'student@example.com', verificationCode: '123456', newPassword: 'NewPassw0rd'};
     const change = {currentPassword: 'OldPassw0rd', newPassword: 'NewPassw0rd'};

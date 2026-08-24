@@ -3,15 +3,15 @@
  *
  * Success and failure share this shape, so `status` is what you branch on;
  * `code` is a string enum (`"SUCCESS"`, `"INVALID_CREDENTIALS"`, …), not a
- * number. `data` is genuinely optional: the server serializes NON_NULL, so a
- * response with nothing to return omits the field entirely.
+ * number. The backend always includes `data`; operations with no payload use
+ * an explicit `null` value.
  */
 export interface ApiResponse<T = unknown> {
   /** HTTP status, mirrored into the body. */
   status: number;
   code: string;
+  data: T | null;
   message: string;
-  data?: T | null;
   /** ISO-8601 instant, e.g. "2026-07-25T01:00:00Z". */
   timestamp: string;
 }
@@ -36,7 +36,8 @@ export function idempotent(key: string = crypto.randomUUID()): {headers: Record<
 }
 
 /**
- * Reads `data` off a response, failing loudly when it is not there.
+ * Reads `data` off a response, failing loudly when it is null (or a malformed
+ * runtime response omits it).
  *
  * A 2xx envelope with no `data` where the caller needs one means the contract
  * was broken, and the one thing we must not do is pass the absence downstream
@@ -45,7 +46,7 @@ export function idempotent(key: string = crypto.randomUUID()): {headers: Record<
  * caller's error branch in charge instead.
  */
 export function unwrapData<T>(response: ApiResponse<T>, context: string): T {
-  if (response.data === undefined || response.data === null) {
+  if (response.data == null) {
     throw new Error(
       `${context}: response had no data (status ${response.status}, code ${response.code})`
     );

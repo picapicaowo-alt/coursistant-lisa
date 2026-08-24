@@ -64,7 +64,7 @@ describe('CourseApiService material management', () => {
     client.patch.mockResolvedValue({status: 200, data: {id: 81}});
     client.post.mockResolvedValue({status: 200, data: {id: 81}});
     client.put.mockResolvedValue({status: 200, data: []});
-    client.delete.mockResolvedValue({status: 200});
+    client.delete.mockResolvedValue({status: 200, data: null});
 
     await service.renameMaterial(31, 5, 81, 'Revised notes');
     await service.moveMaterial(31, 5, 81, 6);
@@ -150,7 +150,7 @@ describe('CourseApiService event and group management', () => {
     const payload = {name: 'Review', date: '2026-09-10', startTime: '10:00'};
     client.post.mockResolvedValue({status: 200, data: {id: 10}});
     client.put.mockResolvedValue({status: 200, data: {id: 10}});
-    client.delete.mockResolvedValue({status: 200});
+    client.delete.mockResolvedValue({status: 200, data: null});
     await service.createCourseEvent(31, payload, 'event-key');
     await service.updateCourseEvent(31, 10, payload);
     await service.deleteCourseEvent(31, 10);
@@ -164,7 +164,7 @@ describe('CourseApiService event and group management', () => {
 
   it('uses canonical group membership routes for student and staff actions', async () => {
     client.post.mockResolvedValue({status: 200, data: {}});
-    client.delete.mockResolvedValue({status: 200});
+    client.delete.mockResolvedValue({status: 200, data: null});
     await service.joinGroup(31, 11, 21);
     await service.switchGroup(31, 11, 22);
     await service.assignGroupMember(31, 11, 21, 385, {confirmCapacityOverfill: true});
@@ -257,7 +257,7 @@ describe('CourseApiService announcements, sessions, and lifecycle', () => {
     const session = {dayOfWeek: 'MON' as const, startTime: '09:00', endTime: '10:00', type: 'Lecture' as const, location: 'Room 1'};
     client.post.mockResolvedValue({status: 200, data: {}});
     client.put.mockResolvedValue({status: 200, data: {}});
-    client.delete.mockResolvedValue({status: 200});
+    client.delete.mockResolvedValue({status: 200, data: null});
     await service.createCourseSession(31, session);
     await service.updateCourseSession(31, 7, session);
     await service.deleteCourseSession(31, 7);

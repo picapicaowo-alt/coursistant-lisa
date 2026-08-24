@@ -31,7 +31,7 @@ describe('NotificationApiService', () => {
   });
 
   it('marks one owned notification read with the required idempotency key', async () => {
-    client.patch.mockResolvedValue({status: 200});
+    client.patch.mockResolvedValue({status: 200, data: null});
 
     await service.markRead(42, 'notification_read_42');
 

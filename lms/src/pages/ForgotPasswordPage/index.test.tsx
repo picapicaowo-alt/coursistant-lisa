@@ -66,8 +66,8 @@ const renderPage = () => render(
 describe('ForgotPasswordPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    authApi.sendPasswordResetVerification.mockResolvedValue({status: 200});
-    authApi.resetPassword.mockResolvedValue({status: 200});
+    authApi.sendPasswordResetVerification.mockResolvedValue({status: 200, data: null});
+    authApi.resetPassword.mockResolvedValue({status: 200, data: null});
   });
 
   it('walks email → code → password → complete with the shared password rule', async () => {
@@ -77,7 +77,7 @@ describe('ForgotPasswordPage', () => {
     await user.type(screen.getByPlaceholderText('Enter email address'), 'student@example.com');
     await user.click(screen.getByRole('button', {name: 'Reset password'}));
     await waitFor(() => {
-      expect(authApi.sendPasswordResetVerification).toHaveBeenCalledWith('student@example.com');
+      expect(authApi.sendPasswordResetVerification).toHaveBeenCalledWith('student@example.com', expect.any(String));
     });
 
     for (const [index, digit] of ['1', '2', '3', '4', '5', '6'].entries()) {
@@ -98,11 +98,14 @@ describe('ForgotPasswordPage', () => {
     await user.click(screen.getByRole('button', {name: 'Reset Password'}));
 
     await waitFor(() => {
-      expect(authApi.resetPassword).toHaveBeenCalledWith({
-        email: 'student@example.com',
-        verificationCode: '123456',
-        newPassword: 'NewPassw0rd',
-      });
+      expect(authApi.resetPassword).toHaveBeenCalledWith(
+        {
+          email: 'student@example.com',
+          verificationCode: '123456',
+          newPassword: 'NewPassw0rd',
+        },
+        expect.any(String),
+      );
     });
     expect(await screen.findByRole('heading', {name: 'Successful password reset!'})).toBeInTheDocument();
   });

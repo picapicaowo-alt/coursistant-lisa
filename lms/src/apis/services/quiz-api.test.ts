@@ -37,7 +37,7 @@ describe('QuizApiService', () => {
   });
 
   it('uses explicit confirm when deleting a quiz', async () => {
-    client.delete.mockResolvedValue({status: 200});
+    client.delete.mockResolvedValue({status: 200, data: null});
     await service.deleteQuiz(4, 3);
     expect(client.delete).toHaveBeenCalledWith('/v2/courses/4/quizzes/3', {params: {confirm: true}});
   });
@@ -54,7 +54,7 @@ describe('QuizApiService', () => {
 
   it('edits an existing question and releases only selected users', async () => {
     client.patch.mockResolvedValue({status: 200, data: {id: 101}});
-    client.post.mockResolvedValue({status: 200});
+    client.post.mockResolvedValue({status: 200, data: null});
     await service.patchQuestion(4, 3, 101, {expectedVersion: 2, stem: 'Updated'});
     await service.releaseGrades(4, 3, [385, 386]);
     await service.retractGrades(4, 3, [386]);

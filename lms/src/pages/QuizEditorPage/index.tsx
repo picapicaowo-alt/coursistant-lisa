@@ -7,6 +7,7 @@ import {unwrapData} from '@/apis';
 import {quizApiService} from '@/apis/services/quiz-api';
 import {EnglishDateTimeInput} from '@/components/EnglishDateInput';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
+import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
 import styles from './index.module.scss';
 
 const localInputValue = (date: Date) => {
@@ -132,6 +133,7 @@ const QuizEditorPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const access = useCourseAccess(Number.isInteger(courseId) ? courseId : null);
+  const idempotency = useIdempotencyCheckpoint();
   const [title, setTitle] = useState('');
   const [instructions, setInstructions] = useState('');
   const [opensAt, setOpensAt] = useState(() => localInputValue(new Date()));
@@ -184,11 +186,23 @@ const QuizEditorPage = () => {
   }), [attemptsAllowed, closesAt, instructions, opensAt, resultVisibility, timeLimitMinutes, title]);
 
   const saveQuiz = useMutation({
-    mutationFn: () => isNew
-      ? quizApiService.createQuiz(courseId, settingsPayload)
-      : quizApiService.patchQuiz(courseId, quizId, {...settingsPayload, expectedVersion: quizQuery.data!.version}),
+    mutationFn: () => {
+      const operation = isNew ? `quiz-create-${courseId}` : `quiz-update-${courseId}-${quizId}`;
+      if (isNew) {
+        const key = idempotency.keyFor(operation, idempotencyFingerprint(settingsPayload));
+        return quizApiService.createQuiz(courseId, settingsPayload, key);
+      }
+      const request = {...settingsPayload, expectedVersion: quizQuery.data!.version};
+      const key = idempotency.keyFor(operation, idempotencyFingerprint(request));
+      return quizApiService.patchQuiz(courseId, quizId, request, key);
+    },
     onSuccess: async response => {
       const saved = unwrapData(response, 'saveQuiz');
+      const operation = isNew ? `quiz-create-${courseId}` : `quiz-update-${courseId}-${quizId}`;
+      const request = isNew
+        ? settingsPayload
+        : {...settingsPayload, expectedVersion: quizQuery.data!.version};
+      idempotency.completeFingerprint(operation, idempotencyFingerprint(request));
       await queryClient.invalidateQueries({queryKey: ['course-quizzes', courseId]});
       setMessage('Quiz settings saved.');
       if (isNew) navigate(`/course/${courseId}/quizzes/${saved.id}/edit`, {replace: true});
@@ -198,8 +212,20 @@ const QuizEditorPage = () => {
   });
 
   const addQuestion = useMutation({
-    mutationFn: () => quizApiService.createQuestion(courseId, quizId!, normalizedQuestion(questionDraft)),
+    mutationFn: () => {
+      const request = normalizedQuestion(questionDraft);
+      const operation = `quiz-question-create-${courseId}-${quizId}`;
+      return quizApiService.createQuestion(
+        courseId,
+        quizId!,
+        request,
+        idempotency.keyFor(operation, idempotencyFingerprint(request)),
+      );
+    },
     onSuccess: async () => {
+      const request = normalizedQuestion(questionDraft);
+      const operation = `quiz-question-create-${courseId}-${quizId}`;
+      idempotency.completeFingerprint(operation, idempotencyFingerprint(request));
       setQuestionDraft(defaultQuestion());
       setMessage('Question added.');
       await queryClient.invalidateQueries({queryKey: ['quiz-questions', courseId, quizId]});
@@ -209,12 +235,24 @@ const QuizEditorPage = () => {
   });
 
   const saveQuestion = useMutation({
-    mutationFn: ({questionId, expectedVersion}: {questionId: number; expectedVersion: number}) =>
-      quizApiService.patchQuestion(courseId, quizId!, questionId, {
+    mutationFn: ({questionId, expectedVersion}: {questionId: number; expectedVersion: number}) => {
+      const request = {
         ...normalizedQuestion(editingQuestionDraft),
         expectedVersion,
-      }),
-    onSuccess: async () => {
+      };
+      const operation = `quiz-question-update-${courseId}-${quizId}-${questionId}`;
+      return quizApiService.patchQuestion(
+        courseId,
+        quizId!,
+        questionId,
+        request,
+        idempotency.keyFor(operation, idempotencyFingerprint(request)),
+      );
+    },
+    onSuccess: async (_, {questionId, expectedVersion}) => {
+      const request = {...normalizedQuestion(editingQuestionDraft), expectedVersion};
+      const operation = `quiz-question-update-${courseId}-${quizId}-${questionId}`;
+      idempotency.completeFingerprint(operation, idempotencyFingerprint(request));
       setEditingQuestionId(null);
       setMessage('Question updated.');
       await queryClient.invalidateQueries({queryKey: ['quiz-questions', courseId, quizId]});
@@ -242,15 +280,35 @@ const QuizEditorPage = () => {
   });
 
   const reorderQuestions = useMutation({
-    mutationFn: (questionIds: number[]) => quizApiService.reorderQuestions(courseId, quizId!, questionIds),
-    onSuccess: async () => queryClient.invalidateQueries({queryKey: ['quiz-questions', courseId, quizId]}),
+    mutationFn: (questionIds: number[]) => {
+      const operation = `quiz-questions-reorder-${courseId}-${quizId}`;
+      return quizApiService.reorderQuestions(
+        courseId,
+        quizId!,
+        questionIds,
+        idempotency.keyFor(operation, idempotencyFingerprint(questionIds)),
+      );
+    },
+    onSuccess: async (_, questionIds) => {
+      const operation = `quiz-questions-reorder-${courseId}-${quizId}`;
+      idempotency.completeFingerprint(operation, idempotencyFingerprint(questionIds));
+      await queryClient.invalidateQueries({queryKey: ['quiz-questions', courseId, quizId]});
+    },
   });
 
   const publishQuiz = useMutation({
-    mutationFn: () => quizQuery.data?.state === 'Published'
-      ? quizApiService.unpublishQuiz(courseId, quizId!)
-      : quizApiService.publishQuiz(courseId, quizId!),
+    mutationFn: () => {
+      const action = quizQuery.data?.state === 'Published' ? 'unpublish' : 'publish';
+      const operation = `quiz-${action}-${courseId}-${quizId}`;
+      const key = idempotency.keyFor(operation, operation);
+      return action === 'unpublish'
+        ? quizApiService.unpublishQuiz(courseId, quizId!, key)
+        : quizApiService.publishQuiz(courseId, quizId!, key);
+    },
     onSuccess: async () => {
+      const action = quizQuery.data?.state === 'Published' ? 'unpublish' : 'publish';
+      const operation = `quiz-${action}-${courseId}-${quizId}`;
+      idempotency.completeFingerprint(operation, operation);
       await queryClient.invalidateQueries({queryKey: ['quiz', courseId, quizId]});
       await queryClient.invalidateQueries({queryKey: ['course-quizzes', courseId]});
     },

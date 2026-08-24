@@ -6,6 +6,7 @@ import type {QuizAttempt, QuizQuestion} from '@/apis';
 import {unwrapData} from '@/apis';
 import {quizApiService} from '@/apis/services/quiz-api';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
+import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
 import {
   formatQuizInstant,
   isMissingCurrentAttempt,
@@ -42,6 +43,7 @@ const QuizPage = () => {
   const access = useCourseAccess(valid ? courseId : null);
   const isStaff = access.isResolved && (access.canConfigureAssignments || access.canGrade);
   const queryClient = useQueryClient();
+  const idempotency = useIdempotencyCheckpoint();
   const [drafts, setDrafts] = useState<Record<number, AnswerDraft>>({});
   const [savedQuestions, setSavedQuestions] = useState<Set<number>>(new Set());
   const [confirmSubmit, setConfirmSubmit] = useState(false);
@@ -127,12 +129,20 @@ const QuizPage = () => {
   }, [questionsQuery.isError, questionsQuery.error, queryClient, courseId, quizId]);
 
   const startAttempt = useMutation({
-    mutationFn: () => quizApiService.startAttempt(courseId, quizId),
+    mutationFn: () => {
+      const operation = `quiz-attempt-start-${courseId}-${quizId}`;
+      const key = idempotency.keyFor(operation, operation);
+      return quizApiService.startAttempt(courseId, quizId, key);
+    },
     onSuccess: response => {
       const attempt = unwrapData(response, 'startAttempt');
+      const operation = `quiz-attempt-start-${courseId}-${quizId}`;
+      idempotency.completeFingerprint(operation, operation);
       queryClient.setQueryData(['quiz-current-attempt', courseId, quizId], attempt);
       setDrafts(toDrafts(attempt));
       void queryClient.invalidateQueries({queryKey: ['quiz-attempts', courseId, quizId, 'mine']});
+      void queryClient.invalidateQueries({queryKey: ['course-quizzes', courseId]});
+      void queryClient.invalidateQueries({queryKey: ['ai-exam-lockdown', courseId]});
     },
   });
 
@@ -153,22 +163,41 @@ const QuizPage = () => {
   });
 
   const submitAttempt = useMutation({
-    mutationFn: () => quizApiService.submitAttempt(courseId, quizId, attemptQuery.data!.id),
+    mutationFn: () => {
+      const attemptId = attemptQuery.data!.id;
+      const operation = `quiz-attempt-submit-${courseId}-${quizId}-${attemptId}`;
+      const key = idempotency.keyFor(operation, operation);
+      return quizApiService.submitAttempt(courseId, quizId, attemptId, key);
+    },
     onSuccess: async () => {
+      const attemptId = attemptQuery.data!.id;
+      const operation = `quiz-attempt-submit-${courseId}-${quizId}-${attemptId}`;
+      idempotency.completeFingerprint(operation, operation);
       setConfirmSubmit(false);
       queryClient.setQueryData(['quiz-current-attempt', courseId, quizId], null);
       await Promise.all([
         queryClient.invalidateQueries({queryKey: ['quiz-my-result', courseId, quizId]}),
         queryClient.invalidateQueries({queryKey: ['quiz-attempts', courseId, quizId, 'mine']}),
+        queryClient.invalidateQueries({queryKey: ['course-quizzes', courseId]}),
+        queryClient.invalidateQueries({queryKey: ['ai-exam-lockdown', courseId]}),
       ]);
     },
   });
 
   const changeState = useMutation({
-    mutationFn: () => quizQuery.data?.state === 'Published'
-      ? quizApiService.unpublishQuiz(courseId, quizId)
-      : quizApiService.publishQuiz(courseId, quizId),
+    mutationFn: () => {
+      const action = quizQuery.data?.state === 'Published' ? 'unpublish' : 'publish';
+      const operation = `quiz-${action}-${courseId}-${quizId}`;
+      const key = idempotency.keyFor(operation, idempotencyFingerprint({courseId, quizId, action}));
+      return action === 'unpublish'
+        ? quizApiService.unpublishQuiz(courseId, quizId, key)
+        : quizApiService.publishQuiz(courseId, quizId, key);
+    },
     onSuccess: async () => {
+      const action = quizQuery.data?.state === 'Published' ? 'unpublish' : 'publish';
+      const operation = `quiz-${action}-${courseId}-${quizId}`;
+      const fingerprint = idempotencyFingerprint({courseId, quizId, action});
+      idempotency.completeFingerprint(operation, fingerprint);
       await queryClient.invalidateQueries({queryKey: ['quiz', courseId, quizId]});
       await queryClient.invalidateQueries({queryKey: ['course-quizzes', courseId]});
     },

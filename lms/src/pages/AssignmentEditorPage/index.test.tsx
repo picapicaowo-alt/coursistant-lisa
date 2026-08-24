@@ -119,9 +119,12 @@ describe('AssignmentEditorForm recovery workflow', () => {
     await waitFor(() => expect(api.publishAssignment).toHaveBeenCalledTimes(1));
     expect(api.createAssignment).toHaveBeenCalledTimes(1);
     expect(api.patchAssignment).toHaveBeenCalledTimes(1);
-    expect(api.patchAssignment).toHaveBeenCalledWith(31, 88, expect.objectContaining({
-      title: 'Recovery assignment',
-    }));
+    expect(api.patchAssignment).toHaveBeenCalledWith(
+      31,
+      88,
+      expect.objectContaining({title: 'Recovery assignment'}),
+      expect.any(String),
+    );
   });
 
   it('does not upload successful attachments again when publish is retried', async () => {
@@ -158,9 +161,27 @@ describe('AssignmentEditorForm recovery workflow', () => {
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
-    await waitFor(() => expect(api.createAssignment).toHaveBeenCalledWith(31, expect.objectContaining({
-      submissionType: 'Group',
-      groupSetId: 9,
-    })));
+    await waitFor(() => expect(api.createAssignment).toHaveBeenCalledWith(
+      31,
+      expect.objectContaining({submissionType: 'Group', groupSetId: 9}),
+      expect.any(String),
+    ));
+  });
+
+  it('reuses the create key when an unchanged assignment is retried after a timeout', async () => {
+    api.createAssignment.mockReset();
+    api.createAssignment
+      .mockRejectedValueOnce(new Error('timeout'))
+      .mockResolvedValueOnce(response(draft));
+    renderEditor();
+    await fillRequiredFields();
+
+    fireEvent.submit(screen.getByRole('button', {name: 'Save draft'}).closest('form')!);
+    await waitFor(() => expect(api.createAssignment).toHaveBeenCalledTimes(1));
+    await screen.findByText('The assignment could not be created. Your form values are still here.');
+    fireEvent.submit(screen.getByRole('button', {name: 'Save draft'}).closest('form')!);
+
+    await waitFor(() => expect(api.createAssignment).toHaveBeenCalledTimes(2));
+    expect(api.createAssignment.mock.calls[0][2]).toBe(api.createAssignment.mock.calls[1][2]);
   });
 });

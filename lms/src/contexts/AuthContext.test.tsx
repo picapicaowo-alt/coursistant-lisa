@@ -58,7 +58,7 @@ describe('AuthProvider logout', () => {
   });
 
   it('revokes the server session before clearing local authentication', async () => {
-    mocks.serverLogout.mockResolvedValue({status: 200});
+    mocks.serverLogout.mockResolvedValue({status: 200, data: null});
 
     render(
       <AuthProvider>

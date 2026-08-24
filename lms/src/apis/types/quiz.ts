@@ -26,7 +26,7 @@ export interface QuizResponse {
    * For student: true if caller has open attempt, false if not.
    * For staff: null.
    */
-  hasOpenAttempt?: boolean | null;
+  hasOpenAttempt: boolean | null;
   createdAt: string;
   updatedAt: string;
 }

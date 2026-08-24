@@ -8,6 +8,7 @@ import {unwrapData} from '@/apis';
 import {authApiService} from '@/apis/services/auth-api';
 import {profileApiService} from '@/apis/services/profile-api';
 import {useAuth} from '@/contexts/AuthContext';
+import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
 import {getApiErrorMessage} from '@/utils/apiError';
 import {isValidPassword} from '@/utils/passwordRules';
 
@@ -33,6 +34,7 @@ const SettingsPage = () => {
   const [status, setStatus] = useState<StatusMessage | null>(null);
   const queryClient = useQueryClient();
   const {updateProfile} = useAuth();
+  const idempotency = useIdempotencyCheckpoint();
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -67,8 +69,18 @@ const SettingsPage = () => {
   });
 
   const changePassword = useMutation({
-    mutationFn: () => authApiService.changePassword({currentPassword, newPassword}),
+    mutationFn: () => {
+      const request = {currentPassword, newPassword};
+      const operation = 'auth-change-password';
+      return authApiService.changePassword(
+        request,
+        idempotency.keyFor(operation, idempotencyFingerprint(request)),
+      );
+    },
     onSuccess: () => {
+      const request = {currentPassword, newPassword};
+      const operation = 'auth-change-password';
+      idempotency.completeFingerprint(operation, idempotencyFingerprint(request));
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');

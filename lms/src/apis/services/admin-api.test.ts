@@ -13,7 +13,7 @@ describe('AdminApiService', () => {
     client.get.mockResolvedValue({status: 200, data: []});
     client.post.mockResolvedValue({status: 200, data: {id: 2}});
     client.patch.mockResolvedValue({status: 200, data: {id: 2}});
-    client.delete.mockResolvedValue({status: 200});
+    client.delete.mockResolvedValue({status: 200, data: null});
     await service.listTenants();
     await service.createTenant(payload);
     await service.updateTenant(2, payload);
@@ -28,7 +28,7 @@ describe('AdminApiService', () => {
     const systemRequest = {email: 'instructor@example.com', name: 'Instructor', role: 'USER' as const, level: 'INSTRUCTOR' as const, tenantId: 2};
     const roleRequest = {role: 'TENANT_ADMIN' as const, level: 'NOT_APPLICABLE' as const};
     client.post.mockResolvedValue({status: 200, data: 41});
-    client.put.mockResolvedValue({status: 200});
+    client.put.mockResolvedValue({status: 200, data: null});
     await service.createManagedUser('system', systemRequest);
     await service.changeManagedUserRole('tenant', 41, roleRequest);
     await service.disableManagedUser('tenant', 41);

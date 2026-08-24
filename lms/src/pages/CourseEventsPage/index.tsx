@@ -7,6 +7,7 @@ import {unwrapData} from '@/apis';
 import {courseApiService} from '@/apis/services/course-api';
 import {EnglishDateInput, EnglishTimeInput} from '@/components/EnglishDateInput';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
+import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
 import {getApiErrorCode, isConflict} from '@/utils/apiError';
 import styles from './index.module.scss';
 
@@ -23,6 +24,33 @@ const toDraft = (event: CourseEvent): CourseEventPayload => ({
   description: event.description ?? '',
 });
 
+const buildCourseEventRequest = (
+  draft: CourseEventPayload,
+  mode: 'create' | 'edit',
+  expectedVersion?: number,
+): CourseEventPayload => ({
+  ...draft,
+  name: draft.name.trim(),
+  startTime: draft.startTime || null,
+  endTime: draft.endTime || null,
+  location: mode === 'edit' ? draft.location?.trim() ?? null : draft.location?.trim() || null,
+  description: mode === 'edit' ? draft.description?.trim() ?? null : draft.description?.trim() || null,
+  expectedVersion: mode === 'edit' ? expectedVersion : undefined,
+});
+
+interface SaveEventAttempt {
+  request: CourseEventPayload;
+  idempotencyKey: string;
+  operation: string;
+  mode: 'create' | 'edit';
+}
+
+interface DeleteEventAttempt {
+  expectedVersion?: number;
+  idempotencyKey: string;
+  operation: string;
+}
+
 const CourseEventsPage = () => {
   const params = useParams();
   const courseId = Number(params.courseId);
@@ -32,6 +60,7 @@ const CourseEventsPage = () => {
   const access = useCourseAccess(validCourse ? courseId : null);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const idempotency = useIdempotencyCheckpoint();
   const [draft, setDraft] = useState<CourseEventPayload>(emptyEvent);
   const [editorMode, setEditorMode] = useState<'create' | 'edit' | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -58,29 +87,20 @@ const CourseEventsPage = () => {
   }, [eventId]);
 
   const saveEvent = useMutation({
-    mutationFn: () => {
-      const request: CourseEventPayload = {
-        ...draft,
-        name: draft.name.trim(),
-        startTime: draft.startTime || null,
-        endTime: draft.endTime || null,
-        location: draft.location?.trim() || null,
-        description: draft.description?.trim() || null,
-        expectedVersion: editorMode === 'edit' && selectedEvent ? selectedEvent.version : undefined,
-      };
-      return editorMode === 'edit' && eventId !== null
-        ? courseApiService.updateCourseEvent(courseId, eventId, request)
-        : courseApiService.createCourseEvent(courseId, request);
-    },
-    onSuccess: async response => {
+    mutationFn: ({request, idempotencyKey, mode}: SaveEventAttempt) =>
+      mode === 'edit' && eventId !== null
+        ? courseApiService.updateCourseEvent(courseId, eventId, request, idempotencyKey)
+        : courseApiService.createCourseEvent(courseId, request, idempotencyKey),
+    onSuccess: async (response, attempt) => {
       const saved = unwrapData(response, 'saveCourseEvent');
+      idempotency.complete(attempt.operation, attempt.idempotencyKey);
       setEditorMode(null);
-      setMessage(editorMode === 'edit' ? 'Event updated.' : 'Event created.');
+      setMessage(attempt.mode === 'edit' ? 'Event updated.' : 'Event created.');
       await Promise.all([
         queryClient.invalidateQueries({queryKey: ['course-events', courseId]}),
         queryClient.invalidateQueries({queryKey: ['course-event', courseId, saved.id]}),
       ]);
-      if (editorMode === 'create') navigate(`/course/${courseId}/events/${saved.id}`);
+      if (attempt.mode === 'create') navigate(`/course/${courseId}/events/${saved.id}`);
     },
     onError: async error => {
       if (isConflict(error) || getApiErrorCode(error) === 'COURSE_EVENT_VERSION_CONFLICT') {
@@ -95,8 +115,10 @@ const CourseEventsPage = () => {
   });
 
   const deleteEvent = useMutation({
-    mutationFn: () => courseApiService.deleteCourseEvent(courseId, eventId!, selectedEvent?.version),
-    onSuccess: async () => {
+    mutationFn: ({expectedVersion, idempotencyKey}: DeleteEventAttempt) =>
+      courseApiService.deleteCourseEvent(courseId, eventId!, expectedVersion, idempotencyKey),
+    onSuccess: async (_, attempt) => {
+      idempotency.complete(attempt.operation, attempt.idempotencyKey);
       await queryClient.invalidateQueries({queryKey: ['course-events', courseId]});
       navigate(`/course/${courseId}/events`, {replace: true});
     },
@@ -113,7 +135,28 @@ const CourseEventsPage = () => {
   const submit = (submitEvent: FormEvent) => {
     submitEvent.preventDefault();
     setMessage(null);
-    saveEvent.mutate();
+    if (!editorMode) return;
+    const request = buildCourseEventRequest(draft, editorMode, selectedEvent?.version);
+    const operation = editorMode === 'edit' && eventId !== null
+      ? `course-event-update-${courseId}-${eventId}`
+      : `course-event-create-${courseId}`;
+    saveEvent.mutate({
+      request,
+      operation,
+      mode: editorMode,
+      idempotencyKey: idempotency.keyFor(operation, idempotencyFingerprint(request)),
+    });
+  };
+  const requestDelete = () => {
+    if (eventId === null) return;
+    const expectedVersion = selectedEvent?.version;
+    const operation = `course-event-delete-${courseId}-${eventId}`;
+    const fingerprint = idempotencyFingerprint({courseId, eventId, expectedVersion});
+    deleteEvent.mutate({
+      expectedVersion,
+      operation,
+      idempotencyKey: idempotency.keyFor(operation, fingerprint),
+    });
   };
   const openCreate = () => { setDraft(emptyEvent()); setEditorMode('create'); setMessage(null); };
   const openEdit = () => { if (selectedEvent) { setDraft(toDraft(selectedEvent)); setEditorMode('edit'); setMessage(null); } };
@@ -155,7 +198,7 @@ const CourseEventsPage = () => {
             {selectedEvent.startTime ? <div><dt><Clock3 size={18}/><span className={styles.srOnly}>Time</span></dt><dd>{selectedEvent.startTime.slice(0, 5)}{selectedEvent.endTime ? ` – ${selectedEvent.endTime.slice(0, 5)}` : ''} {selectedEvent.timezone}</dd></div> : null}
             {selectedEvent.location ? <div><dt><MapPin size={18}/><span className={styles.srOnly}>Location</span></dt><dd>{selectedEvent.location}</dd></div> : null}
           </dl>
-          {access.canManageCourseEvents ? <div className={styles.dangerZone}>{confirmDelete ? <><p>Delete this event for everyone in the course?</p><button type="button" className={styles.dangerButton} onClick={() => deleteEvent.mutate()} disabled={deleteEvent.isPending}>Confirm delete</button><button type="button" className={styles.secondaryButton} onClick={() => setConfirmDelete(false)}>Cancel</button></> : <button type="button" className={styles.dangerButton} onClick={() => setConfirmDelete(true)}><Trash2 size={16}/> Delete event</button>}</div> : null}
+          {access.canManageCourseEvents ? <div className={styles.dangerZone}>{confirmDelete ? <><p>Delete this event for everyone in the course?</p><button type="button" className={styles.dangerButton} onClick={requestDelete} disabled={deleteEvent.isPending}>Confirm delete</button><button type="button" className={styles.secondaryButton} onClick={() => setConfirmDelete(false)}>Cancel</button></> : <button type="button" className={styles.dangerButton} onClick={() => setConfirmDelete(true)}><Trash2 size={16}/> Delete event</button>}</div> : null}
         </section>
       ) : eventId === null && !failed ? (
         <section className={styles.card}>

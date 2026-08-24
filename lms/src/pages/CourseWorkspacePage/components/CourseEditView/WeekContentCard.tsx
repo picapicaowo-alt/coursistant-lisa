@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import type {CourseMaterial, CourseWeek} from '@/apis';
 import {courseApiService} from '@/apis/services/course-api';
+import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
 import styles from '../CourseDetailView/index.module.scss';
 import editStyles from './index.module.scss';
 
@@ -54,6 +55,7 @@ export const WeekContentCard: React.FC<WeekContentCardProps> = ({
   onChanged,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const idempotency = useIdempotencyCheckpoint();
   const [linkUrl, setLinkUrl] = useState('');
   const [linkName, setLinkName] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -72,7 +74,10 @@ export const WeekContentCard: React.FC<WeekContentCardProps> = ({
       return courseApiService.createMaterials(courseId, week.id, {files}, idempotencyKey);
     },
     retry: 1,
-    onSuccess: finishChange,
+    onSuccess: (_, attempt) => {
+      idempotency.complete(`material-upload-${courseId}-${week?.id}`, attempt.idempotencyKey);
+      finishChange();
+    },
     onError: () => setFailure("Couldn't upload the selected file(s)."),
   });
 
@@ -87,7 +92,8 @@ export const WeekContentCard: React.FC<WeekContentCardProps> = ({
       );
     },
     retry: 1,
-    onSuccess: () => {
+    onSuccess: (_, attempt) => {
+      idempotency.complete(`material-link-${courseId}-${week?.id}`, attempt.idempotencyKey);
       setLinkUrl('');
       setLinkName('');
       finishChange();
@@ -98,9 +104,18 @@ export const WeekContentCard: React.FC<WeekContentCardProps> = ({
   const renameMaterial = useMutation({
     mutationFn: ({materialId, displayName}: {materialId: number; displayName: string}) => {
       if (!week) throw new Error('Select a week first');
-      return courseApiService.renameMaterial(courseId, week.id, materialId, displayName);
+      const operation = `material-rename-${courseId}-${week.id}-${materialId}`;
+      return courseApiService.renameMaterial(
+        courseId,
+        week.id,
+        materialId,
+        displayName,
+        idempotency.keyFor(operation, idempotencyFingerprint({materialId, displayName})),
+      );
     },
-    onSuccess: () => {
+    onSuccess: (_, {materialId, displayName}) => {
+      const operation = `material-rename-${courseId}-${week?.id}-${materialId}`;
+      idempotency.completeFingerprint(operation, idempotencyFingerprint({materialId, displayName}));
       setEditingId(null);
       finishChange();
     },
@@ -110,9 +125,12 @@ export const WeekContentCard: React.FC<WeekContentCardProps> = ({
   const deleteMaterial = useMutation({
     mutationFn: (materialId: number) => {
       if (!week) throw new Error('Select a week first');
-      return courseApiService.deleteMaterial(courseId, week.id, materialId);
+      const operation = `material-delete-${courseId}-${week.id}-${materialId}`;
+      return courseApiService.deleteMaterial(courseId, week.id, materialId, idempotency.keyFor(operation, operation));
     },
-    onSuccess: () => {
+    onSuccess: (_, materialId) => {
+      const operation = `material-delete-${courseId}-${week?.id}-${materialId}`;
+      idempotency.completeFingerprint(operation, operation);
       setConfirmDeleteId(null);
       finishChange();
     },
@@ -122,36 +140,69 @@ export const WeekContentCard: React.FC<WeekContentCardProps> = ({
   const moveMaterial = useMutation({
     mutationFn: ({materialId, targetWeekId}: {materialId: number; targetWeekId: number}) => {
       if (!week) throw new Error('Select a week first');
-      return courseApiService.moveMaterial(courseId, week.id, materialId, targetWeekId);
+      const operation = `material-move-${courseId}-${week.id}-${materialId}`;
+      const fingerprint = idempotencyFingerprint({materialId, targetWeekId});
+      return courseApiService.moveMaterial(
+        courseId,
+        week.id,
+        materialId,
+        targetWeekId,
+        idempotency.keyFor(operation, fingerprint),
+      );
     },
-    onSuccess: finishChange,
+    onSuccess: (_, {materialId, targetWeekId}) => {
+      const operation = `material-move-${courseId}-${week?.id}-${materialId}`;
+      const fingerprint = idempotencyFingerprint({materialId, targetWeekId});
+      idempotency.completeFingerprint(operation, fingerprint);
+      finishChange();
+    },
     onError: () => setFailure("Couldn't move the material."),
   });
 
   const reorderMaterials = useMutation({
     mutationFn: (materialIds: number[]) => {
       if (!week) throw new Error('Select a week first');
-      return courseApiService.reorderMaterials(courseId, week.id, materialIds);
+      const operation = `materials-reorder-${courseId}-${week.id}`;
+      return courseApiService.reorderMaterials(
+        courseId,
+        week.id,
+        materialIds,
+        idempotency.keyFor(operation, idempotencyFingerprint(materialIds)),
+      );
     },
-    onSuccess: finishChange,
+    onSuccess: (_, materialIds) => {
+      const operation = `materials-reorder-${courseId}-${week?.id}`;
+      idempotency.completeFingerprint(operation, idempotencyFingerprint(materialIds));
+      finishChange();
+    },
     onError: () => setFailure("Couldn't reorder the materials."),
   });
 
   const publishMaterial = useMutation({
     mutationFn: (materialId: number) => {
       if (!week) throw new Error('Select a week first');
-      return courseApiService.publishMaterial(courseId, week.id, materialId);
+      const operation = `material-publish-${courseId}-${week.id}-${materialId}`;
+      return courseApiService.publishMaterial(courseId, week.id, materialId, idempotency.keyFor(operation, operation));
     },
-    onSuccess: finishChange,
+    onSuccess: (_, materialId) => {
+      const operation = `material-publish-${courseId}-${week?.id}-${materialId}`;
+      idempotency.completeFingerprint(operation, operation);
+      finishChange();
+    },
     onError: () => setFailure("Couldn't publish the material."),
   });
 
   const unpublishMaterial = useMutation({
     mutationFn: (materialId: number) => {
       if (!week) throw new Error('Select a week first');
-      return courseApiService.unpublishMaterial(courseId, week.id, materialId);
+      const operation = `material-unpublish-${courseId}-${week.id}-${materialId}`;
+      return courseApiService.unpublishMaterial(courseId, week.id, materialId, idempotency.keyFor(operation, operation));
     },
-    onSuccess: finishChange,
+    onSuccess: (_, materialId) => {
+      const operation = `material-unpublish-${courseId}-${week?.id}-${materialId}`;
+      idempotency.completeFingerprint(operation, operation);
+      finishChange();
+    },
     onError: () => setFailure("Couldn't unpublish the material."),
   });
 
@@ -191,7 +242,11 @@ export const WeekContentCard: React.FC<WeekContentCardProps> = ({
               onChange={(event) => {
                 const files = Array.from(event.target.files ?? []);
                 if (files.length > 0) {
-                  uploadMaterials.mutate({files, idempotencyKey: crypto.randomUUID()});
+                  const operation = `material-upload-${courseId}-${week.id}`;
+                  uploadMaterials.mutate({
+                    files,
+                    idempotencyKey: idempotency.keyFor(operation, idempotencyFingerprint(files)),
+                  });
                 }
                 event.target.value = '';
               }}
@@ -374,10 +429,14 @@ export const WeekContentCard: React.FC<WeekContentCardProps> = ({
                 event.preventDefault();
                 const url = linkUrl.trim();
                 if (!url) return;
-                addLink.mutate({
+                const attempt = {
                   linkUrl: url,
                   linkDisplayName: linkName.trim() || undefined,
-                  idempotencyKey: crypto.randomUUID(),
+                };
+                const operation = `material-link-${courseId}-${week.id}`;
+                addLink.mutate({
+                  ...attempt,
+                  idempotencyKey: idempotency.keyFor(operation, idempotencyFingerprint(attempt)),
                 });
               }}
             >

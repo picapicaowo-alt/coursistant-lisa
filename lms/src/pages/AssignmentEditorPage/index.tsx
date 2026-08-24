@@ -9,6 +9,7 @@ import {courseApiService} from '@/apis/services/course-api';
 import {EnglishDateTimeInput} from '@/components/EnglishDateInput';
 import {RichTextEditor} from '@/components/RichTextEditor';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
+import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
 import {getApiErrorCode, isConflict} from '@/utils/apiError';
 import {isPreviewableFile, openPreviewWindow, saveBlob, showBlobInPreviewWindow} from '@/utils/downloadBlob';
 import {FileTypeMultiSelect} from './FileTypeMultiSelect';
@@ -66,6 +67,7 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
   const [previewingAttachmentId, setPreviewingAttachmentId] = useState<number | null>(null);
   const [deletingAttachmentId, setDeletingAttachmentId] = useState<number | null>(null);
   const savingRef = useRef(false);
+  const idempotency = useIdempotencyCheckpoint();
 
   const groupSetsQuery = useQuery({
     queryKey: ['course-group-sets', courseId],
@@ -137,8 +139,11 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
     if (!savedAssignment || !window.confirm(`Delete ${filename} from this assignment?`)) return;
     setDeletingAttachmentId(attachmentId);
     setAttachmentError(null);
+    const operation = `assignment-attachment-delete-${courseId}-${savedAssignment.id}-${attachmentId}`;
+    const idempotencyKey = idempotency.keyFor(operation, operation);
     try {
-      await assignmentApiService.deleteAttachment(courseId, savedAssignment.id, attachmentId);
+      await assignmentApiService.deleteAttachment(courseId, savedAssignment.id, attachmentId, idempotencyKey);
+      idempotency.complete(operation, idempotencyKey);
       setCheckpointAssignment(current => current ? {
         ...current,
         attachments: current.attachments.filter(file => file.id !== attachmentId),
@@ -228,23 +233,37 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
         }
       }
 
-      const response = saved
-        ? await assignmentApiService.patchAssignment(courseId, saved.id, {
+      const recordRequest = saved
+        ? {
           ...payload,
           expectedVersion: saved.version,
           ...(checkpointAssignment?.lateUntilLocal && !lateUntil ? {clearLateUntil: true} : {}),
           ...(confirmShortenDueDate ? {confirmShortenDueDate: true} : {}),
-        })
-        : await assignmentApiService.createAssignment(courseId, payload);
+        }
+        : payload;
+      const recordOperation = saved
+        ? `assignment-update-${courseId}-${saved.id}`
+        : `assignment-create-${courseId}`;
+      const recordKey = idempotency.keyFor(recordOperation, idempotencyFingerprint(recordRequest));
+      const response = saved
+        ? await assignmentApiService.patchAssignment(courseId, saved.id, recordRequest, recordKey)
+        : await assignmentApiService.createAssignment(courseId, recordRequest, recordKey);
       saved = unwrapData(response, checkpointAssignment ? 'patchAssignment' : 'createAssignment');
+      idempotency.complete(recordOperation, recordKey);
       setCheckpointAssignment(saved);
 
       if (pendingFiles.length > 0) {
         stage = 'attachments';
+        const attachmentOperation = `assignment-attachments-upload-${courseId}-${saved.id}`;
+        const attachmentKey = idempotency.keyFor(
+          attachmentOperation,
+          idempotencyFingerprint({assignmentId: saved.id, files: pendingFiles}),
+        );
         const uploaded = unwrapData(
-          await assignmentApiService.uploadAttachments(courseId, saved.id, pendingFiles),
+          await assignmentApiService.uploadAttachments(courseId, saved.id, pendingFiles, attachmentKey),
           'uploadAttachments'
         );
+        idempotency.complete(attachmentOperation, attachmentKey);
         saved = {...saved, attachments: [...(saved.attachments ?? []), ...uploaded]};
         setCheckpointAssignment(saved);
         // If publishing fails next, a retry must not upload the same successful
@@ -254,10 +273,13 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
 
       if (publish && saved.state !== 'Published') {
         stage = 'publish';
+        const publishOperation = `assignment-publish-${courseId}-${saved.id}`;
+        const publishKey = idempotency.keyFor(publishOperation, publishOperation);
         saved = unwrapData(
-          await assignmentApiService.publishAssignment(courseId, saved.id),
+          await assignmentApiService.publishAssignment(courseId, saved.id, publishKey),
           'publishAssignment'
         );
+        idempotency.complete(publishOperation, publishKey);
         setCheckpointAssignment(saved);
       }
 

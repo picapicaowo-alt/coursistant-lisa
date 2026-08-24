@@ -40,20 +40,25 @@ export class QuizApiService {
     return this.apiClient.post(`/v2/courses/${courseId}/quizzes`, request, idempotent(idempotencyKey));
   }
 
-  patchQuiz(courseId: number, quizId: number, request: PatchQuizRequest): Promise<ApiResponse<QuizResponse>> {
-    return this.apiClient.patch(`/v2/courses/${courseId}/quizzes/${quizId}`, request, idempotent());
+  patchQuiz(
+    courseId: number,
+    quizId: number,
+    request: PatchQuizRequest,
+    idempotencyKey: string = crypto.randomUUID(),
+  ): Promise<ApiResponse<QuizResponse>> {
+    return this.apiClient.patch(`/v2/courses/${courseId}/quizzes/${quizId}`, request, idempotent(idempotencyKey));
   }
 
   deleteQuiz(courseId: number, quizId: number): Promise<ApiResponse<void>> {
     return this.apiClient.delete(`/v2/courses/${courseId}/quizzes/${quizId}`, {params: {confirm: true}});
   }
 
-  publishQuiz(courseId: number, quizId: number): Promise<ApiResponse<QuizResponse>> {
-    return this.apiClient.post(`/v2/courses/${courseId}/quizzes/${quizId}/publish`, undefined, idempotent());
+  publishQuiz(courseId: number, quizId: number, idempotencyKey: string = crypto.randomUUID()): Promise<ApiResponse<QuizResponse>> {
+    return this.apiClient.post(`/v2/courses/${courseId}/quizzes/${quizId}/publish`, undefined, idempotent(idempotencyKey));
   }
 
-  unpublishQuiz(courseId: number, quizId: number): Promise<ApiResponse<QuizResponse>> {
-    return this.apiClient.post(`/v2/courses/${courseId}/quizzes/${quizId}/unpublish`, undefined, idempotent());
+  unpublishQuiz(courseId: number, quizId: number, idempotencyKey: string = crypto.randomUUID()): Promise<ApiResponse<QuizResponse>> {
+    return this.apiClient.post(`/v2/courses/${courseId}/quizzes/${quizId}/unpublish`, undefined, idempotent(idempotencyKey));
   }
 
   listQuestions(courseId: number, quizId: number): Promise<ApiResponse<QuizQuestion[]>> {
@@ -64,8 +69,9 @@ export class QuizApiService {
     courseId: number,
     quizId: number,
     request: CreateQuizQuestionRequest,
+    idempotencyKey: string = crypto.randomUUID(),
   ): Promise<ApiResponse<QuizQuestion>> {
-    return this.apiClient.post(`/v2/courses/${courseId}/quizzes/${quizId}/questions`, request, idempotent());
+    return this.apiClient.post(`/v2/courses/${courseId}/quizzes/${quizId}/questions`, request, idempotent(idempotencyKey));
   }
 
   patchQuestion(
@@ -73,11 +79,12 @@ export class QuizApiService {
     quizId: number,
     questionId: number,
     request: PatchQuizQuestionRequest,
+    idempotencyKey: string = crypto.randomUUID(),
   ): Promise<ApiResponse<QuizQuestion>> {
     return this.apiClient.patch(
       `/v2/courses/${courseId}/quizzes/${quizId}/questions/${questionId}`,
       request,
-      idempotent(),
+      idempotent(idempotencyKey),
     );
   }
 
@@ -85,11 +92,16 @@ export class QuizApiService {
     return this.apiClient.delete(`/v2/courses/${courseId}/quizzes/${quizId}/questions/${questionId}`);
   }
 
-  reorderQuestions(courseId: number, quizId: number, questionIds: number[]): Promise<ApiResponse<QuizQuestion[]>> {
+  reorderQuestions(
+    courseId: number,
+    quizId: number,
+    questionIds: number[],
+    idempotencyKey: string = crypto.randomUUID(),
+  ): Promise<ApiResponse<QuizQuestion[]>> {
     return this.apiClient.put(
       `/v2/courses/${courseId}/quizzes/${quizId}/questions/order`,
       {questionIds},
-      idempotent(),
+      idempotent(idempotencyKey),
     );
   }
 
@@ -138,11 +150,16 @@ export class QuizApiService {
     );
   }
 
-  submitAttempt(courseId: number, quizId: number, attemptId: number): Promise<ApiResponse<QuizReceipt>> {
+  submitAttempt(
+    courseId: number,
+    quizId: number,
+    attemptId: number,
+    idempotencyKey: string = crypto.randomUUID(),
+  ): Promise<ApiResponse<QuizReceipt>> {
     return this.apiClient.post(
       `/v2/courses/${courseId}/quizzes/${quizId}/attempts/${attemptId}/submit`,
       undefined,
-      idempotent(),
+      idempotent(idempotencyKey),
     );
   }
 
@@ -170,27 +187,38 @@ export class QuizApiService {
     attemptId: number,
     questionId: number,
     request: {score: number; feedback?: string; reason?: string},
+    idempotencyKey: string = crypto.randomUUID(),
   ): Promise<ApiResponse<QuizShortAnswerGradingItem>> {
     return this.apiClient.put(
       `/v2/courses/${courseId}/quizzes/${quizId}/attempts/${attemptId}/answers/${questionId}/grade`,
       request,
-      idempotent(),
+      idempotent(idempotencyKey),
     );
   }
 
-  releaseGrades(courseId: number, quizId: number, userIds?: number[]): Promise<ApiResponse<void>> {
+  releaseGrades(
+    courseId: number,
+    quizId: number,
+    userIds?: number[],
+    idempotencyKey: string = crypto.randomUUID(),
+  ): Promise<ApiResponse<void>> {
     return this.apiClient.post(
       `/v2/courses/${courseId}/quizzes/${quizId}/grades/release`,
       userIds ? {userIds} : {},
-      idempotent(),
+      idempotent(idempotencyKey),
     );
   }
 
-  retractGrades(courseId: number, quizId: number, userIds?: number[]): Promise<ApiResponse<void>> {
+  retractGrades(
+    courseId: number,
+    quizId: number,
+    userIds?: number[],
+    idempotencyKey: string = crypto.randomUUID(),
+  ): Promise<ApiResponse<void>> {
     return this.apiClient.post(
       `/v2/courses/${courseId}/quizzes/${quizId}/grades/retract`,
       userIds ? {userIds} : {},
-      idempotent(),
+      idempotent(idempotencyKey),
     );
   }
 }

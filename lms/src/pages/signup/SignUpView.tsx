@@ -6,6 +6,7 @@ import {useTranslation} from 'react-i18next';
 import {AUTH_ERROR_CODES, V2ApiClient} from '@/apis';
 import {authApiService} from '@/apis/services/auth-api';
 import {useAuth} from '@/contexts/AuthContext';
+import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
 import {getApiErrorCode, isTransportOrServerFailure} from '@/utils/apiError';
 import {isValidPassword} from '@/utils/passwordRules';
 
@@ -25,6 +26,7 @@ export default function SignUpView() {
   const navigate = useNavigate();
   const {login} = useAuth();
   const {t} = useTranslation('auth');
+  const idempotency = useIdempotencyCheckpoint();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -81,8 +83,11 @@ export default function SignUpView() {
     }
 
     setIsSendingCode(true);
+    const operation = 'auth-registration-verification';
+    const idempotencyKey = idempotency.keyFor(operation, normalizedEmail);
     try {
-      await authApiService.sendRegistrationVerification(normalizedEmail);
+      await authApiService.sendRegistrationVerification(normalizedEmail, idempotencyKey);
+      idempotency.complete(operation, idempotencyKey);
       setCountdown(60);
       setNotice(t('signupErrors.verificationCodeSent'));
     } catch (error) {
@@ -107,13 +112,16 @@ export default function SignUpView() {
     if (Object.keys(errors).length > 0) return;
 
     setIsSubmitting(true);
+    const request = {
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      password,
+      verificationCode: verificationCode.trim(),
+    };
+    const operation = 'auth-register';
+    const idempotencyKey = idempotency.keyFor(operation, idempotencyFingerprint(request));
     try {
-      const response = await authApiService.register({
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        password,
-        verificationCode: verificationCode.trim(),
-      });
+      const response = await authApiService.register(request, idempotencyKey);
 
       if (response.status !== 200 || !response.data) {
         setFormError(t('signupErrors.signupFailed'));
@@ -121,6 +129,7 @@ export default function SignUpView() {
       }
 
       const auth = response.data;
+      idempotency.complete(operation, idempotencyKey);
       V2ApiClient.setAccessToken(auth.accessToken);
       localStorage.setItem('accToken', auth.accessToken);
       localStorage.setItem('preferredLoginRole', 'USER');

@@ -7,6 +7,8 @@ import {useAuth} from '@/contexts/AuthContext.js';
 import axios from 'axios';
 import transformDate from '../utils/transformDate';
 import {useNavigate} from 'react-router-dom';
+import {useAiExamLockdown} from '@/hooks/useAiExamLockdown';
+import {loadActiveChatCourses} from '@/utils/chatCourses';
 
 const getSavedDialogueId = () => {
   const raw = localStorage.getItem('dialogueId');
@@ -37,6 +39,14 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
     const STATIC_BASE = (import.meta.env.VITE_STATIC_BASE_URL || '').replace(/\/+$/, '');
     const navigate = useNavigate();
     const {user} = useAuth();
+    const chatAuthHeaders = () => ({
+      Authorization: `Bearer ${user.accessToken}`,
+      // Kept during the legacy Study Support migration; old dialogue/query
+      // handlers still inspect this alias while the v2 security filter uses
+      // the standard Bearer header.
+      token: user.accessToken,
+      'X-Timezone': getBrowserTimeZone(),
+    });
     const toFullURL = (u) => {
       if (!u) return null;
       if (!STATIC_BASE) return u;
@@ -62,20 +72,16 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
       return () => document.removeEventListener('mousedown', onDown);
     }, []);
     const [isCoursesFetched, setIsCoursesFetched] = useState(false);
+    const [courseFetchFailed, setCourseFetchFailed] = useState(false);
     const [selectedCourseId, setSelectedCourseId] = useState(() => {
       const v = localStorage.getItem('selectedCourseId');
       return v ? Number(v) : 0;
     });
     const fetchCourses = async () => {
       if (isCoursesFetched) return;
+      setCourseFetchFailed(false);
       try {
-        const res = await axios.get(`${VITE_CHAT_API_DOMAIN}/course/selectByUserId/${user.id}`, {
-          headers: {
-            token: user.accessToken,
-            'X-Timezone': getBrowserTimeZone(),
-          },
-        });
-        const list = Array.isArray(res.data?.data) ? res.data.data : [];
+        const list = await loadActiveChatCourses();
         setCourses(list);
         setIsCoursesFetched(true);
         
@@ -86,6 +92,7 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
         }
       } catch (e) {
         console.error('Failed to fetch courses:', e);
+        setCourseFetchFailed(true);
       }
     };
     
@@ -97,6 +104,32 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
     }, [user?.accessToken, user?.id]);
     const currentCourseName =
       (selectedCourseId === 0 ? 'All Courses' : (courses.find(c => Number(c.id) === Number(selectedCourseId))?.name)) || 'All Courses';
+    const relevantCourseIds = selectedCourseId === 0
+      ? courses.map(course => Number(course.id))
+      : [selectedCourseId];
+    const examLockdown = useAiExamLockdown(
+      relevantCourseIds,
+      user?.id ?? null,
+      Boolean(isCoursesFetched && user?.accessToken && user?.id),
+    );
+    const isExamStatusPending = (!isCoursesFetched && !courseFetchFailed) || examLockdown.status === 'checking';
+    const isStudySupportUnavailable = isExamStatusPending
+      || courseFetchFailed
+      || examLockdown.status === 'locked'
+      || examLockdown.status === 'error';
+    const lockedCourseNames = courses
+      .filter(course => examLockdown.lockedCourseIds.includes(Number(course.id)))
+      .map(course => course.name || `Course ${course.id}`)
+      .join(', ');
+    const examLockdownMessage = courseFetchFailed
+      ? 'Study Support is temporarily unavailable because your course list could not be verified.'
+      : isExamStatusPending
+        ? 'Checking quiz attempt status before enabling Study Support…'
+        : examLockdown.status === 'error'
+          ? 'Study Support is temporarily unavailable because quiz attempt status could not be verified. Try again shortly.'
+          : selectedCourseId === 0
+            ? `Study Support is locked because an active quiz attempt is open in ${lockedCourseNames || 'one of your courses'}. Select a course without an active attempt to continue.`
+            : `Study Support is unavailable for ${currentCourseName} while you have an active quiz attempt. Submit or finalize the attempt before using course assistance.`;
     const menuItemStyle = (active) => ({
       display: 'block',
       width: '100%',
@@ -220,10 +253,7 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
       console.log('Fetching recent prompts...');
       try {
         const response = await axios.get(`${VITE_CHAT_API_DOMAIN}/dialogue/selectByUserId/${user.id}`, {
-          headers: {
-            'token': user.accessToken,
-            'X-Timezone': getBrowserTimeZone(),
-          },
+          headers: chatAuthHeaders(),
         });
         if (response.data.code === "200" || response.data.code === 200) {
           const filtered = response.data.data
@@ -252,7 +282,7 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
       setIsWriting(false);
       try {
         const response = await axios.get(`${VITE_CHAT_API_DOMAIN}/dialogue/selectById/${idNum}`, {
-          headers: {'token': user.accessToken, 'X-Timezone': getBrowserTimeZone()},
+          headers: chatAuthHeaders(),
         });
         if (response.data.code === "200" || response.data.code === 200) {
           const rawChats = response.data.data.chats;
@@ -307,7 +337,7 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
 // replace existing handleSend with this:
     const handleSend = async (overrideText, overrideCourseId) => {
       const question = (overrideText ?? input)?.trim();
-      if (!question) return;
+      if (!question || isStudySupportUnavailable) return;
       
       const courseForSend = (typeof overrideCourseId === 'number')
         ? overrideCourseId
@@ -345,8 +375,7 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
         const response = await axios.post(`${VITE_CHAT_API_DOMAIN}/query`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
-            'X-Timezone': getBrowserTimeZone(),
-            'token': user.accessToken
+            ...chatAuthHeaders(),
           },
         });
         
@@ -368,7 +397,7 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
         if (Number.isFinite(queryIdNum) && queryIdNum > 0) {
           const followUp = await axios.get(
             `${VITE_CHAT_API_DOMAIN}/dialogue/selectById/${queryIdNum}`,
-            {headers: {'token': user.accessToken, 'X-Timezone': getBrowserTimeZone()}}
+            {headers: chatAuthHeaders()}
           );
           const promptData = followUp?.data?.data;
           
@@ -403,7 +432,7 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
     };
     
     const handleSendClick = () => {
-      if (!input.trim()) return;
+      if (!input.trim() || isStudySupportUnavailable) return;
       
       if (props.isDashboard) {
         const payload = {text: input.trim(), courseId: selectedCourseId ?? 0};
@@ -449,6 +478,7 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
       
       const raw = sessionStorage.getItem('pendingChat');
       if (!raw) return;
+      if (isExamStatusPending) return;
       
       sessionStorage.removeItem('pendingChat');
       
@@ -458,6 +488,10 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
           if (typeof courseId !== 'undefined') {
             setSelectedCourseId(Number(courseId));
             localStorage.setItem('selectedCourseId', String(courseId));
+          }
+          if (examLockdown.status !== 'unlocked') {
+            if (text && text.trim()) setInput(text.trim());
+            return;
           }
           if (text && text.trim()) {
             const shouldHydrate = sessionStorage.getItem('hydrateThenSend') === '1';
@@ -479,7 +513,7 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
         }
       })();
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [props.isDashboard]);
+    }, [props.isDashboard, isExamStatusPending, examLockdown.status]);
     
     
     const handleIconClick = (icon) => {
@@ -657,7 +691,25 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
         {/*  Main Content */}
         <div className={`flex flex-col p-2 ${props.isDashboard ? 'h-[90%]' : props.isSummary ? 'h-[87%]' : 'h-[95%]'}`}>
           <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4" ref={containerRef}>
-            {messages.length === 0 ? (
+            {isStudySupportUnavailable ? (
+              <div
+                id="study-support-lockdown-message"
+                className="m-auto max-w-xl rounded-xl border border-amber-300 bg-amber-50 p-5 text-left text-amber-950"
+                role={courseFetchFailed || examLockdown.status === 'error' ? 'alert' : 'status'}
+              >
+                <strong>{examLockdown.status === 'locked' ? 'Exam lockdown active' : 'Study Support unavailable'}</strong>
+                <p className="mt-2 text-sm">{examLockdownMessage}</p>
+                {courseFetchFailed ? (
+                  <button
+                    type="button"
+                    className="mt-3 rounded-lg border border-amber-500 bg-white px-3 py-2 text-sm font-semibold"
+                    onClick={() => void fetchCourses()}
+                  >
+                    Try again
+                  </button>
+                ) : null}
+              </div>
+            ) : messages.length === 0 ? (
               props.isSummary ? (
                 <div className="flex-1 flex flex-col justify-start mb-8 ml-3">
                   <div
@@ -829,12 +881,14 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
                 style={{display: 'none'}}
                 onChange={handleImageChange}
                 accept="image/*"
+                disabled={isStudySupportUnavailable}
               />
               <input
                 type="file"
                 ref={fileInputRef}
                 style={{display: 'none'}}
                 onChange={handleFileChange}
+                disabled={isStudySupportUnavailable}
               />
               
               {/* Image Preview */}
@@ -879,6 +933,8 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
                 }}
                 placeholder="Please note that the AI system is not yet fully developed, and some of its responses may be inaccurate or incomplete."
                 rows={3}
+                disabled={isStudySupportUnavailable}
+                aria-describedby={isStudySupportUnavailable ? 'study-support-lockdown-message' : undefined}
               />
             </div>
             
@@ -891,12 +947,13 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
                   className={styles.chatFooterIconButton}
                   onClick={() => handleIconClick(icon)}
                   aria-label={icon.alt}
+                  disabled={isStudySupportUnavailable}
                 >
                   <img className={styles.chatFooterIcon} src={icon.src} alt=""/>
                 </button>
               ))}
               <div className={styles.spacer}/>
-              <button type="button" className={styles.chatFooterSend} onClick={handleSendClick}>
+              <button type="button" className={styles.chatFooterSend} onClick={handleSendClick} disabled={isStudySupportUnavailable}>
                 Send
                 <img src="/icons/chat/send-star.png" alt="send-star"/>
               </button>

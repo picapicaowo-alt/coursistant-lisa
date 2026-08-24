@@ -6,6 +6,7 @@ import {unwrapData} from '@/apis';
 import {quizApiService} from '@/apis/services/quiz-api';
 import {courseApiService} from '@/apis/services/course-api';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
+import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
 import styles from './index.module.scss';
 
 interface GradeDraft {
@@ -35,6 +36,7 @@ const QuizGradingPage = () => {
   const valid = Number.isInteger(courseId) && courseId > 0 && Number.isInteger(quizId) && quizId > 0;
   const access = useCourseAccess(valid ? courseId : null);
   const queryClient = useQueryClient();
+  const idempotency = useIdempotencyCheckpoint();
   const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null);
   const [drafts, setDrafts] = useState<Record<number, GradeDraft>>({});
   const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set());
@@ -101,12 +103,25 @@ const QuizGradingPage = () => {
   }, [answersQuery.data]);
 
   const gradeAnswer = useMutation({
-    mutationFn: ({attemptId, questionId, draft}: {attemptId: number; questionId: number; draft: GradeDraft}) =>
-      quizApiService.gradeAnswer(courseId, quizId, attemptId, questionId, {
+    mutationFn: ({attemptId, questionId, draft}: {attemptId: number; questionId: number; draft: GradeDraft}) => {
+      const request = {
         score: Number(draft.score),
         feedback: draft.feedback.trim() || undefined,
-      }),
-    onSuccess: async () => {
+      };
+      const operation = `quiz-grade-${courseId}-${quizId}-${attemptId}-${questionId}`;
+      return quizApiService.gradeAnswer(
+        courseId,
+        quizId,
+        attemptId,
+        questionId,
+        request,
+        idempotency.keyFor(operation, idempotencyFingerprint(request)),
+      );
+    },
+    onSuccess: async (_, {attemptId, questionId, draft}) => {
+      const request = {score: Number(draft.score), feedback: draft.feedback.trim() || undefined};
+      const operation = `quiz-grade-${courseId}-${quizId}-${attemptId}-${questionId}`;
+      idempotency.completeFingerprint(operation, idempotencyFingerprint(request));
       setMessage('Grade saved.');
       await queryClient.invalidateQueries({queryKey: ['quiz-short-answers', courseId, quizId, selectedQuestionId]});
       await queryClient.invalidateQueries({queryKey: ['quiz-grading-summary', courseId, quizId]});
@@ -115,10 +130,18 @@ const QuizGradingPage = () => {
   });
 
   const updateRelease = useMutation({
-    mutationFn: ({action, userIds}: {action: 'release' | 'retract'; userIds?: number[]}) => action === 'release'
-      ? quizApiService.releaseGrades(courseId, quizId, userIds)
-      : quizApiService.retractGrades(courseId, quizId, userIds),
+    mutationFn: ({action, userIds}: {action: 'release' | 'retract'; userIds?: number[]}) => {
+      const operation = `quiz-grades-${action}-${courseId}-${quizId}`;
+      const fingerprint = idempotencyFingerprint({action, userIds: userIds ?? []});
+      const key = idempotency.keyFor(operation, fingerprint);
+      return action === 'release'
+        ? quizApiService.releaseGrades(courseId, quizId, userIds, key)
+        : quizApiService.retractGrades(courseId, quizId, userIds, key);
+    },
     onSuccess: async (_, {action, userIds}) => {
+      const operation = `quiz-grades-${action}-${courseId}-${quizId}`;
+      const fingerprint = idempotencyFingerprint({action, userIds: userIds ?? []});
+      idempotency.completeFingerprint(operation, fingerprint);
       setMessage(action === 'release'
         ? `${userIds?.length ?? 'Eligible'} grade${userIds?.length === 1 ? '' : 's'} released.`
         : `${userIds?.length ?? 'Released'} grade${userIds?.length === 1 ? '' : 's'} retracted.`);

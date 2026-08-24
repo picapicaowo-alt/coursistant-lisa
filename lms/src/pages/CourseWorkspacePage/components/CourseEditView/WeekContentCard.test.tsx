@@ -107,7 +107,8 @@ describe('WeekContentCard', () => {
     await waitFor(() => expect(courseApiService.reorderMaterials).toHaveBeenCalledWith(
       31,
       11,
-      [82, 81]
+      [82, 81],
+      expect.any(String),
     ));
   });
 

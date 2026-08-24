@@ -519,12 +519,13 @@ export class CourseApiService {
     courseId: number,
     weekId: number,
     materialId: number,
-    displayName: string
+    displayName: string,
+    idempotencyKey: string = crypto.randomUUID()
   ): Promise<ApiResponse<CourseMaterial>> {
     return this.apiClient.patch<CourseMaterial>(
       `/v2/courses/${courseId}/weeks/${weekId}/materials/${materialId}`,
       {displayName},
-      idempotent()
+      idempotent(idempotencyKey)
     );
   }
 
@@ -570,12 +571,13 @@ export class CourseApiService {
     courseId: number,
     weekId: number,
     materialId: number,
-    targetWeekId: number
+    targetWeekId: number,
+    idempotencyKey: string = crypto.randomUUID()
   ): Promise<ApiResponse<CourseMaterial>> {
     return this.apiClient.post<CourseMaterial>(
       `/v2/courses/${courseId}/weeks/${weekId}/materials/${materialId}/move`,
       {targetWeekId},
-      idempotent()
+      idempotent(idempotencyKey)
     );
   }
 
@@ -583,12 +585,13 @@ export class CourseApiService {
   async reorderMaterials(
     courseId: number,
     weekId: number,
-    materialIds: number[]
+    materialIds: number[],
+    idempotencyKey: string = crypto.randomUUID()
   ): Promise<ApiResponse<CourseMaterial[]>> {
     return this.apiClient.put<CourseMaterial[]>(
       `/v2/courses/${courseId}/weeks/${weekId}/materials/reorder`,
       {materialIds},
-      idempotent()
+      idempotent(idempotencyKey)
     );
   }
   

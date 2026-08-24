@@ -2,6 +2,7 @@ import {FormEvent, useEffect, useRef, useState} from 'react';
 import {useLocation, useNavigate} from 'react-router-dom';
 import {useTranslation} from 'react-i18next';
 import {authApiService} from '@/apis/services/auth-api';
+import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
 import {getApiErrorMessage} from '@/utils/apiError';
 import {isValidPassword} from '@/utils/passwordRules';
 
@@ -19,6 +20,7 @@ const usePasswordReset = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const {t} = useTranslation('auth');
+  const idempotency = useIdempotencyCheckpoint();
   const query = new URLSearchParams(location.search);
   const locationState = (location.state ?? {}) as PasswordResetLocationState;
   const forced = locationState.forced === true || query.get('forced') === '1';
@@ -49,8 +51,11 @@ const usePasswordReset = () => {
     }
     setSubmitting(true);
     setError('');
+    const operation = 'auth-password-reset-verification';
+    const idempotencyKey = idempotency.keyFor(operation, normalized);
     try {
-      await authApiService.sendPasswordResetVerification(normalized);
+      await authApiService.sendPasswordResetVerification(normalized, idempotencyKey);
+      idempotency.complete(operation, idempotencyKey);
       setEmail(normalized);
       setCode('');
       setStep('code');
@@ -83,12 +88,16 @@ const usePasswordReset = () => {
     }
     setSubmitting(true);
     setError('');
+    const request = {
+      email,
+      verificationCode: code,
+      newPassword: password,
+    };
+    const operation = 'auth-password-reset';
+    const idempotencyKey = idempotency.keyFor(operation, idempotencyFingerprint(request));
     try {
-      await authApiService.resetPassword({
-        email,
-        verificationCode: code,
-        newPassword: password,
-      });
+      await authApiService.resetPassword(request, idempotencyKey);
+      idempotency.complete(operation, idempotencyKey);
       setStep('complete');
     } catch (cause) {
       setError(getApiErrorMessage(cause, t('forgotPasswordErrors.updateError')));

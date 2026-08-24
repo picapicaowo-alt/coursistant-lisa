@@ -43,37 +43,52 @@ export class AuthApiService {
   }
 
   /** Sends the one-time code consumed atomically by registration. */
-  async sendRegistrationVerification(email: string): Promise<ApiResponse<void>> {
+  async sendRegistrationVerification(
+    email: string,
+    idempotencyKey: string = crypto.randomUUID(),
+  ): Promise<ApiResponse<void>> {
     return this.apiClient.post<void>(
       '/v1/auth/email-verifications/register',
       undefined,
-      {params: {email}, ...idempotent(), skipAuth: true},
+      {params: {email}, ...idempotent(idempotencyKey), skipAuth: true},
     );
   }
 
   /** Creates a student account and returns an authenticated session. */
-  async register(request: RegisterRequest): Promise<ApiResponse<AuthResult>> {
-    return this.apiClient.post<AuthResult>('/v1/auth/register', request, {...idempotent(), skipAuth: true});
+  async register(
+    request: RegisterRequest,
+    idempotencyKey: string = crypto.randomUUID(),
+  ): Promise<ApiResponse<AuthResult>> {
+    return this.apiClient.post<AuthResult>('/v1/auth/register', request, {...idempotent(idempotencyKey), skipAuth: true});
   }
 
-  async sendPasswordResetVerification(email: string): Promise<ApiResponse<void>> {
+  async sendPasswordResetVerification(
+    email: string,
+    idempotencyKey: string = crypto.randomUUID(),
+  ): Promise<ApiResponse<void>> {
     return this.apiClient.post<void>(
       '/v1/auth/email-verifications/reset',
       undefined,
-      {params: {email}, ...idempotent(), skipAuth: true},
+      {params: {email}, ...idempotent(idempotencyKey), skipAuth: true},
     );
   }
 
-  async resetPassword(request: PasswordResetRequest): Promise<ApiResponse<void>> {
+  async resetPassword(
+    request: PasswordResetRequest,
+    idempotencyKey: string = crypto.randomUUID(),
+  ): Promise<ApiResponse<void>> {
     return this.apiClient.post<void>(
       '/v1/auth/password-resets',
       request,
-      {...idempotent(), skipAuth: true},
+      {...idempotent(idempotencyKey), skipAuth: true},
     );
   }
 
-  async changePassword(request: ChangePasswordRequest): Promise<ApiResponse<void>> {
-    return this.apiClient.put<void>('/v1/auth/password', request, idempotent());
+  async changePassword(
+    request: ChangePasswordRequest,
+    idempotencyKey: string = crypto.randomUUID(),
+  ): Promise<ApiResponse<void>> {
+    return this.apiClient.put<void>('/v1/auth/password', request, idempotent(idempotencyKey));
   }
 
   /** Allowed without a Bearer token — the refresh cookie identifies the session. */

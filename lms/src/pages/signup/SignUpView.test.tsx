@@ -125,7 +125,7 @@ describe('SignUpView', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
-    mocks.sendVerification.mockResolvedValue({status: 200});
+    mocks.sendVerification.mockResolvedValue({status: 200, data: null});
     mocks.register.mockResolvedValue(authResponse);
   });
 
@@ -134,17 +134,20 @@ describe('SignUpView', () => {
     const user = await fillRegistration();
 
     await user.click(screen.getByRole('button', {name: 'Verify Email'}));
-    expect(mocks.sendVerification).toHaveBeenCalledWith('student@example.com');
+    expect(mocks.sendVerification).toHaveBeenCalledWith('student@example.com', expect.any(String));
     expect(await screen.findByText('Code sent.')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', {name: 'Continue'}));
 
-    expect(mocks.register).toHaveBeenCalledWith({
-      name: 'Student One',
-      email: 'student@example.com',
-      password: 'Passw0rd1',
-      verificationCode: '123456',
-    });
+    expect(mocks.register).toHaveBeenCalledWith(
+      {
+        name: 'Student One',
+        email: 'student@example.com',
+        password: 'Passw0rd1',
+        verificationCode: '123456',
+      },
+      expect.any(String),
+    );
     expect(mocks.setAccessToken).toHaveBeenCalledWith('registered-token');
     expect(mocks.storeLogin).toHaveBeenCalledWith(expect.objectContaining({id: 9}));
     expect(await screen.findByText('Student dashboard')).toBeInTheDocument();

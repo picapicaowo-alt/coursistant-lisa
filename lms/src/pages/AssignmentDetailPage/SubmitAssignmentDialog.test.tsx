@@ -51,6 +51,7 @@ describe('SubmitAssignmentDialog', () => {
     vi.mocked(assignmentApiService.deleteStagingFile).mockResolvedValue({
       status: 200,
       code: 'SUCCESS',
+      data: null,
       message: 'Success',
       timestamp: '2026-08-18T12:00:00Z',
     });

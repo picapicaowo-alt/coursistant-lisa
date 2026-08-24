@@ -51,7 +51,7 @@ describe('SettingsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     profileApi.getMyProfile.mockResolvedValue(response(profile));
-    authApi.changePassword.mockResolvedValue(response(undefined));
+    authApi.changePassword.mockResolvedValue(response(null));
   });
 
   it('rejects a password that would fail the backend letter-and-digit rule', async () => {
@@ -75,10 +75,13 @@ describe('SettingsPage', () => {
     await userEvent.type(screen.getByLabelText('Confirm new password'), 'NewPassw0rd');
     await userEvent.click(screen.getByRole('button', {name: 'Update password'}));
     await waitFor(() => {
-      expect(authApi.changePassword).toHaveBeenCalledWith({
-        currentPassword: 'OldPassw0rd',
-        newPassword: 'NewPassw0rd',
-      });
+      expect(authApi.changePassword).toHaveBeenCalledWith(
+        {
+          currentPassword: 'OldPassw0rd',
+          newPassword: 'NewPassw0rd',
+        },
+        expect.any(String),
+      );
     });
   });
 

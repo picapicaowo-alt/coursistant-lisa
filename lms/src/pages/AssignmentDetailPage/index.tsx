@@ -20,6 +20,7 @@ import type {AssignmentAttachment} from '@/apis';
 import {unwrapData} from '@/apis';
 import {useAuth} from '@/contexts/AuthContext';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
+import {useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
 import {RichTextEditor} from '@/components/RichTextEditor';
 import {formatDeadline} from '@/utils/datetime';
 import {isPreviewableFile, openPreviewWindow, saveBlob, showBlobInPreviewWindow} from '@/utils/downloadBlob';
@@ -199,6 +200,7 @@ const AssignmentDetailPage = () => {
   const {user} = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const idempotency = useIdempotencyCheckpoint();
   const rubricInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitDialogOpen, setSubmitDialogOpen] = useState(false);
   const [staffMessage, setStaffMessage] = useState<string | null>(null);
@@ -267,14 +269,35 @@ const AssignmentDetailPage = () => {
   });
 
   const unpublish = useMutation({
-    mutationFn: () => assignmentApiService.unpublishAssignment(courseId!, assignmentId!),
-    onSuccess: async () => { await assignmentQuery.refetch(); setStaffMessage('Assignment unpublished.'); },
+    mutationFn: () => {
+      const operation = `assignment-unpublish-${courseId}-${assignmentId}`;
+      return assignmentApiService.unpublishAssignment(
+        courseId!,
+        assignmentId!,
+        idempotency.keyFor(operation, operation),
+      );
+    },
+    onSuccess: async () => {
+      const operation = `assignment-unpublish-${courseId}-${assignmentId}`;
+      idempotency.completeFingerprint(operation, operation);
+      await assignmentQuery.refetch();
+      setStaffMessage('Assignment unpublished.');
+    },
     onError: () => setStaffMessage('The assignment could not be unpublished.'),
   });
 
   const removeAssignment = useMutation({
-    mutationFn: () => assignmentApiService.deleteAssignment(courseId!, assignmentId!),
+    mutationFn: () => {
+      const operation = `assignment-delete-${courseId}-${assignmentId}`;
+      return assignmentApiService.deleteAssignment(
+        courseId!,
+        assignmentId!,
+        idempotency.keyFor(operation, operation),
+      );
+    },
     onSuccess: async () => {
+      const operation = `assignment-delete-${courseId}-${assignmentId}`;
+      idempotency.completeFingerprint(operation, operation);
       await queryClient.invalidateQueries({queryKey: ['course-assignments', courseId]});
       navigate(`/course/${courseId}`, {replace: true});
     },

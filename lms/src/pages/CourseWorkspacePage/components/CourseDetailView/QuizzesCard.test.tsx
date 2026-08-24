@@ -22,6 +22,7 @@ const quiz = (overrides: Partial<QuizResponse> = {}): QuizResponse => ({
   totalPoints: 20,
   questionCount: 5,
   hasAttempts: false,
+  hasOpenAttempt: false,
   createdAt: '2026-08-01T00:00:00Z',
   updatedAt: '2026-08-01T00:00:00Z',
   ...overrides,
