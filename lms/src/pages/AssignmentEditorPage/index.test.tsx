@@ -4,10 +4,12 @@ import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {MemoryRouter} from 'react-router-dom';
+import type {AssignmentDetail} from '@/apis';
 
 const api = vi.hoisted(() => ({
   createAssignment: vi.fn(),
   patchAssignment: vi.fn(),
+  previewDueDateChange: vi.fn(),
   uploadAttachments: vi.fn(),
   publishAssignment: vi.fn(),
 }));
@@ -35,19 +37,24 @@ vi.mock('@/components/RichTextEditor', () => ({
 
 import {AssignmentEditorForm} from './index';
 
-const draft = {
+const draft: AssignmentDetail = {
   id: 88,
   courseId: 31,
   title: 'Recovery assignment',
   description: '',
   pointsPossible: 100,
   dueAtLocal: '2026-08-30T10:00:00',
+  dueAtUtc: '2026-08-30T17:00:00Z',
+  timezone: 'America/Los_Angeles',
   submissionType: 'Individual',
   allowedFileTypes: ['pdf'],
   maxFileCount: 3,
   maxFileSizeBytes: 10 * 1024 * 1024,
   state: 'Draft',
   attachments: [],
+  version: 3,
+  createdAt: '2026-08-20T00:00:00Z',
+  updatedAt: '2026-08-20T00:00:00Z',
 };
 
 const response = <T,>(data: T) => ({
@@ -58,12 +65,12 @@ const response = <T,>(data: T) => ({
   data,
 });
 
-const renderEditor = () => {
+const renderEditor = (assignment?: typeof draft) => {
   const client = new QueryClient({defaultOptions: {queries: {retry: false}}});
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
-        <AssignmentEditorForm courseId={31}/>
+        <AssignmentEditorForm courseId={31} assignment={assignment}/>
       </MemoryRouter>
     </QueryClientProvider>
   );
@@ -81,6 +88,18 @@ describe('AssignmentEditorForm recovery workflow', () => {
     vi.clearAllMocks();
     api.createAssignment.mockResolvedValue(response(draft));
     api.patchAssignment.mockResolvedValue(response(draft));
+    api.previewDueDateChange.mockResolvedValue(response({
+      currentDueAt: '2026-08-30T10:00:00',
+      newDueAt: '2026-08-30T10:00:00',
+      timezone: 'America/Los_Angeles',
+      shortening: false,
+      confirmationRequired: false,
+      activeStudentCount: 0,
+      submittedCount: 0,
+      notSubmittedCount: 0,
+      submissionsBecomingLateCount: 0,
+      gradedCount: 0,
+    }));
     api.publishAssignment.mockResolvedValue(response({...draft, state: 'Published'}));
     courseApi.listGroupSets.mockResolvedValue(response([
       {
@@ -183,5 +202,39 @@ describe('AssignmentEditorForm recovery workflow', () => {
 
     await waitFor(() => expect(api.createAssignment).toHaveBeenCalledTimes(2));
     expect(api.createAssignment.mock.calls[0][2]).toBe(api.createAssignment.mock.calls[1][2]);
+  });
+
+  it('creates with a course-local whole-second deadline and no UTC conversion', async () => {
+    renderEditor();
+    await fillRequiredFields();
+
+    fireEvent.submit(screen.getByRole('button', {name: 'Save draft'}).closest('form')!);
+
+    await waitFor(() => expect(api.createAssignment).toHaveBeenCalledWith(
+      31,
+      expect.objectContaining({dueAt: '2026-08-30T10:00:00'}),
+      expect.any(String),
+    ));
+    const request = api.createAssignment.mock.calls[0][1];
+    expect(request.dueAt).not.toMatch(/[Z.+-]\d{2}:?\d{2}$|\.\d+$/);
+  });
+
+  it('previews and patches changed deadlines in the same course-local coordinate', async () => {
+    renderEditor(draft);
+    fireEvent.change(screen.getByLabelText('Due time'), {target: {value: '09/20/2026, 11:59 PM'}});
+
+    fireEvent.submit(screen.getByRole('button', {name: 'Save changes'}).closest('form')!);
+
+    await waitFor(() => expect(api.previewDueDateChange).toHaveBeenCalledWith(
+      31,
+      88,
+      {dueAt: '2026-09-20T23:59:00'},
+    ));
+    expect(api.patchAssignment).toHaveBeenCalledWith(
+      31,
+      88,
+      expect.objectContaining({dueAt: '2026-09-20T23:59:00', expectedVersion: 3}),
+      expect.any(String),
+    );
   });
 });

@@ -254,8 +254,9 @@ export interface CreateAssignmentPayload {
   title: string;
   description?: string;
   pointsPossible?: number;
-  /** Course-tenant wall-clock time, for example 2026-09-15T23:59:00. */
+  /** Course-local wall-clock time with no `Z`, offset, or fractional seconds. */
   dueAt: string;
+  /** Course-local wall-clock time with no `Z`, offset, or fractional seconds. */
   lateUntil?: string;
   allowedFileTypes?: string[];
   maxFileSizeBytes?: number;
@@ -265,16 +266,18 @@ export interface CreateAssignmentPayload {
 }
 
 export type PatchAssignmentPayload = Partial<CreateAssignmentPayload> & {
-  expectedVersion?: number;
+  expectedVersion: number;
   clearLateUntil?: boolean;
   confirmShortenDueDate?: boolean;
 };
 
 export interface DueDateChangePreview {
+  /** Course-local wall-clock values; do not parse them as UTC instants. */
   currentDueAt: string;
   currentLateUntil?: string;
   newDueAt: string;
   newLateUntil?: string;
+  timezone: string;
   shortening: boolean;
   confirmationRequired: boolean;
   activeStudentCount: number;

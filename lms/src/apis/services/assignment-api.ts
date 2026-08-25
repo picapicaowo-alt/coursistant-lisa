@@ -20,6 +20,27 @@ import {
   V2ApiClient
 } from "@/apis";
 import {idempotent} from '@/apis/types/common';
+import {normalizeCourseLocalDateTime} from '@/utils/courseLocalDateTime';
+
+type AssignmentDeadlineFields = {
+  dueAt?: string;
+  lateUntil?: string;
+};
+
+const normalizeDeadlineFields = <Request extends AssignmentDeadlineFields>(request: Request): Request => {
+  let normalizedRequest = request;
+
+  for (const field of ['dueAt', 'lateUntil'] as const) {
+    if (request[field] === undefined) continue;
+    const normalizedValue = normalizeCourseLocalDateTime(request[field]);
+    if (!normalizedValue) {
+      throw new TypeError(`${field} must be a valid course-local date-time without a timezone or fractional seconds.`);
+    }
+    normalizedRequest = {...normalizedRequest, [field]: normalizedValue};
+  }
+
+  return normalizedRequest;
+};
 
 export class AssignmentApiService {
   private apiClient = V2ApiClient;
@@ -59,7 +80,11 @@ export class AssignmentApiService {
     request: CreateAssignmentPayload,
     idempotencyKey: string = crypto.randomUUID()
   ): Promise<ApiResponse<AssignmentDetail>> {
-    return this.apiClient.post<AssignmentDetail>(`/v2/courses/${courseId}/assignments`, request, idempotent(idempotencyKey));
+    return this.apiClient.post<AssignmentDetail>(
+      `/v2/courses/${courseId}/assignments`,
+      normalizeDeadlineFields(request),
+      idempotent(idempotencyKey),
+    );
   }
 
   async patchAssignment(
@@ -68,9 +93,12 @@ export class AssignmentApiService {
     request: PatchAssignmentPayload,
     idempotencyKey: string = crypto.randomUUID()
   ): Promise<ApiResponse<AssignmentDetail>> {
+    if (!Number.isInteger(request.expectedVersion)) {
+      throw new TypeError('expectedVersion is required when patching an assignment.');
+    }
     return this.apiClient.patch<AssignmentDetail>(
       `/v2/courses/${courseId}/assignments/${assignmentId}`,
-      request,
+      normalizeDeadlineFields(request),
       idempotent(idempotencyKey)
     );
   }
@@ -114,7 +142,7 @@ export class AssignmentApiService {
   ): Promise<ApiResponse<DueDateChangePreview>> {
     return this.apiClient.post(
       `/v2/courses/${courseId}/assignments/${assignmentId}/due-date-change-preview`,
-      request,
+      normalizeDeadlineFields(request),
     );
   }
 

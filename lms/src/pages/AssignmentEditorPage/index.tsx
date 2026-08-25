@@ -2,7 +2,7 @@ import {ChangeEvent, FormEvent, useRef, useState} from 'react';
 import {useQuery, useQueryClient} from '@tanstack/react-query';
 import {ArrowLeft, CalendarClock, CheckCircle2, Eye, FileText, Trash2, Upload, UsersRound, X} from 'lucide-react';
 import {Link, useNavigate, useParams} from 'react-router-dom';
-import type {AssignmentDetail, AssignmentSubmissionType, CreateAssignmentPayload} from '@/apis';
+import type {ApiResponse, AssignmentDetail, AssignmentSubmissionType, CreateAssignmentPayload, PatchAssignmentPayload} from '@/apis';
 import {unwrapData} from '@/apis';
 import {assignmentApiService} from '@/apis/services/assignment-api';
 import {courseApiService} from '@/apis/services/course-api';
@@ -11,6 +11,7 @@ import {RichTextEditor} from '@/components/RichTextEditor';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
 import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
 import {getApiErrorCode, isConflict} from '@/utils/apiError';
+import {normalizeCourseLocalDateTime, toCourseLocalDateTimeInput} from '@/utils/courseLocalDateTime';
 import {isPreviewableFile, openPreviewWindow, saveBlob, showBlobInPreviewWindow} from '@/utils/downloadBlob';
 import {FileTypeMultiSelect} from './FileTypeMultiSelect';
 import styles from './index.module.scss';
@@ -20,8 +21,6 @@ const parseId = (value?: string) => {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 };
 
-const toDateTimeInput = (value?: string) => value ? value.slice(0, 16) : '';
-const toApiDateTime = (value: string) => value.length === 16 ? `${value}:00` : value;
 const formatFileSize = (sizeBytes: number) => {
   if (sizeBytes < 1024 * 1024) return `${Math.max(1, Math.round(sizeBytes / 1024))} KB`;
   return `${(sizeBytes / 1024 / 1024).toFixed(1)} MB`;
@@ -37,8 +36,8 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
   const queryClient = useQueryClient();
   const [title, setTitle] = useState(assignment?.title ?? '');
   const [description, setDescription] = useState(assignment?.description ?? '');
-  const [dueAt, setDueAt] = useState(toDateTimeInput(assignment?.dueAtLocal));
-  const [lateUntil, setLateUntil] = useState(toDateTimeInput(assignment?.lateUntilLocal));
+  const [dueAt, setDueAt] = useState(toCourseLocalDateTimeInput(assignment?.dueAtLocal));
+  const [lateUntil, setLateUntil] = useState(toCourseLocalDateTimeInput(assignment?.lateUntilLocal));
   const [pointsPossible, setPointsPossible] = useState(
     assignment?.pointsPossible === undefined ? '100' : String(assignment.pointsPossible)
   );
@@ -158,8 +157,14 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
 
   const buildPayload = (): CreateAssignmentPayload | null => {
     const cleanTitle = title.trim();
-    if (!cleanTitle || !dueAt) {
+    const normalizedDueAt = normalizeCourseLocalDateTime(dueAt);
+    const normalizedLateUntil = lateUntil ? normalizeCourseLocalDateTime(lateUntil) : undefined;
+    if (!cleanTitle || !normalizedDueAt) {
       setError('Assignment name and due time are required.');
+      return null;
+    }
+    if (lateUntil && !normalizedLateUntil) {
+      setError('The late-work deadline must be a valid course-local time.');
       return null;
     }
 
@@ -187,8 +192,8 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
       title: cleanTitle,
       description: description.trim(),
       pointsPossible: points,
-      dueAt: toApiDateTime(dueAt),
-      ...(lateUntil ? {lateUntil: toApiDateTime(lateUntil)} : {}),
+      dueAt: normalizedDueAt,
+      ...(normalizedLateUntil ? {lateUntil: normalizedLateUntil} : {}),
       allowedFileTypes,
       maxFileCount: fileCount,
       maxFileSizeBytes: Math.round(sizeMb * 1024 * 1024),
@@ -217,10 +222,10 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
     try {
       let confirmShortenDueDate = false;
       if (saved) {
-        const nextDueAt = toApiDateTime(dueAt);
-        const nextLateUntil = lateUntil ? toApiDateTime(lateUntil) : undefined;
-        const dueChanged = toDateTimeInput(saved.dueAtLocal) !== dueAt;
-        const lateChanged = toDateTimeInput(saved.lateUntilLocal) !== lateUntil;
+        const nextDueAt = payload.dueAt;
+        const nextLateUntil = payload.lateUntil;
+        const dueChanged = toCourseLocalDateTimeInput(saved.dueAtLocal) !== dueAt;
+        const lateChanged = toCourseLocalDateTimeInput(saved.lateUntilLocal) !== lateUntil;
         if (dueChanged || lateChanged) {
           // Moving a deadline earlier can retroactively change submission state;
           // preview the impact before sending the confirmed versioned update.
@@ -230,9 +235,11 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
             ...(!nextLateUntil && saved.lateUntilLocal ? {clearLateUntil: true} : {}),
           }), 'previewDueDateChange');
           if (preview.confirmationRequired) {
+            const deadlineTimezone = preview.timezone || saved.timezone;
             const accepted = window.confirm(
               `This earlier deadline affects ${preview.activeStudentCount} active students. ` +
-              `${preview.submittedCount} have submitted and ${preview.submissionsBecomingLateCount} submission(s) would become late. Continue?`
+              `${preview.submittedCount} have submitted and ${preview.submissionsBecomingLateCount} submission(s) would become late` +
+              `${deadlineTimezone ? ` in ${deadlineTimezone}` : ''}. Continue?`
             );
             if (!accepted) return;
             confirmShortenDueDate = true;
@@ -240,21 +247,29 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
         }
       }
 
-      const recordRequest = saved
-        ? {
+      let recordOperation: string;
+      let recordKey: string;
+      let response: ApiResponse<AssignmentDetail>;
+      if (saved) {
+        const expectedVersion = saved.version;
+        if (typeof expectedVersion !== 'number' || !Number.isInteger(expectedVersion)) {
+          setError('The assignment version is unavailable. Reload the editor before saving changes.');
+          return;
+        }
+        const recordRequest: PatchAssignmentPayload = {
           ...payload,
-          expectedVersion: saved.version,
+          expectedVersion,
           ...(checkpointAssignment?.lateUntilLocal && !lateUntil ? {clearLateUntil: true} : {}),
           ...(confirmShortenDueDate ? {confirmShortenDueDate: true} : {}),
-        }
-        : payload;
-      const recordOperation = saved
-        ? `assignment-update-${courseId}-${saved.id}`
-        : `assignment-create-${courseId}`;
-      const recordKey = idempotency.keyFor(recordOperation, idempotencyFingerprint(recordRequest));
-      const response = saved
-        ? await assignmentApiService.patchAssignment(courseId, saved.id, recordRequest, recordKey)
-        : await assignmentApiService.createAssignment(courseId, recordRequest, recordKey);
+        };
+        recordOperation = `assignment-update-${courseId}-${saved.id}`;
+        recordKey = idempotency.keyFor(recordOperation, idempotencyFingerprint(recordRequest));
+        response = await assignmentApiService.patchAssignment(courseId, saved.id, recordRequest, recordKey);
+      } else {
+        recordOperation = `assignment-create-${courseId}`;
+        recordKey = idempotency.keyFor(recordOperation, idempotencyFingerprint(payload));
+        response = await assignmentApiService.createAssignment(courseId, payload, recordKey);
+      }
       saved = unwrapData(response, checkpointAssignment ? 'patchAssignment' : 'createAssignment');
       idempotency.complete(recordOperation, recordKey);
       setCheckpointAssignment(saved);

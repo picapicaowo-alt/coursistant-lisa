@@ -34,7 +34,7 @@ describe('AssignmentApiService 8081 routes', () => {
   });
 
   it('patches an assignment with PATCH rather than a legacy edit POST', async () => {
-    const payload = {title: 'Revised assignment'};
+    const payload = {title: 'Revised assignment', expectedVersion: 3};
     client.patch.mockResolvedValue({status: 200, data: {id: 9}});
 
     await service.patchAssignment(4, 9, payload);
@@ -203,11 +203,56 @@ describe('AssignmentApiService 8081 routes', () => {
       undefined,
       expect.objectContaining({headers: expect.objectContaining({'Idempotency-Key': expect.any(String)})}),
     );
-    expect(client.post).toHaveBeenNthCalledWith(2, '/v2/courses/4/assignments/9/due-date-change-preview', preview);
+    expect(client.post).toHaveBeenNthCalledWith(
+      2,
+      '/v2/courses/4/assignments/9/due-date-change-preview',
+      {dueAt: '2026-09-01T10:00:00', clearLateUntil: true},
+    );
     expect(client.delete).toHaveBeenCalledWith(
       '/v2/courses/4/assignments/9',
       expect.objectContaining({headers: expect.objectContaining({'Idempotency-Key': expect.any(String)})}),
     );
+  });
+
+  it('sends assignment deadlines as normalized course-local wall-clock values', async () => {
+    client.post.mockResolvedValue({status: 200, data: {id: 9}});
+
+    await service.createAssignment(4, {
+      title: 'Local deadline',
+      dueAt: '2026-09-20T23:59',
+      lateUntil: '2026-09-22T23:59:00',
+    }, 'create-local-deadline');
+
+    expect(client.post).toHaveBeenCalledWith(
+      '/v2/courses/4/assignments',
+      {
+        title: 'Local deadline',
+        dueAt: '2026-09-20T23:59:00',
+        lateUntil: '2026-09-22T23:59:00',
+      },
+      {headers: {'Idempotency-Key': 'create-local-deadline'}},
+    );
+  });
+
+  it.each([
+    '2026-09-21T06:59:00Z',
+    '2026-09-20T23:59:00-07:00',
+    '2026-09-20T23:59:00.123',
+    '2026-02-29T23:59:00',
+  ])('does not send an invalid assignment deadline: %s', async dueAt => {
+    await expect(service.createAssignment(4, {title: 'Invalid deadline', dueAt})).rejects.toThrow(
+      'dueAt must be a valid course-local date-time',
+    );
+    expect(client.post).not.toHaveBeenCalled();
+  });
+
+  it('does not patch an assignment without expectedVersion', async () => {
+    await expect(service.patchAssignment(
+      4,
+      9,
+      {title: 'Missing version'} as {title: string; expectedVersion: number},
+    )).rejects.toThrow('expectedVersion is required');
+    expect(client.patch).not.toHaveBeenCalled();
   });
 
   it('uploads, previews, downloads, and restores versioned rubric files', async () => {
