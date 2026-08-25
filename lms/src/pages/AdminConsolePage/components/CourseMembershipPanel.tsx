@@ -2,6 +2,7 @@ import React, {FormEvent, useMemo, useState} from 'react';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {CourseMember, CourseSummary, unwrapData} from '@/apis';
 import {courseApiService} from '@/apis/services/course-api';
+import {getApiErrorMessage} from '@/utils/apiError';
 import styles from '../index.module.scss';
 
 const COURSE_PAGE_SIZE = 100;
@@ -16,6 +17,15 @@ type RoleChange = {
   member: CourseMember;
   targetRole: 'TA' | 'Student';
 };
+
+type EnrollmentRole = 'Student' | 'TA';
+
+class PartialTaAssignmentError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'PartialTaAssignmentError';
+  }
+}
 
 const instructorLabel = (course: CourseSummary): string => {
   const instructor = course.primaryInstructor;
@@ -97,6 +107,7 @@ export const CourseMembershipPanel: React.FC = () => {
   const queryClient = useQueryClient();
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   const [identifier, setIdentifier] = useState('');
+  const [enrollmentRole, setEnrollmentRole] = useState<EnrollmentRole>('Student');
   const [memberSearchInput, setMemberSearchInput] = useState('');
   const [memberSearch, setMemberSearch] = useState('');
   const [memberPage, setMemberPage] = useState(0);
@@ -143,30 +154,52 @@ export const CourseMembershipPanel: React.FC = () => {
   };
 
   const enrolStudent = useMutation({
-    mutationFn: async ({courseId, value}: {courseId: number; value: string}) => {
+    mutationFn: async ({courseId, value, targetRole}: {courseId: number; value: string; targetRole: EnrollmentRole}) => {
       const userId = /^[1-9]\d*$/.test(value) ? Number(value) : null;
-      return unwrapData(
+      const result = unwrapData(
         await courseApiService.enrolStudents(courseId, userId ? {userIds: [userId]} : {emails: [value]}),
         'adminEnrolStudent',
       );
-    },
-    onSuccess: async (result, variables) => {
+
+      const successfulItem = result.items.find(item => item.status === 'SUCCESS');
       const failure = result.items.find(item => item.status === 'ERROR');
-      if (result.successCount > 0) {
-        setIdentifier('');
-        setFeedback({tone: 'success', text: 'Student enrolled in the selected course.'});
-        await refreshMembers(variables.courseId);
-        return;
+      if (!successfulItem) {
+        throw new Error(failure?.message || 'The user could not be enrolled. Confirm their tenant, account level, and current course membership.');
       }
+
+      if (targetRole === 'TA') {
+        const enrolledUserId = successfulItem.userId ?? successfulItem.member?.userId;
+        if (!enrolledUserId) {
+          throw new PartialTaAssignmentError('The user was enrolled, but TA access was not assigned because the enrollment response did not include a user ID.');
+        }
+        try {
+          await courseApiService.promoteToTa(courseId, enrolledUserId);
+        } catch (error) {
+          throw new PartialTaAssignmentError(`The user was enrolled, but TA access was not assigned. ${getApiErrorMessage(error, 'Use “Set as TA” in the roster to try again.')}`);
+        }
+      }
+
+      return {result, targetRole};
+    },
+    onSuccess: async ({targetRole}, variables) => {
+      setIdentifier('');
+      setFeedback({
+        tone: 'success',
+        text: targetRole === 'TA'
+          ? 'User enrolled and assigned as a TA for the selected course.'
+          : 'Student enrolled in the selected course.',
+      });
+      await refreshMembers(variables.courseId);
+    },
+    onError: async (error, variables) => {
       setFeedback({
         tone: 'error',
-        text: failure?.message || 'The student could not be enrolled. Confirm their tenant, account level, and current course membership.',
+        text: getApiErrorMessage(error, 'The course access change failed. Confirm the user tenant, account level, and current course membership.'),
       });
+      if (error instanceof PartialTaAssignmentError) {
+        await refreshMembers(variables.courseId);
+      }
     },
-    onError: () => setFeedback({
-      tone: 'error',
-      text: 'The student could not be enrolled. Confirm their tenant, account level, and current course membership.',
-    }),
   });
 
   const changeCourseRole = useMutation({
@@ -198,7 +231,7 @@ export const CourseMembershipPanel: React.FC = () => {
     const value = identifier.trim();
     if (!effectiveCourseId || !value) return;
     setFeedback(null);
-    enrolStudent.mutate({courseId: effectiveCourseId, value});
+    enrolStudent.mutate({courseId: effectiveCourseId, value, targetRole: enrollmentRole});
   };
 
   const selectCourse = (courseId: number) => {
@@ -207,6 +240,7 @@ export const CourseMembershipPanel: React.FC = () => {
     setMemberSearchInput('');
     setMemberSearch('');
     setIdentifier('');
+    setEnrollmentRole('Student');
     setFeedback(null);
     setPendingRoleChange(null);
   };
@@ -259,15 +293,24 @@ export const CourseMembershipPanel: React.FC = () => {
 
         <form className={styles.form} onSubmit={submitEnrollment}>
           <label>
-            <span>Student email or user ID</span>
-            <input value={identifier} onChange={event => setIdentifier(event.target.value)} placeholder="student@example.edu or 485"/>
+            <span>User email or ID</span>
+            <input value={identifier} onChange={event => setIdentifier(event.target.value)} placeholder="assistant@example.edu or 485"/>
+          </label>
+          <label>
+            <span>Course role</span>
+            <select value={enrollmentRole} onChange={event => setEnrollmentRole(event.target.value as EnrollmentRole)}>
+              <option value="Student">Student</option>
+              <option value="TA">Teaching assistant (TA)</option>
+            </select>
           </label>
           <button className={styles.primaryButton} disabled={!identifier.trim() || enrolStudent.isPending}>
-            {enrolStudent.isPending ? 'Enrolling…' : 'Enroll student'}
+            {enrolStudent.isPending
+              ? enrollmentRole === 'TA' ? 'Assigning TA…' : 'Enrolling…'
+              : enrollmentRole === 'TA' ? 'Enroll and assign TA' : 'Enroll student'}
           </button>
         </form>
-        <p className={styles.hint}>To assign a TA, enroll the user first, then use “Set as TA” in the course roster.</p>
-        {feedback ? <p className={feedback.tone === 'error' ? styles.inlineError : styles.inlineSuccess} role="status">{feedback.text}</p> : null}
+        <p className={styles.hint}>TA access applies only to the selected course; the user&apos;s platform level remains Student.</p>
+        {feedback ? <p className={feedback.tone === 'error' ? styles.inlineError : styles.inlineSuccess} role={feedback.tone === 'error' ? 'alert' : 'status'}>{feedback.text}</p> : null}
       </section>
 
       <section className={`${styles.card} ${styles.listCard}`} aria-labelledby="course-roster-title">

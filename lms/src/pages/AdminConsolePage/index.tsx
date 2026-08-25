@@ -12,11 +12,13 @@ import {
 } from '@/apis';
 import {adminApiService} from '@/apis/services/admin-api';
 import {useRequiredAuth} from '@/contexts/RequiredAuthContext';
+import {getManagedUserCreateError} from './adminFeedback';
 import {CourseMembershipPanel} from './components/CourseMembershipPanel';
 import styles from './index.module.scss';
 
 type ManagedRole = CreateManagedUserRequest['role'];
 type ManagedLevel = 'STUDENT' | 'INSTRUCTOR';
+type PageFeedback = {tone: 'success' | 'error'; text: string};
 
 const TenantRow = ({tenant, busy, onSave, onDelete}: {
   tenant: AdminTenant;
@@ -98,7 +100,7 @@ const AdminConsolePage: React.FC = () => {
   // the API still performs the authoritative permission and tenant checks.
   const scope = isSystemAdmin ? 'system' : 'tenant';
   const [tab, setTab] = useState<'users' | 'members' | 'tenants' | 'operations'>('users');
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<PageFeedback | null>(null);
   const [search, setSearch] = useState('');
   const [tenantName, setTenantName] = useState('');
   const [tenantTimezone, setTenantTimezone] = useState('America/Los_Angeles');
@@ -134,26 +136,26 @@ const AdminConsolePage: React.FC = () => {
     mutationFn: (payload: AdminTenantPayload) => adminApiService.createTenant(payload),
     onSuccess: async () => {
       setTenantName('');
-      setMessage('Tenant created.');
+      setMessage({tone: 'success', text: 'Tenant created.'});
       await queryClient.invalidateQueries({queryKey: ['admin', 'tenants']});
     },
-    onError: () => setMessage('The tenant could not be created.'),
+    onError: () => setMessage({tone: 'error', text: 'The tenant could not be created.'}),
   });
   const updateTenant = useMutation({
     mutationFn: ({id, payload}: {id: number; payload: AdminTenantPayload}) => adminApiService.updateTenant(id, payload),
     onSuccess: async () => {
-      setMessage('Tenant updated.');
+      setMessage({tone: 'success', text: 'Tenant updated.'});
       await queryClient.invalidateQueries({queryKey: ['admin', 'tenants']});
     },
-    onError: () => setMessage('The tenant could not be updated.'),
+    onError: () => setMessage({tone: 'error', text: 'The tenant could not be updated.'}),
   });
   const deleteTenant = useMutation({
     mutationFn: (id: number) => adminApiService.deleteTenant(id),
     onSuccess: async () => {
-      setMessage('Tenant deleted.');
+      setMessage({tone: 'success', text: 'Tenant deleted.'});
       await queryClient.invalidateQueries({queryKey: ['admin', 'tenants']});
     },
-    onError: () => setMessage('The tenant could not be deleted. Remove its dependent records first.'),
+    onError: () => setMessage({tone: 'error', text: 'The tenant could not be deleted. Remove its dependent records first.'}),
   });
   const createUser = useMutation({
     mutationFn: (request: CreateManagedUserRequest) => adminApiService.createManagedUser(scope, request),
@@ -162,51 +164,51 @@ const AdminConsolePage: React.FC = () => {
       setManagedUserId(String(id));
       setEmail('');
       setName('');
-      setMessage(`Managed user #${id} created. They must use Forgot Password to establish their first password.`);
+      setMessage({tone: 'success', text: `Managed user #${id} created. They must use Forgot Password to establish their first password.`});
       if (isSystemAdmin) await queryClient.invalidateQueries({queryKey: ['admin', 'users']});
     },
-    onError: () => setMessage('The managed user could not be created.'),
+    onError: error => setMessage({tone: 'error', text: getManagedUserCreateError(error)}),
   });
   const changeRole = useMutation({
     mutationFn: ({id, request}: {id: number; request: ChangeManagedUserRoleRequest}) => adminApiService.changeManagedUserRole(scope, id, request),
     onSuccess: async () => {
-      setMessage('User role updated. Existing sessions have been signed out.');
+      setMessage({tone: 'success', text: 'User role updated. Existing sessions have been signed out.'});
       if (isSystemAdmin) await queryClient.invalidateQueries({queryKey: ['admin', 'users']});
     },
-    onError: () => setMessage('The role could not be changed. Check tenant scope and active course responsibilities.'),
+    onError: () => setMessage({tone: 'error', text: 'The role could not be changed. Check tenant scope and active course responsibilities.'}),
   });
   const disableUser = useMutation({
     mutationFn: (id: number) => adminApiService.disableManagedUser(scope, id),
     onSuccess: async () => {
       setConfirmManualDisable(false);
-      setMessage('User disabled and active enrolments withdrawn.');
+      setMessage({tone: 'success', text: 'User disabled and active enrolments withdrawn.'});
       if (isSystemAdmin) await queryClient.invalidateQueries({queryKey: ['admin', 'users']});
     },
-    onError: () => setMessage('The user could not be disabled.'),
+    onError: () => setMessage({tone: 'error', text: 'The user could not be disabled.'}),
   });
   const moveTenant = useMutation({
     mutationFn: ({id, targetTenantId}: {id: number; targetTenantId: number}) => adminApiService.changeUserTenant(id, {tenantId: targetTenantId}),
     onSuccess: async () => {
-      setMessage('User moved to the selected tenant. Existing sessions have been signed out.');
+      setMessage({tone: 'success', text: 'User moved to the selected tenant. Existing sessions have been signed out.'});
       await queryClient.invalidateQueries({queryKey: ['admin', 'users']});
     },
-    onError: () => setMessage('The user could not be moved. Resolve active course responsibilities or duplicate tenant identity first.'),
+    onError: () => setMessage({tone: 'error', text: 'The user could not be moved. Resolve active course responsibilities or duplicate tenant identity first.'}),
   });
   const reassignInstructor = useMutation({
     mutationFn: () => adminApiService.reassignPrimaryInstructor(Number(courseId), {primaryInstructorUserId: Number(primaryInstructorUserId)}),
     onSuccess: () => {
       setConfirmReassignment(false);
-      setMessage('Primary instructor reassigned. The change was added to the course audit log.');
+      setMessage({tone: 'success', text: 'Primary instructor reassigned. The change was added to the course audit log.'});
     },
-    onError: () => setMessage('The primary instructor could not be reassigned. Confirm course, tenant, role, and enrolment constraints.'),
+    onError: () => setMessage({tone: 'error', text: 'The primary instructor could not be reassigned. Confirm course, tenant, role, and enrolment constraints.'}),
   });
   const correctGrade = useMutation({
     mutationFn: () => adminApiService.correctAssignmentGrade({...correction, reason: correction.reason.trim()}),
     onSuccess: () => {
       setConfirmCorrection(false);
-      setMessage('Assignment grade corrected and written to the system audit log.');
+      setMessage({tone: 'success', text: 'Assignment grade corrected and written to the system audit log.'});
     },
-    onError: () => setMessage('The grade could not be corrected. Confirm that an existing grade row matches this assignment and student.'),
+    onError: () => setMessage({tone: 'error', text: 'The grade could not be corrected. Confirm that an existing grade row matches this assignment and student.'}),
   });
 
   const filteredUsers = useMemo(() => {
@@ -244,7 +246,7 @@ const AdminConsolePage: React.FC = () => {
         {isSystemAdmin ? <button type="button" aria-pressed={tab === 'operations'} className={tab === 'operations' ? styles.activeTab : ''} onClick={() => setTab('operations')}>Audited operations</button> : null}
       </nav>
 
-      {message ? <p className={message.includes('could not') ? styles.errorMessage : styles.message} role="status">{message}</p> : null}
+      {message ? <p className={message.tone === 'error' ? styles.errorMessage : styles.message} role={message.tone === 'error' ? 'alert' : 'status'}>{message.text}</p> : null}
 
       {tab === 'tenants' && isSystemAdmin ? (
         <div className={styles.contentGrid}>
