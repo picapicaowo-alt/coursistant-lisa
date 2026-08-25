@@ -12,6 +12,7 @@ import {
 } from '@/apis';
 import {adminApiService} from '@/apis/services/admin-api';
 import {useRequiredAuth} from '@/contexts/RequiredAuthContext';
+import {CourseMembershipPanel} from './components/CourseMembershipPanel';
 import styles from './index.module.scss';
 
 type ManagedRole = CreateManagedUserRequest['role'];
@@ -96,7 +97,7 @@ const AdminConsolePage: React.FC = () => {
   // Scope is derived from authenticated context, never from an editable form;
   // the API still performs the authoritative permission and tenant checks.
   const scope = isSystemAdmin ? 'system' : 'tenant';
-  const [tab, setTab] = useState<'users' | 'tenants' | 'operations'>('users');
+  const [tab, setTab] = useState<'users' | 'members' | 'tenants' | 'operations'>('users');
   const [message, setMessage] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [tenantName, setTenantName] = useState('');
@@ -238,6 +239,7 @@ const AdminConsolePage: React.FC = () => {
 
       <nav className={styles.tabs} aria-label="Admin sections">
         <button type="button" aria-pressed={tab === 'users'} className={tab === 'users' ? styles.activeTab : ''} onClick={() => setTab('users')}>Managed users</button>
+        <button type="button" aria-pressed={tab === 'members'} className={tab === 'members' ? styles.activeTab : ''} onClick={() => setTab('members')}>Course members</button>
         {isSystemAdmin ? <button type="button" aria-pressed={tab === 'tenants'} className={tab === 'tenants' ? styles.activeTab : ''} onClick={() => setTab('tenants')}>Tenants</button> : null}
         {isSystemAdmin ? <button type="button" aria-pressed={tab === 'operations'} className={tab === 'operations' ? styles.activeTab : ''} onClick={() => setTab('operations')}>Audited operations</button> : null}
       </nav>
@@ -301,6 +303,8 @@ const AdminConsolePage: React.FC = () => {
           )}
         </div>
       ) : null}
+
+      {tab === 'members' ? <CourseMembershipPanel/> : null}
 
       {tab === 'operations' && isSystemAdmin ? (
         <div className={styles.operationsGrid}>

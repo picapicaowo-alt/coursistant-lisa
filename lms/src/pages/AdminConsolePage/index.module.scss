@@ -44,6 +44,28 @@
 .confirmStack p { margin: 0; color: t.$danger; font-size: t.$fs-caption; line-height: 1.45; }
 .operationDivider { border-top: 1px solid t.$border; margin: .25rem 0; }
 .operationsGrid { display: grid; max-width: 82rem; margin: 0 auto; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
+.courseContext { display: grid; gap: .2rem; margin-top: 1rem; padding: .85rem; border: 1px solid rgba(t.$brand, .18); border-radius: t.$radius-control; background: t.$brand-subtle; }
+.courseContext > span { justify-self: start; padding: .15rem .5rem; border-radius: t.$radius-pill; background: t.$brand; color: t.$card-bg; font-size: t.$fs-logo; font-weight: t.$fw-bold; letter-spacing: .04em; }
+.courseContext strong { margin-top: .25rem; font-size: t.$fs-item-sub; }
+.courseContext p, .courseContext small { margin: 0; color: t.$text-muted; font-size: t.$fs-caption; line-height: 1.45; }
+.inlineSuccess, .inlineError { margin-top: .85rem; padding: .7rem .8rem; border-radius: t.$radius-control-sm; background: t.$success-subtle; color: t.$success; font-size: t.$fs-caption; line-height: 1.45; }
+.inlineError { background: rgba(t.$danger, .1); color: t.$danger; }
+.memberSearch { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: .6rem; margin: 1rem 0; }
+.courseMemberList { display: grid; gap: .65rem; }
+.courseMemberRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: .85rem; border: 1px solid t.$border; border-radius: t.$radius-control; }
+.memberIdentity { display: grid; min-width: 0; gap: .18rem; }
+.memberNameLine { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
+.memberIdentity > span, .memberIdentity small { overflow-wrap: anywhere; color: t.$text-muted; font-size: t.$fs-caption; }
+.roleBadge { display: inline-block; padding: .14rem .55rem; border-radius: t.$radius-pill; color: t.$card-bg; font-size: t.$fs-logo; font-weight: t.$fw-bold; }
+.roleInstructor { background: t.$brand; }
+.roleTa { background: t.$success; }
+.roleStudent { background: t.$text-placeholder; }
+.memberActions { flex: 0 0 auto; }
+.memberActions button { min-height: 2.25rem; padding: 0 .75rem; border: 1px solid t.$border; border-radius: t.$radius-control-sm; color: t.$brand; font-size: t.$fs-caption; font-weight: t.$fw-semibold; cursor: pointer; }
+.memberActions button:disabled { cursor: not-allowed; opacity: .5; }
+.roleChangeReview { display: grid; max-width: 27rem; gap: .55rem; padding: .7rem; border-radius: t.$radius-control-sm; background: t.$brand-subtle; }
+.roleChangeReview p { margin: 0; color: t.$text; font-size: t.$fs-caption; line-height: 1.45; }
+.pagination { display: flex; align-items: center; justify-content: center; gap: .75rem; margin-top: 1rem; color: t.$text-muted; font-size: t.$fs-caption; }
 
 @media (max-width: 900px) { .contentGrid, .operationsGrid { grid-template-columns: 1fr; } }
-@media (max-width: 600px) { .page { padding-top: 1rem; } .listRow { flex-direction: column; } .details, .details[open] { width: 100%; } .tabs button { flex: 1; } }
+@media (max-width: 600px) { .page { padding-top: 1rem; } .listRow, .courseMemberRow { flex-direction: column; } .details, .details[open], .roleChangeReview { width: 100%; max-width: none; } .tabs { flex-wrap: wrap; } .tabs button { flex: 1 1 8.5rem; } .memberSearch { grid-template-columns: 1fr; } .memberActions { width: 100%; } .memberActions button { width: 100%; } }
