@@ -14,10 +14,11 @@ $page-bg: #F1F3F8; // Every screen. Cards float as white on top of this.
 $card-bg: #FFFFFF; // Widgets, course cards, modals
 $subcard-bg: #F5F6FA; // Inner blocks, disabled inputs, dashed placeholders
 $brand: #4F46E5; // Publish/Create/Send buttons, active sidebar, selected date, links
+$brand-strong: #4338CA; // Hover/pressed state for primary brand controls
 $brand-subtle: #E7E5FD; // Active sidebar item background
 $text: #141A2B; // Headings, values
-$text-muted: #69728A; // Labels, descriptions
-$text-placeholder: #A3AAB8; // "Name your Course", "Enter the name of the course"
+$text-muted: #5C667D; // Labels and descriptions; AA-safe on page and card surfaces
+$text-placeholder: #747D91; // Placeholder and tertiary copy; AA-safe at body sizes
 $border: #E4E7EE; // Cards, inputs, dividers
 $danger: #EF4444; // Delete Course, Delete project, delete icons
 $warning: #F97316; // Pending/manual review states
@@ -64,11 +65,41 @@ $fs-item-sub: 17px; // Week card content title (sec. 6)
 $fs-label: 15px; // Section labels and body text
 $fs-caption: 13px; // Secondary text
 $fs-logo: 11px; // "X – LEARN" (sec. 2)
+$fs-dashboard-section: 15px; // Quiet dashboard group labels
 
 $fw-extrabold: 800; // h1
 $fw-bold: 700; // Titles
 $fw-semibold: 600; // Section labels
 $fw-regular: 400; // Body
+
+// Dashboard section headers share one restrained hierarchy so they do not
+// compete with the welcome, course names, or record titles.
+$dashboard-section-title-color: $text-muted;
+$dashboard-section-title-size: $fs-dashboard-section;
+$dashboard-section-title-weight: $fw-semibold;
+$dashboard-section-title-tracking: -0.01em;
+$dashboard-section-content-gap: 10px;
+
+// Dashboard spatial roles mirror the pinned reference: a calm outer gutter,
+// a little extra air before the welcome, and a branded assistant heading that
+// does not cling to the rail boundary.
+$dashboard-shell-gutter: 24px;
+$dashboard-shell-column-gap: 16px;
+$dashboard-intro-top-space: 12px;
+$dashboard-intro-copy-gap: 8px;
+$dashboard-main-group-gap: 28px;
+$dashboard-work-column-gap: 20px;
+$dashboard-course-card-gap: 12px;
+$dashboard-record-gap: 8px;
+$dashboard-mobile-shell-gutter: 12px;
+$dashboard-mobile-main-gap: 24px;
+$dashboard-assistant-sticky-offset: 16px;
+$dashboard-assistant-header-top-space: 16px;
+$dashboard-assistant-header-layout-gap: 16px;
+$dashboard-assistant-header-gutter: 16px;
+$dashboard-assistant-brand-gap: 8px;
+$dashboard-assistant-mark-size: 28px;
+$dashboard-assistant-divider-space: 16px;
 
 // ---------------------------------------------------------------- Shape
 

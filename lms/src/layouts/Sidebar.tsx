@@ -5,7 +5,11 @@ import {useTranslation} from 'react-i18next';
 import {getSidebarIndex, SIDEBAR_CONFIGS} from "@/configs/routes.config";
 import {useRequiredAuth} from "@/contexts/RequiredAuthContext";
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  compact?: boolean;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({compact = false}) => {
   const {t} = useTranslation();
   const {user} = useRequiredAuth();
   const {pathname} = useLocation();
@@ -18,7 +22,7 @@ const Sidebar: React.FC = () => {
     .filter(({item}) => isUserAccount || item.path === '/course');
   
   return (
-    <div className={styles.sidebar}>
+    <aside className={`${styles.sidebar} ${compact ? styles.compact : ''}`} aria-label="Primary navigation">
       <Link
         to={homePath}
         className={styles.logo}
@@ -35,7 +39,8 @@ const Sidebar: React.FC = () => {
                   <div className={`${styles.itemContent} ${selectedSidebarIndex === originalIndex ? styles.active : ''}`}>
                     <img
                       src={selectedSidebarIndex === originalIndex ? item.sidebarItem.filledIcon : item.sidebarItem.unfilledIcon}
-                      alt={item.name}
+                      alt=""
+                      aria-hidden="true"
                       className={styles.responsiveImage}
                     />
                     <span>{!isUserAccount && item.path === '/course' ? 'Courses' : t(item.sidebarItem.translationLabel)}</span>
@@ -56,7 +61,7 @@ const Sidebar: React.FC = () => {
           ) : null}
         </ul>
       </nav>
-    </div>
+    </aside>
   );
 };
 

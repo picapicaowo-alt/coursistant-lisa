@@ -1,65 +1,33 @@
-﻿import React from 'react';
-import 'react-grid-layout/css/styles.css';
-import 'react-resizable/css/styles.css';
-import styles from "./Dashboard.module.scss"
-import ReactGridLayout, {verticalCompactor} from 'react-grid-layout';
-import WidgetWrapper from './WidgetWrapper';
-import {GridLayoutItem, WidgetConfig} from "@/pages/LmsHomePage/types";
+import ChatComponent from './ChatComponent';
+import CourseComponent from './CourseComponent';
+import DashboardIntro from './DashboardIntro';
+import DashboardSearch from './DashboardSearch';
+import AssignmentComponent from '@/sections/assignments/AssignmentComponent';
+import PostComponent from '@/sections/posts/PostComponent';
+import styles from './Dashboard.module.scss';
 
-interface DashboardProps {
-  layout: GridLayoutItem[];
-  width: number;
-  columns: number;
-  mounted: boolean;
-  widgetConfigs: WidgetConfig[];
-  containerRef: React.RefObject<HTMLDivElement>;
-}
+export const Dashboard = () => (
+  <section className={styles.dashboard} aria-label="Dashboard overview">
+    <div className={styles.mainColumn}>
+      <DashboardIntro/>
+      <div className={styles.mobileSearch}><DashboardSearch/></div>
 
-export const Dashboard: React.FC<DashboardProps> = ({
-                                                      layout,
-                                                      width,
-                                                      columns,
-                                                      mounted,
-                                                      widgetConfigs,
-                                                      containerRef,
-                                                    }) => {
-  if (!mounted) return null;
-
-  if (columns <= 4) {
-    return (
-      <section className={styles.mobileDashboard} ref={containerRef} aria-label="Dashboard widgets">
-        {widgetConfigs.map(({key, ref, component}) => (
-          <div key={key} className={`${styles.mobileWidget} ${key === 'chat' ? styles.chat : styles.assignments}`} ref={ref}>
-            <WidgetWrapper>{component}</WidgetWrapper>
-          </div>
-        ))}
+      <section className={styles.courses} aria-label="My courses">
+        <CourseComponent/>
       </section>
-    );
-  }
-  
-  return (
-    <section className={styles['grid-layout-container']} ref={containerRef} aria-label="Dashboard widgets">
-      <ReactGridLayout
-        layout={layout}
-        width={width}
-        gridConfig={{cols: columns, rowHeight: 30}}
-        compactor={verticalCompactor}
-        dragConfig={{enabled: false}}
-        resizeConfig={{enabled: false}}
-        autoSize
-        style={{
-          width: '100%',
-          minHeight: '100%',
-        }}
-      >
-        {widgetConfigs.map(({key, ref, component}) => (
-          <div key={key} className={key === 'chat' ? styles.chat : styles.assignments} ref={ref}>
-            <WidgetWrapper>
-              {component}
-            </WidgetWrapper>
-          </div>
-        ))}
-      </ReactGridLayout>
-    </section>
-  );
-};
+
+      <div className={styles.workGrid}>
+        <section className={styles.listSection} aria-label="Assignments">
+          <AssignmentComponent/>
+        </section>
+        <section className={styles.listSection} aria-label="Announcements">
+          <PostComponent/>
+        </section>
+      </div>
+    </div>
+
+    <aside className={styles.assistantRail} aria-label="Coursistant AI chatbot">
+      <ChatComponent/>
+    </aside>
+  </section>
+);

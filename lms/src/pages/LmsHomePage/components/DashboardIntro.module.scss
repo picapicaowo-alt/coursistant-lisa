@@ -1,0 +1,30 @@
+.intro {
+    min-width: 0;
+    padding: t.$dashboard-intro-top-space 0 0;
+
+    h2 {
+        margin: 0;
+        color: t.$text;
+        font-size: clamp(1.75rem, 2.25vw, 2rem);
+        font-weight: t.$fw-extrabold;
+        letter-spacing: -.028em;
+        line-height: 1.12;
+        white-space: nowrap;
+    }
+
+    p {
+        margin: t.$dashboard-intro-copy-gap 0 0;
+        color: t.$text-muted;
+        font-size: .875rem;
+        line-height: 1.45;
+    }
+}
+
+@media (max-width: 760px) {
+    .intro { padding-top: .25rem; }
+
+    .intro h2 {
+        font-size: clamp(1.55rem, 7vw, 1.9rem);
+        white-space: normal;
+    }
+}

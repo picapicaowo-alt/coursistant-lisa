@@ -5,7 +5,6 @@ import {FileText, Paperclip, X} from 'lucide-react';
 import TypingText from "../utils/typing-text";
 import {renderMessageText} from '@/utils/render-message-text';
 import {useAuth} from '@/contexts/AuthContext.js';
-import {useNavigate} from 'react-router-dom';
 import {useAiExamLockdown} from '@/hooks/useAiExamLockdown';
 import {loadActiveChatCourses} from '@/utils/chatCourses';
 import DynamicThinking from '@/components/DynamicThinking/DynamicThinking';
@@ -20,6 +19,12 @@ const STUDY_SUPPORT_THINKING_STEPS = [
   {id: 'understand', text: 'Understanding your question.'},
   {id: 'context', text: 'Reviewing the relevant course context.'},
   {id: 'response', text: 'Preparing a clear response.'},
+];
+
+const DASHBOARD_PROMPTS = [
+  'Summarize this week',
+  'Plan my next study session',
+  'Explain my next assignment',
 ];
 
 interface Props {
@@ -42,7 +47,6 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
     if (!handoffRef.current) {
       handoffRef.current = !!sessionStorage.getItem('pendingChat');
     }
-    const navigate = useNavigate();
     const {user} = useAuth();
     const chatAuthHeaders = () => ({
       Authorization: `Bearer ${user.accessToken}`,
@@ -293,17 +297,8 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
     
     const handleSendClick = () => {
       if ((!input.trim() && !selectedFile) || isStudySupportUnavailable) return;
-      
-      if (props.isDashboard) {
-        const payload = {text: input.trim(), courseId: selectedCourseId ?? 0};
-        sessionStorage.setItem('pendingChat', JSON.stringify(payload));
-        sessionStorage.removeItem('hydrateThenSend');
-        localStorage.setItem('selectedCourseId', String(payload.courseId));
-        navigate('/aibot');
-        return;
-      }
-      
-      handleSend();
+
+      void handleSend();
     };
 
     useEffect(() => {
@@ -349,11 +344,21 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
         {(props.isDashboard || props.isPopup) && (
           <>
             <div className={styles.chatHeader}>
-              <div className={styles.chatTitle}>
-                <h1 className="text-[1.5rem] font-medium">New Chat</h1>
+              <div className={styles.chatHeading}>
+                {props.isDashboard ? (
+                  <span className={styles.chatBrandMark} aria-hidden="true">
+                    <img src="/icons/ai_course.png" alt=""/>
+                  </span>
+                ) : null}
+                <div className={styles.chatTitle}>
+                  <h2 className="text-[1.5rem] font-medium">
+                    {props.isDashboard ? 'Coursistant' : 'New Chat'}
+                  </h2>
+                  {props.isDashboard ? <p>Course context on</p> : null}
+                </div>
               </div>
               <div className={styles.spacer}/>
-              <button className={styles.glassButton} onClick={() => {
+              <button type="button" className={styles.glassButton} onClick={() => {
                 handleNewChat()
               }}>
                 <img className="w-[1.3rem]" src="/icons/chat/add_plus.png" alt="plus"/>
@@ -395,7 +400,21 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
                 ) : null}
               </div>
             ) : messages.length === 0 ? (
-              props.isSummary ? (
+              props.isDashboard ? (
+                <div className={styles.dashboardEmpty}>
+                  <div>
+                    <h3>What can I help you study?</h3>
+                    <p>Ask about a concept, an assignment, or how to plan your week.</p>
+                  </div>
+                  <div className={styles.dashboardPrompts} role="group" aria-label="Suggested questions">
+                    {DASHBOARD_PROMPTS.map(prompt => (
+                      <button type="button" key={prompt} onClick={() => setInput(prompt)}>
+                        {prompt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : props.isSummary ? (
                 <div className="flex-1 flex flex-col justify-start mb-8 ml-3">
                   <div
                     className="cursor-pointer hover:bg-[#EDF2F7] transition-all duration-300 flex items-center p-4 border border-[rgba(226,232,240,1)] rounded-xl  bg-transparent max-w-xl">
@@ -415,7 +434,7 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
                   className={`flex-1 flex flex-col items-start text-left mb-8 ml-3 ${props.isIntroTop ? 'justify-start' : 'justify-end'
                   }`}
                 >
-                  <h1 className="text-2xl font-bold">Welcome back, {user?.name}! 👋</h1>
+                  <h3 className="text-2xl font-bold">Welcome back, {user?.name}</h3>
                   <p className="text-sm text-gray-500 mt-2">
                     Every small step forward brings you closer to your big dream.
                   </p>

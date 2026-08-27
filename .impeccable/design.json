@@ -1,0 +1,205 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-26T21:58:02Z",
+  "title": "Design System: Coursistant Student Dashboard",
+  "extensions": {
+    "colorMeta": {
+      "page-canvas": {
+        "role": "neutral",
+        "displayName": "Cool Dashboard Canvas",
+        "canonical": "#F1F3F8",
+        "tonalRamp": ["oklch(15% 0.012 270)", "oklch(27% 0.012 270)", "oklch(39% 0.012 270)", "oklch(51% 0.012 270)", "oklch(63% 0.012 270)", "oklch(75% 0.012 270)", "oklch(87% 0.012 270)", "oklch(95% 0.012 270)"]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Operating White",
+        "canonical": "#FFFFFF",
+        "tonalRamp": ["oklch(15% 0 0)", "oklch(27% 0 0)", "oklch(39% 0 0)", "oklch(51% 0 0)", "oklch(63% 0 0)", "oklch(75% 0 0)", "oklch(87% 0 0)", "oklch(95% 0 0)"]
+      },
+      "inset-surface": {
+        "role": "neutral",
+        "displayName": "Inset Gray",
+        "canonical": "#F5F6FA",
+        "tonalRamp": ["oklch(15% 0.01 270)", "oklch(27% 0.01 270)", "oklch(39% 0.01 270)", "oklch(51% 0.01 270)", "oklch(63% 0.01 270)", "oklch(75% 0.01 270)", "oklch(87% 0.01 270)", "oklch(95% 0.01 270)"]
+      },
+      "coursistant-indigo": {
+        "role": "primary",
+        "displayName": "Coursistant Indigo",
+        "canonical": "#4F46E5",
+        "tonalRamp": ["oklch(15% 0.16 278)", "oklch(27% 0.17 278)", "oklch(39% 0.18 278)", "oklch(51% 0.19 278)", "oklch(63% 0.18 278)", "oklch(75% 0.14 278)", "oklch(87% 0.08 278)", "oklch(95% 0.03 278)"]
+      },
+      "indigo-strong": {
+        "role": "primary",
+        "displayName": "Pressed Indigo",
+        "canonical": "#4338CA",
+        "tonalRamp": ["oklch(15% 0.15 278)", "oklch(27% 0.17 278)", "oklch(39% 0.19 278)", "oklch(51% 0.18 278)", "oklch(63% 0.16 278)", "oklch(75% 0.12 278)", "oklch(87% 0.07 278)", "oklch(95% 0.03 278)"]
+      },
+      "indigo-soft": {
+        "role": "primary",
+        "displayName": "Quiet Indigo Wash",
+        "canonical": "#E7E5FD",
+        "tonalRamp": ["oklch(15% 0.09 278)", "oklch(27% 0.1 278)", "oklch(39% 0.11 278)", "oklch(51% 0.11 278)", "oklch(63% 0.09 278)", "oklch(75% 0.07 278)", "oklch(87% 0.04 278)", "oklch(95% 0.02 278)"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Midnight Ink",
+        "canonical": "#141A2B",
+        "tonalRamp": ["oklch(15% 0.025 265)", "oklch(27% 0.025 265)", "oklch(39% 0.024 265)", "oklch(51% 0.022 265)", "oklch(63% 0.02 265)", "oklch(75% 0.016 265)", "oklch(87% 0.01 265)", "oklch(95% 0.005 265)"]
+      },
+      "muted-ink": {
+        "role": "neutral",
+        "displayName": "Slate Annotation",
+        "canonical": "#5C667D",
+        "tonalRamp": ["oklch(15% 0.025 260)", "oklch(27% 0.026 260)", "oklch(39% 0.027 260)", "oklch(51% 0.027 260)", "oklch(63% 0.024 260)", "oklch(75% 0.019 260)", "oklch(87% 0.012 260)", "oklch(95% 0.006 260)"]
+      },
+      "placeholder-ink": {
+        "role": "neutral",
+        "displayName": "Placeholder Slate",
+        "canonical": "#747D91",
+        "tonalRamp": ["oklch(15% 0.02 260)", "oklch(27% 0.022 260)", "oklch(39% 0.023 260)", "oklch(51% 0.023 260)", "oklch(63% 0.021 260)", "oklch(75% 0.017 260)", "oklch(87% 0.011 260)", "oklch(95% 0.005 260)"]
+      },
+      "quiet-border": {
+        "role": "neutral",
+        "displayName": "Quiet Divider",
+        "canonical": "#E4E7EE",
+        "tonalRamp": ["oklch(15% 0.01 260)", "oklch(27% 0.011 260)", "oklch(39% 0.011 260)", "oklch(51% 0.011 260)", "oklch(63% 0.01 260)", "oklch(75% 0.008 260)", "oklch(87% 0.005 260)", "oklch(95% 0.003 260)"]
+      },
+      "course-cyan": {
+        "role": "secondary",
+        "displayName": "Course Cyan",
+        "canonical": "#22CCEE",
+        "tonalRamp": ["oklch(15% 0.08 210)", "oklch(27% 0.1 210)", "oklch(39% 0.12 210)", "oklch(51% 0.14 210)", "oklch(63% 0.15 210)", "oklch(75% 0.13 210)", "oklch(87% 0.08 210)", "oklch(95% 0.03 210)"]
+      },
+      "course-green": {
+        "role": "secondary",
+        "displayName": "Course Green",
+        "canonical": "#22C55E",
+        "tonalRamp": ["oklch(15% 0.09 145)", "oklch(27% 0.12 145)", "oklch(39% 0.15 145)", "oklch(51% 0.17 145)", "oklch(63% 0.17 145)", "oklch(75% 0.14 145)", "oklch(87% 0.08 145)", "oklch(95% 0.03 145)"]
+      },
+      "state-orange": {
+        "role": "secondary",
+        "displayName": "Attention Orange",
+        "canonical": "#F97316",
+        "tonalRamp": ["oklch(15% 0.1 48)", "oklch(27% 0.13 48)", "oklch(39% 0.16 48)", "oklch(51% 0.19 48)", "oklch(63% 0.19 48)", "oklch(75% 0.15 48)", "oklch(87% 0.09 48)", "oklch(95% 0.035 48)"]
+      },
+      "danger-red": {
+        "role": "secondary",
+        "displayName": "Danger Red",
+        "canonical": "#EF4444",
+        "tonalRamp": ["oklch(15% 0.11 25)", "oklch(27% 0.15 25)", "oklch(39% 0.18 25)", "oklch(51% 0.2 25)", "oklch(63% 0.19 25)", "oklch(75% 0.15 25)", "oklch(87% 0.09 25)", "oklch(95% 0.035 25)"]
+      }
+    },
+    "typographyMeta": {
+      "display": {"displayName": "Dashboard Welcome", "purpose": "The student greeting only."},
+      "title": {"displayName": "Content Title", "purpose": "Course names and primary record emphasis."},
+      "section-label": {"displayName": "Dashboard Section", "purpose": "Muted group headings aligned with their first record border."},
+      "body": {"displayName": "Dashboard Body", "purpose": "Search, guidance, and readable supporting copy."},
+      "label": {"displayName": "Compact Utility", "purpose": "Links, metadata controls, chips, and status text."}
+    },
+    "shadows": [
+      {"name": "ambient-panel", "value": "0 1px 2px rgba(20, 26, 43, 0.04), 0 4px 16px rgba(20, 26, 43, 0.04)", "purpose": "Dashboard panels and the assistant rail."},
+      {"name": "interactive-course-lift", "value": "0 10px 24px rgba(20, 26, 43, 0.08)", "purpose": "Course-card hover only."},
+      {"name": "transient-overlay", "value": "0 16px 34px rgba(20, 26, 43, 0.13)", "purpose": "Search results and temporary menus."}
+    ],
+    "motion": [
+      {"name": "dashboard-state", "value": "160ms ease", "purpose": "Border, tonal, arrow, and course-card feedback."},
+      {"name": "reduced-motion", "value": "none", "purpose": "Disable course-card and arrow transitions when reduced motion is requested."}
+    ],
+    "breakpoints": [
+      {"name": "assistant-stack", "value": "1040px"},
+      {"name": "single-column-content", "value": "760px"},
+      {"name": "bottom-navigation", "value": "700px"},
+      {"name": "row-status-wrap", "value": "520px"}
+    ]
+  },
+  "components": [
+    {
+      "name": "Dashboard Content Group",
+      "kind": "custom",
+      "description": "A section heading and related list grouped by proximity on the canvas without an outer card.",
+      "html": "<section class=\"ds-content-group\"><h2>Assignments</h2><div class=\"ds-content-list\">Related records</div></section>",
+      "css": ".ds-content-group { display: grid; min-width: 0; gap: 0.625rem; color: var(--xl-text); font-family: var(--xl-font-family); } .ds-content-group h2 { margin: 0; color: var(--xl-text-muted); font-size: 0.9375rem; font-weight: 600; letter-spacing: -0.01em; } .ds-content-list { min-width: 0; color: var(--xl-text-muted); font-size: 0.875rem; }"
+    },
+    {
+      "name": "Dashboard Search",
+      "kind": "input",
+      "refersTo": "search-field",
+      "description": "A pill-shaped search control for courses and assignments.",
+      "html": "<label class=\"ds-search\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"7\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/><path d=\"m20 20-4-4\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg><span class=\"ds-search-label\">Search courses and assignments</span><input aria-label=\"Search courses and assignments\" /></label>",
+      "css": ".ds-search { display: flex; min-height: 44px; align-items: center; gap: 0.65rem; padding: 0 0.95rem; border: 1px solid var(--xl-border); border-radius: var(--xl-radius-pill); background: var(--xl-card-bg); color: var(--xl-text-muted); font-family: var(--xl-font-family); transition: border-color 160ms ease, box-shadow 160ms ease; } .ds-search:focus-within { border-color: color-mix(in srgb, var(--xl-brand) 45%, var(--xl-border)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--xl-brand) 12%, transparent); } .ds-search svg { width: 1.05rem; height: 1.05rem; flex: 0 0 auto; } .ds-search-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; } .ds-search input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--xl-text); font: inherit; font-size: 0.875rem; caret-color: var(--xl-brand); }"
+    },
+    {
+      "name": "Course Card",
+      "kind": "card",
+      "refersTo": "course-card",
+      "description": "A direct course record with accent-aware identity and restrained hover lift.",
+      "html": "<a class=\"ds-course-card\" href=\"#\"><span class=\"ds-course-code\">BIO 201</span><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><h3>Cellular Biology</h3><small>Instructor · Your role: Student</small></a>",
+      "css": ".ds-course-card { --ds-course-accent: var(--xl-brand); display: grid; grid-template-columns: 1fr auto; min-height: 8.5rem; padding: 0.9rem; border: 1px solid var(--xl-border); border-radius: var(--xl-radius-card); background: var(--xl-card-bg); color: var(--xl-text); font-family: var(--xl-font-family); text-decoration: none; transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease; } .ds-course-card:hover { border-color: color-mix(in srgb, var(--ds-course-accent) 42%, var(--xl-border)); box-shadow: 0 10px 24px rgb(20 26 43 / 0.08); transform: translateY(-2px); } .ds-course-card:focus-visible { outline: 3px solid color-mix(in srgb, var(--ds-course-accent) 30%, transparent); outline-offset: 2px; } .ds-course-card svg { width: 1rem; height: 1rem; color: var(--xl-text-muted); } .ds-course-code { width: fit-content; padding: 0.25rem 0.55rem; border-radius: var(--xl-radius-pill); background: color-mix(in srgb, var(--ds-course-accent) 14%, var(--xl-card-bg)); color: color-mix(in srgb, var(--ds-course-accent) 78%, var(--xl-text)); font-size: 0.7rem; font-weight: 700; } .ds-course-card h3 { grid-column: 1 / -1; margin: 0.8rem 0 1.05rem; font-size: 1rem; letter-spacing: -0.015em; } .ds-course-card small { grid-column: 1 / -1; align-self: end; color: var(--xl-text-muted); font-size: 0.68rem; } @media (prefers-reduced-motion: reduce) { .ds-course-card { transition: none; } }"
+    },
+    {
+      "name": "Dashboard Record Row",
+      "kind": "custom",
+      "refersTo": "record-row",
+      "description": "The shared compact pattern for assignments and announcements.",
+      "html": "<a class=\"ds-record\" href=\"#\"><span class=\"ds-record-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 3h9l3 3v15H6zM9 11h6M9 15h6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></span><span class=\"ds-record-copy\"><strong>Research reflection</strong><small>BIO 201 · Due Friday</small></span><span class=\"ds-record-chip\">Upcoming</span></a>",
+      "css": ".ds-record { display: grid; min-height: 4.2rem; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.7rem; padding: 0.65rem 0.7rem; border: 1px solid var(--xl-border); border-radius: var(--xl-radius-control); background: var(--xl-card-bg); color: var(--xl-text); font-family: var(--xl-font-family); text-decoration: none; transition: border-color 160ms ease, background-color 160ms ease; } .ds-record:hover { border-color: color-mix(in srgb, var(--xl-brand) 40%, var(--xl-border)); background: var(--xl-subcard-bg); } .ds-record:focus-visible { outline: 3px solid color-mix(in srgb, var(--xl-brand) 22%, transparent); outline-offset: 2px; } .ds-record-icon { display: grid; width: 2.15rem; height: 2.15rem; border-radius: var(--xl-radius-control-sm); background: var(--xl-brand-subtle); color: var(--xl-brand); place-items: center; } .ds-record-icon svg { width: 1rem; height: 1rem; } .ds-record-copy { display: flex; min-width: 0; flex-direction: column; gap: 0.18rem; } .ds-record-copy strong { overflow: hidden; font-size: 0.82rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; } .ds-record-copy small { color: var(--xl-text-muted); font-size: 0.68rem; } .ds-record-chip { padding: 0.35rem 0.55rem; border-radius: var(--xl-radius-pill); background: var(--xl-brand-subtle); color: var(--xl-brand-strong); font-size: 0.66rem; font-weight: 600; }"
+    },
+    {
+      "name": "Unread Status Chip",
+      "kind": "chip",
+      "refersTo": "status-chip",
+      "description": "Text-backed compact state emphasis for unread or selected content.",
+      "html": "<span class=\"ds-status-chip\">New</span>",
+      "css": ".ds-status-chip { display: inline-flex; min-height: 1.75rem; align-items: center; padding: 0 0.55rem; border-radius: var(--xl-radius-pill); background: var(--xl-brand-subtle); color: var(--xl-brand-strong); font-family: var(--xl-font-family); font-size: 0.66rem; font-weight: 600; }"
+    },
+    {
+      "name": "Assistant Composer",
+      "kind": "custom",
+      "description": "The explicit user-action boundary for course-aware dashboard assistance.",
+      "html": "<form class=\"ds-composer\"><button class=\"ds-course-selector\" type=\"button\">BIO 201</button><label><span>Ask Coursistant AI</span><textarea rows=\"3\" placeholder=\"Ask about this course…\"></textarea></label><button class=\"ds-send\" type=\"submit\">Send</button></form>",
+      "css": ".ds-composer { display: grid; grid-template-columns: 1fr auto; gap: 0.65rem; padding: 0.7rem; border: 1px solid var(--xl-border); border-radius: var(--xl-radius-card); background: var(--xl-card-bg); color: var(--xl-text); font-family: var(--xl-font-family); } .ds-course-selector { grid-column: 1 / -1; width: fit-content; min-height: 2rem; padding: 0.2rem 0.55rem; border: 1px solid var(--xl-brand); border-radius: var(--xl-radius-control-sm); background: transparent; color: var(--xl-brand-strong); font: inherit; font-size: 0.7rem; cursor: pointer; } .ds-composer label { min-width: 0; } .ds-composer label span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; } .ds-composer textarea { width: 100%; min-height: 3.25rem; max-height: 11rem; resize: none; border: 0; outline: 0; background: transparent; color: var(--xl-text); font: inherit; font-size: 0.875rem; line-height: 1.45; } .ds-send { align-self: end; min-height: 44px; padding: 0.5rem 1rem; border: 0; border-radius: 8px; background: var(--xl-brand); color: white; font: inherit; font-weight: 600; cursor: pointer; } .ds-send:hover { background: var(--xl-brand-strong); } .ds-course-selector:focus-visible, .ds-send:focus-visible { outline: 3px solid color-mix(in srgb, var(--xl-brand) 28%, transparent); outline-offset: 2px; }"
+    },
+    {
+      "name": "Active Dashboard Navigation Item",
+      "kind": "nav",
+      "description": "The compact indigo active destination used in the dashboard rail or bottom bar.",
+      "html": "<a class=\"ds-nav-item\" href=\"#\" aria-current=\"page\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 13h6V4H4zM14 20h6v-9h-6zM14 4h6v3h-6zM4 20h6v-3H4z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/></svg><span>Dashboard</span></a>",
+      "css": ".ds-nav-item { display: flex; min-width: 4.5rem; min-height: 4.5rem; flex-direction: column; align-items: center; justify-content: center; gap: 0.45rem; padding: 0.65rem 0.2rem; border-radius: var(--xl-radius-card); background: var(--xl-brand); color: white; box-shadow: 0 5px 12px color-mix(in srgb, var(--xl-brand) 20%, transparent); font-family: var(--xl-font-family); font-size: 0.7rem; text-decoration: none; } .ds-nav-item svg { width: 1.35rem; height: 1.35rem; } .ds-nav-item:hover { background: var(--xl-brand-strong); } .ds-nav-item:focus-visible { outline: 3px solid color-mix(in srgb, var(--xl-brand) 34%, white); outline-offset: 3px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Course Command Desk",
+    "overview": "The authenticated student dashboard is a compact operating surface for answering three questions quickly: what course am I in, what needs attention, and where can I get help? Its form follows the user-pinned reference: a framed application shell, course overview, paired work and announcement lists, and a persistent assistant rail on wide screens. Coursistant's own indigo identity and real LMS data remain authoritative; the reference supplies structure, not palette, content, or third-party branding.\n\nThe visual system is calm, dense, and operational. Section headings sit directly on the cool gray canvas while white course and record cards carry actionable content, avoiding redundant outer panels. AI assistance remains visible but user-initiated, and every data region preserves distinct loading, empty, and error states.\n\nThis document is scoped to the signed-in student dashboard and its dashboard-specific shell treatment. Use it when extending that surface; do not restyle unrelated LMS screens without a separate design decision.",
+    "keyCharacteristics": [
+      "Compact framed shell with a narrow navigation rail, a 24px desktop content gutter, and a task-first content column.",
+      "White operating surfaces over a cool gray canvas, with quiet borders and minimal shadow.",
+      "Coursistant indigo reserved for identity, focus, links, selection, and primary action.",
+      "Real course and state colors used sparingly for meaning, never as decorative palette copying.",
+      "Persistent course-aware assistant rail on wide screens; normal-flow stacked assistant below the dashboard on narrower screens."
+    ],
+    "rules": [
+      {"name": "The One Indigo Voice Rule", "body": "Indigo communicates identity or state; it does not wash large dashboard regions or compete with course content.", "section": "colors"},
+      {"name": "The Meaning Before Color Rule", "body": "Cyan, green, orange, and red appear only when a course or status meaning supports them.", "section": "colors"},
+      {"name": "The Weight Carries Hierarchy Rule", "body": "Use the shared family across display, utility, and data roles; do not introduce a decorative display face or tracked all-caps eyebrow to manufacture hierarchy.", "section": "typography"},
+      {"name": "The Breathing Gutter Rule", "body": "Desktop content uses a 24px shell gutter, the welcome adds 12px of top air, and the assistant brand heading uses a compact mark to maintain a clear boundary offset.", "section": "layout"},
+      {"name": "The Task Order Rule", "body": "Narrow layouts preserve the reading and action order: orientation, search, courses, assignments, announcements, then assistant.", "section": "layout"},
+      {"name": "The Independent Region Rule", "body": "Loading, empty, and error states belong inside their own content region; one unavailable endpoint must not collapse or misrepresent neighboring regions.", "section": "layout"},
+      {"name": "The Flat-By-Default Rule", "body": "Rows and controls are flat at rest; elevation appears only for panel hierarchy, transient overlays, or an explicit interactive response.", "section": "elevation"},
+      {"name": "The Honest Container Rule", "body": "Add a card boundary only around a real functional region or navigable record; spacing alone should organize incidental wrappers.", "section": "shapes"}
+    ],
+    "dos": [
+      "Do preserve the pinned form: compact shell, course overview, paired work/announcement regions, and a persistent wide-screen assistant rail.",
+      "Do use the dashboard token source for colors, type, radii, and shadows rather than introducing feature-local visual constants.",
+      "Do keep 44px minimum control targets and visible :focus-visible feedback for search, navigation, row links, retry actions, and assistant controls.",
+      "Do distinguish loading, empty, unavailable, and transport-error states inside each data region.",
+      "Do preserve direct links to the exact course object whenever the contract exposes one."
+    ],
+    "donts": [
+      "Don't copy the reference palette, third-party branding, or fabricated course records; its authority is form only.",
+      "Don't turn semantic course/status colors into decorative accents or full-panel washes.",
+      "Don't make AI generate on page load, hide its course context, or let the rail compress below usable composer dimensions.",
+      "Don't wrap every row or wrapper in another elevated card; use spacing, border, and tonal layering first.",
+      "Don't communicate selected, unread, warning, complete, or error states by color alone."
+    ]
+  }
+}

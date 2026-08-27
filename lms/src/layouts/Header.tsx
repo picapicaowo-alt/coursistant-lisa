@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from 'react';
+import {ReactNode, useEffect, useRef, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {useTranslation} from 'react-i18next';
 import {useAuth} from '../contexts/AuthContext';
@@ -12,7 +12,12 @@ interface MenuItem {
   path?: string;
 }
 
-const Header = () => {
+interface HeaderProps {
+  compact?: boolean;
+  children?: ReactNode;
+}
+
+const Header = ({compact = false, children}: HeaderProps) => {
   const {t} = useTranslation();
   const {user, logout} = useAuth();
   const navigate = useNavigate();
@@ -54,8 +59,8 @@ const Header = () => {
   };
 
   return (
-    <div className="lms-home-header">
-      <div className="spacer"/>
+    <header className={`lms-home-header${compact ? ' dashboard-header' : ''}`}>
+      {children ? <div className="dashboard-search-slot">{children}</div> : <div className="spacer"/>}
       {user?.role === 'USER' && <NotificationCenter/>}
       <div className="profile">
         <img
@@ -93,7 +98,7 @@ const Header = () => {
           )}
         </div>
       </div>
-    </div>
+    </header>
   );
 };
 

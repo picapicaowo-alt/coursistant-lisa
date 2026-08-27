@@ -145,6 +145,37 @@ $secondary-color: #718096;
     }
 }
 
+.lms-home-header.dashboard-header {
+    min-height: 4.5rem;
+    margin: 0;
+    padding: .7rem 1.25rem;
+    border-bottom: 1px solid t.$border;
+    background: t.$card-bg;
+
+    .dashboard-search-slot {
+        width: min(25rem, 40vw);
+        margin-right: auto;
+    }
+
+    .profile {
+        align-self: center;
+        padding: .35rem .45rem;
+        border: 1px solid t.$border;
+        border-radius: t.$radius-pill;
+
+        .profile-avatar {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .profile-info p { font-size: .78rem; }
+        .profile-info .profile-email { color: t.$text-muted; font-size: .68rem; }
+        .profile-arrow-container .profile-arrow-button { width: 2rem; height: 2rem; }
+    }
+}
+
 @media (max-width: 700px) {
     .lms-home-header {
         min-width: 0;
@@ -186,5 +217,13 @@ $secondary-color: #718096;
                 right: 0;
             }
         }
+    }
+
+    .lms-home-header.dashboard-header {
+        min-height: 0;
+        padding: .75rem 1rem;
+
+        .profile { border: 0; padding: 0; }
+        .dashboard-search-slot { display: none; }
     }
 }

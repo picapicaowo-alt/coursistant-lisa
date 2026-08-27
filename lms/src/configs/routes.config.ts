@@ -37,7 +37,7 @@ export const SIDEBAR_CONFIGS: SidebarConfig[] = [
     },
   },
   {
-    name: "AI Workplace",
+    name: "AI Assistant",
     path: "/aibot",
     sidebarItem: {
       filledIcon: "/icons/ai_course.png",

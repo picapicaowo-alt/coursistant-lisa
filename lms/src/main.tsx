@@ -1,4 +1,5 @@
 import {createRoot} from 'react-dom/client'
+import '@fontsource-variable/plus-jakarta-sans'
 import './styles/tokens.global.scss'
 import './index.css'
 import App from './App'

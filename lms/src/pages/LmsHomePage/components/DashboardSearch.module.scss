@@ -1,0 +1,101 @@
+.searchRegion {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+}
+
+.search {
+    display: flex;
+    min-height: t.$control-size;
+    align-items: center;
+    gap: .65rem;
+    padding: 0 .95rem;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-pill;
+    background: t.$card-bg;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+
+    &:focus-within {
+        border-color: rgba(t.$brand, .45);
+        box-shadow: 0 0 0 3px rgba(t.$brand, .12);
+    }
+
+    svg {
+        width: 1.05rem;
+        height: 1.05rem;
+        flex: 0 0 auto;
+        color: t.$text-muted;
+    }
+
+    input {
+        width: 100%;
+        min-width: 0;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: t.$text;
+        font: inherit;
+        font-size: .875rem;
+        caret-color: t.$brand;
+
+        &::placeholder {
+            color: t.$text-muted;
+            opacity: 1;
+        }
+    }
+}
+
+.results {
+    position: absolute;
+    inset: calc(100% + .45rem) 0 auto;
+    z-index: 30;
+    padding: .4rem;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-card;
+    background: t.$card-bg;
+    box-shadow: 0 16px 34px rgba(t.$text, .13);
+
+    a {
+        display: flex;
+        min-height: t.$control-size;
+        align-items: center;
+        gap: .7rem;
+        padding: .55rem .65rem;
+        border-radius: t.$radius-control-sm;
+        color: t.$text;
+        text-decoration: none;
+
+        &:hover,
+        &:focus-visible { background: t.$brand-subtle; }
+        &:focus-visible { outline: 2px solid t.$brand; }
+    }
+
+    svg {
+        width: 1rem;
+        height: 1rem;
+        flex: 0 0 auto;
+        color: t.$brand;
+    }
+
+    span {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        font-size: .82rem;
+        font-weight: t.$fw-semibold;
+    }
+
+    small {
+        color: t.$text-muted;
+        font-size: .7rem;
+        font-weight: t.$fw-regular;
+    }
+
+    p {
+        margin: 0;
+        padding: .8rem;
+        color: t.$text-muted;
+        font-size: .8rem;
+        text-align: center;
+    }
+}

@@ -51,3 +51,21 @@ html,
 *:hover::-webkit-scrollbar-track {
     background: transparent;
 }
+
+.tsqd-parent-container {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 1200;
+}
+
+body:has([data-dashboard-root]) .tsqd-parent-container {
+    display: none;
+}
+
+@media (max-width: 700px) {
+    .tsqd-parent-container {
+        right: .75rem;
+        bottom: 5.5rem;
+    }
+}

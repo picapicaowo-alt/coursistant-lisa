@@ -15,7 +15,7 @@ export function QueryProvider({children}: PropsWithChildren) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      {import.meta.env.DEV ? <ReactQueryDevtools initialIsOpen={false}/> : null}
+      {import.meta.env.DEV ? <ReactQueryDevtools initialIsOpen={false} buttonPosition="relative"/> : null}
     </QueryClientProvider>
   )
 }
