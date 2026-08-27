@@ -1,7 +1,9 @@
-import {BookOpenCheck, Clock3} from 'lucide-react';
+import {BookOpenCheck} from 'lucide-react';
 import {Link} from 'react-router-dom';
 import {SubmissionStatus} from '@/apis';
-import {AssignmentRow, useDashboardAssignments} from '@/pages/LmsHomePage/hooks/useDashboardAssignments';
+import DashboardEmptyState from '@/components/DashboardEmptyState/DashboardEmptyState';
+import {AssignmentRow} from '@/pages/LmsHomePage/hooks/useDashboardAssignments';
+import {useDashboardMoreAssignments} from '@/pages/LmsHomePage/hooks/useDashboardMoreAssignments';
 import {formatDeadline, isPastDeadline} from '@/utils/datetime';
 import styles from './AssignmentComponent.module.scss';
 
@@ -25,26 +27,46 @@ const studentAction = (status: SubmissionStatus): string | null => {
   return null;
 };
 
-const AssignmentComponent = () => {
-  const {rows, isInstructor, isLoading, isError, refetch} = useDashboardAssignments();
+interface AssignmentComponentProps {
+  title?: string;
+  limit?: number;
+}
+
+const AssignmentComponent = ({title = 'Assignments', limit = 4}: AssignmentComponentProps) => {
+  const {rows, hasDueNext, isInstructor, isLoading, isError, refetch} = useDashboardMoreAssignments();
+  const visibleRows = rows.slice(0, limit);
+  const isEmpty = !isLoading && !isError && visibleRows.length === 0;
+  const emptyState = hasDueNext
+    ? {
+      title: isInstructor ? 'No other upcoming deadlines' : 'No other upcoming assignments',
+      description: 'Your next assignment is shown above.',
+    }
+    : {
+      title: isInstructor ? 'No upcoming deadlines' : 'No upcoming assignments',
+      description: 'New assignments will appear here.',
+    };
 
   return (
     <div className={styles.section}>
       <div className={styles.header}>
-        <h2>Assignments</h2>
+        <h2>{title}</h2>
         {rows[0] ? (
-          <Link to={`/course/${rows[0].courseId}`} aria-label={`See all work in ${rows[0].courseCode}`}>
+          <Link to="/calendar" aria-label="View all assignments in Calendar">
             View all
           </Link>
         ) : null}
       </div>
-      <div className={styles.list}>
+      <div
+        className={`${styles.list} ${isEmpty ? styles.emptyList : ''}`}
+        data-dashboard-list-state={isEmpty ? 'empty' : 'populated'}
+      >
         <Body
-          rows={rows.slice(0, 4)}
+          rows={visibleRows}
           isInstructor={isInstructor}
           isLoading={isLoading}
           isError={isError}
           refetch={refetch}
+          emptyState={emptyState}
         />
       </div>
     </div>
@@ -57,9 +79,10 @@ interface BodyProps {
   isLoading: boolean;
   isError: boolean;
   refetch: () => void;
+  emptyState: {title: string; description: string};
 }
 
-const Body = ({rows, isInstructor, isLoading, isError, refetch}: BodyProps) => {
+const Body = ({rows, isInstructor, isLoading, isError, refetch, emptyState}: BodyProps) => {
   if (isLoading) return <p className={styles.state}>Loading assignments…</p>;
 
   if (isError) {
@@ -72,7 +95,12 @@ const Body = ({rows, isInstructor, isLoading, isError, refetch}: BodyProps) => {
   }
 
   if (rows.length === 0) {
-    return <p className={styles.state}>{isInstructor ? 'No upcoming deadlines.' : 'Nothing due in the next 14 days.'}</p>;
+    return (
+      <DashboardEmptyState
+        title={emptyState.title}
+        description={emptyState.description}
+      />
+    );
   }
 
   return <>{rows.map(row => <AssignmentItem key={row.key} row={row} isInstructor={isInstructor}/>)}</>;
@@ -81,7 +109,9 @@ const Body = ({rows, isInstructor, isLoading, isError, refetch}: BodyProps) => {
 const AssignmentItem = ({row, isInstructor}: {row: AssignmentRow; isInstructor: boolean}) => {
   const overdue = isPastDeadline(row.atLocal, row.timezone);
   const statusLabel = isInstructor
-    ? (overdue ? 'Past due' : `${row.progress?.submitted ?? 0}/${row.progress?.total ?? 0} submitted`)
+    ? (overdue
+      ? 'Past due'
+      : (row.progress ? `${row.progress.submitted}/${row.progress.total} submitted` : 'Upcoming'))
     : (row.submissionStatus ? STATUS_LABEL[row.submissionStatus] : 'Upcoming');
   const statusClass = isInstructor
     ? (overdue ? styles.closed : styles.complete)
@@ -96,8 +126,7 @@ const AssignmentItem = ({row, isInstructor}: {row: AssignmentRow; isInstructor: 
         <small>
           {row.courseCode}
           <span aria-hidden="true">·</span>
-          <Clock3 aria-hidden="true"/>
-          {formatDeadline(row.atLocal, row.timezone)}
+          Due {formatDeadline(row.atLocal, row.timezone)}
         </small>
       </span>
       {action ? (

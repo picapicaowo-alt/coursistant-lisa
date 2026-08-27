@@ -88,54 +88,164 @@
     }
 }
 
+.dashboardHeader {
+    min-height: t.$dashboard-shell-header-height;
+    margin: 0;
+    padding: 12px t.$dashboard-assistant-header-gutter;
+
+    .chatTitle {
+        h2 {
+            color: t.$text;
+            font-size: .9rem;
+            font-weight: t.$fw-bold;
+            letter-spacing: -.02em;
+        }
+
+        p {
+            display: flex;
+            align-items: center;
+            gap: .32rem;
+            color: color-mix(in srgb, t.$success 62%, t.$text);
+            font-size: .68rem;
+
+            &::before {
+                width: .4rem;
+                height: .4rem;
+                border-radius: 50%;
+                background: t.$success;
+                content: '';
+            }
+        }
+    }
+
+    .glassButton {
+        min-height: 2.25rem;
+        gap: .35rem;
+        padding: 0 .85rem;
+        border: 1px solid t.$border;
+        border-radius: t.$radius-pill;
+        background: t.$card-bg;
+        color: t.$text;
+        font-size: .76rem;
+        font-weight: t.$fw-semibold;
+        backdrop-filter: none;
+
+        svg { width: .9rem; height: .9rem; }
+        &:hover { border-color: rgba(t.$brand, .35); background: t.$subcard-bg; }
+    }
+}
+
+.chatMain { min-height: 0; }
+
+.dashboardMain {
+    height: auto;
+    min-height: 0;
+    flex: 1 1 auto;
+    padding: 0 !important;
+}
+
+.messageViewport {
+    min-height: 0;
+    scrollbar-color: t.$dashboard-scrollbar-thumb t.$dashboard-scrollbar-track;
+    scrollbar-width: thin;
+
+    &::-webkit-scrollbar { width: t.$dashboard-scrollbar-size; }
+    &::-webkit-scrollbar-track { background: t.$dashboard-scrollbar-track; }
+    &::-webkit-scrollbar-thumb {
+        border-radius: t.$radius-pill;
+        background: t.$dashboard-scrollbar-thumb;
+    }
+}
+
+.dashboardViewport { padding: 24px t.$dashboard-assistant-content-gutter !important; }
+
 .dashboardEmpty {
     display: flex;
-    min-height: 100%;
     flex-direction: column;
-    justify-content: space-between;
-    gap: 1.25rem;
-    padding: .85rem .35rem;
+    gap: 1rem;
 
     h3 {
-        max-width: 14ch;
         margin: 0;
         color: t.$text;
-        font-size: 1.25rem;
+        font-size: 1.125rem;
         font-weight: t.$fw-bold;
         letter-spacing: -.025em;
-        line-height: 1.25;
+        line-height: 1.3;
     }
 
     p {
         max-width: 32ch;
-        margin: .55rem 0 0;
+        margin: .45rem 0 0;
         color: t.$text-muted;
-        font-size: .78rem;
+        font-size: .76rem;
         line-height: 1.5;
     }
 }
 
 .dashboardPrompts {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .4rem;
+    display: grid;
+    gap: t.$dashboard-assistant-prompt-gap;
 
     button {
-        min-height: 2rem;
-        padding: .35rem .65rem;
+        display: grid;
+        min-width: 0;
+        min-height: t.$dashboard-assistant-prompt-min-height;
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: center;
+        gap: .75rem;
+        padding: .75rem;
         border: 1px solid t.$border;
-        border-radius: t.$radius-pill;
+        border-radius: t.$radius-control;
         background: t.$card-bg;
-        color: t.$text-muted;
+        color: t.$text;
         cursor: pointer;
         font: inherit;
-        font-size: .67rem;
-        line-height: 1.2;
+        text-align: left;
+        transition: border-color 160ms ease, background-color 160ms ease;
 
-        &:hover { border-color: rgba(t.$brand, .35); color: t.$brand-strong; }
+        &:hover { border-color: rgba(t.$brand, .35); background: t.$subcard-bg; }
         &:focus-visible { outline: 2px solid t.$brand; outline-offset: 2px; }
     }
 }
+
+.dashboardPromptIcon {
+    display: grid;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: t.$radius-control-sm;
+    place-items: center;
+
+    svg { width: 1.1rem; height: 1.1rem; }
+}
+
+.dashboardPromptCopy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: .16rem;
+
+    strong {
+        overflow: hidden;
+        font-size: .8rem;
+        font-weight: t.$fw-semibold;
+        line-height: 1.3;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    small {
+        overflow: hidden;
+        color: t.$text-muted;
+        font-size: .68rem;
+        line-height: 1.3;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+.primary { background: t.$brand-subtle; color: t.$brand; }
+.cyan { background: t.$type-cyan-subtle; color: color-mix(in srgb, t.$type-cyan 72%, t.$text); }
+.green { background: t.$type-green-subtle; color: color-mix(in srgb, t.$type-green 72%, t.$text); }
 
 .spacer {
     flex: 1;
@@ -146,6 +256,28 @@
     height: 1px;
     border: 1px dashed rgba(226, 232, 240, 1);
     margin: t.$dashboard-assistant-divider-space auto;
+}
+
+.dashboardDivider {
+    height: 1px;
+    margin: 0;
+    border: 0;
+    border-top: 1px solid t.$border;
+}
+
+.composerDock { min-width: 0; }
+
+.dashboardComposerDock {
+    flex: 0 0 auto;
+    padding: 16px;
+    border-top: 1px solid t.$border;
+    background: t.$card-bg;
+}
+
+.coursePicker {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
 }
 
 .chatInputContainer {
@@ -263,6 +395,97 @@
             outline-offset: 2px;
         }
     }
+}
+
+.dashboardComposerDock .chatInputContainer {
+    min-height: t.$dashboard-assistant-composer-min-height;
+    padding: .75rem;
+    border-color: t.$border;
+    border-radius: t.$radius-card;
+    margin: 0;
+    background: t.$subcard-bg;
+
+    .chatCourse {
+        width: auto;
+        max-width: 100%;
+        justify-content: flex-start;
+        padding: .25rem .6rem;
+        border-color: rgba(t.$brand, .35);
+        border-radius: t.$radius-pill;
+        background: t.$card-bg;
+
+        p {
+            max-width: 12rem;
+            overflow: hidden;
+            color: t.$brand;
+            font-weight: t.$fw-semibold;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+
+    .chatInputMessage .chatMarkdownEditor {
+        margin-top: .45rem;
+        background: transparent;
+        --composer-min-height: 3.1rem;
+    }
+
+    .chatFooterSend {
+        width: 2.25rem;
+        height: 2.25rem;
+        padding: 0;
+        border-radius: 50%;
+        background: t.$brand;
+
+        svg { width: 1rem; height: 1rem; }
+        &:hover { background: t.$brand-strong; }
+    }
+}
+
+.courseListbox {
+    position: absolute;
+    z-index: 1000;
+    top: calc(100% + .4rem);
+    left: 0;
+    width: min(15rem, calc(100vw - 3rem));
+    max-height: 16rem;
+    padding: .35rem;
+    overflow-y: auto;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-control;
+    background: t.$card-bg;
+    box-shadow: t.$shadow-card;
+}
+
+.courseOption {
+    width: 100%;
+    padding: .55rem .65rem;
+    overflow: hidden;
+    border: 0;
+    border-radius: t.$radius-control-sm;
+    background: transparent;
+    color: t.$text;
+    cursor: pointer;
+    font: inherit;
+    font-size: .76rem;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:hover { background: t.$subcard-bg; }
+    &:focus-visible { outline: 2px solid t.$brand; outline-offset: -2px; }
+}
+
+.courseOptionActive { background: t.$brand-subtle; color: t.$brand-strong; }
+
+.dashboardSendHint {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    color: t.$text-muted;
+    font-size: .68rem;
+
+    svg { width: .85rem; height: .85rem; }
 }
 
 .selectedFile,

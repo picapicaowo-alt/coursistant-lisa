@@ -1,4 +1,9 @@
-.section { min-width: 0; }
+.section {
+    display: flex;
+    min-width: 0;
+    height: 100%;
+    flex-direction: column;
+}
 
 .header {
     display: flex;
@@ -13,7 +18,8 @@
         color: t.$dashboard-section-title-color;
         font-size: t.$dashboard-section-title-size;
         font-weight: t.$dashboard-section-title-weight;
-        letter-spacing: t.$dashboard-section-title-tracking;
+        letter-spacing: .025em;
+        text-transform: uppercase;
     }
 
     a {
@@ -30,16 +36,28 @@
     }
 }
 
-.list { display: grid; gap: t.$dashboard-record-gap; }
+.list {
+    display: grid;
+    min-height: 0;
+    flex: 1;
+    align-content: start;
+    gap: t.$dashboard-record-gap;
+}
+
+.emptyList {
+    min-height: var(--dashboard-empty-surface-min-height, #{t.$dashboard-empty-card-min-height});
+    grid-template-rows: minmax(var(--dashboard-empty-surface-min-height, #{t.$dashboard-empty-card-min-height}), 1fr);
+    align-content: stretch;
+}
 
 .item {
     display: grid;
     min-width: 0;
-    min-height: 4.2rem;
+    min-height: t.$dashboard-record-min-height;
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     gap: .7rem;
-    padding: .65rem .7rem;
+    padding: t.$dashboard-record-padding;
     border: 1px solid t.$border;
     border-radius: t.$radius-control;
     color: t.$text;
@@ -53,8 +71,8 @@
 
 .icon {
     display: grid;
-    width: 2.15rem;
-    height: 2.15rem;
+    width: t.$dashboard-record-mark-size;
+    height: t.$dashboard-record-mark-size;
     border-radius: t.$radius-control-sm;
     background: t.$brand-subtle;
     color: t.$brand;
@@ -71,7 +89,7 @@
 
     strong {
         overflow: hidden;
-        font-size: .82rem;
+        font-size: .84rem;
         font-weight: t.$fw-semibold;
         line-height: 1.3;
         text-overflow: ellipsis;
@@ -88,15 +106,20 @@
 }
 
 .unread {
-    display: inline-flex;
-    min-height: 1.75rem;
-    align-items: center;
-    padding: 0 .55rem;
-    border-radius: t.$radius-pill;
-    background: t.$brand-subtle;
-    color: t.$brand-strong;
-    font-size: .66rem;
-    font-weight: t.$fw-semibold;
+    width: .5rem;
+    height: .5rem;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: t.$brand;
+}
+
+.srOnly {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
 }
 
 .state {

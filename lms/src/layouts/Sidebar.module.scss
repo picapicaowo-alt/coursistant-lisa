@@ -68,26 +68,26 @@
 }
 
 .compact {
-    min-width: 96px;
+    min-width: t.$dashboard-shell-sidebar-width;
     min-height: 0;
     padding-top: 1rem;
     border-radius: t.$radius-modal 0 0 t.$radius-modal;
 
-    .logo img { width: 48px; }
+    .logo img { width: 40px; }
 
     .itemContent {
-        min-width: 4.5rem;
-        min-height: 4.5rem;
-        margin: .65rem 0;
-        padding: .65rem .2rem;
+        min-width: 4rem;
+        min-height: 3.75rem;
+        margin: .55rem 0;
+        padding: .55rem .15rem;
 
-        .responsiveImage { width: 22px; margin-bottom: .45rem; }
-        span { margin: 0 .35rem; }
+        .responsiveImage { width: 20px; margin-bottom: .35rem; }
+        span { margin: 0 .2rem; }
 
         &.active {
-            border-radius: t.$radius-card;
+            border-radius: t.$radius-control;
             background: t.$brand;
-            box-shadow: 0 5px 12px rgba(t.$brand, .2);
+            box-shadow: none;
         }
     }
 }

@@ -57,7 +57,7 @@ export interface DashboardCourse {
   courseRole: 'Student' | 'TA' | 'Instructor';
 }
 
-export type WidgetId = 'chat' | 'course' | 'assignments' | 'learning-schedule' | 'posts' | 'average-score' | 'instructor-work';
+export type WidgetId = 'course' | 'assignments' | 'learning-schedule' | 'posts' | 'average-score' | 'instructor-work';
 
 export interface WidgetLayoutConfig {
   default: { w: number; h: number };

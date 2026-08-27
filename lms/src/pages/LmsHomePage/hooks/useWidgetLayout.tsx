@@ -1,13 +1,13 @@
 ﻿import React, {useMemo, useRef} from 'react';
 import {calculateLayout, getColumns, getScreenSize} from '../utils/layoutCalculations';
 import {useContainerWidth} from 'react-grid-layout';
-import ChatComponent from "@/pages/LmsHomePage/components/ChatComponent.js";
 import AssignmentComponent from "@/sections/assignments/AssignmentComponent";
 import CourseComponent from "../components/CourseComponent.js";
 import LearningScheduleComponent from "@/sections/learning_schedule/LearningScheduleComponent";
 import PostComponent from "@/sections/posts/PostComponent";
 import AverageScoreComponent from '../components/AverageScoreComponent';
-import {GridLayoutItem, ScreenSizeInfo, WidgetConfig} from "@/pages/LmsHomePage/types";
+import {GridLayoutItem, ScreenSizeInfo, WidgetConfig, WidgetId} from "@/pages/LmsHomePage/types";
+import {WIDGET_ORDER} from '@/pages/LmsHomePage/constants';
 
 interface UseWidgetLayoutResult {
   containerRef: React.RefObject<HTMLDivElement>;
@@ -25,15 +25,13 @@ interface UseWidgetLayoutResult {
  * not remount widgets or discard their local UI state.
  */
 export const useWidgetLayout = (): UseWidgetLayoutResult => {
-  const chatRef = useRef<HTMLDivElement>(null);
   const assignmentsRef = useRef<HTMLDivElement>(null);
   const courseRef = useRef<HTMLDivElement>(null);
   const learningScheduleRef = useRef<HTMLDivElement>(null);
   const postsRef = useRef<HTMLDivElement>(null);
   const averageScoreRef = useRef<HTMLDivElement>(null);
   
-  const widgetComponents = useMemo(() => ({
-    chat: <ChatComponent/>,
+  const widgetComponents = useMemo<Partial<Record<WidgetId, React.ReactNode>>>(() => ({
     assignments: <AssignmentComponent/>,
     course: <CourseComponent/>,
     'learning-schedule': <LearningScheduleComponent/>,
@@ -41,8 +39,7 @@ export const useWidgetLayout = (): UseWidgetLayoutResult => {
     'average-score': <AverageScoreComponent/>,
   }), []);
   
-  const widgetRefs = useMemo(() => ({
-    chat: chatRef,
+  const widgetRefs = useMemo<Partial<Record<WidgetId, React.RefObject<HTMLDivElement>>>>(() => ({
     assignments: assignmentsRef,
     course: courseRef,
     'learning-schedule': learningScheduleRef,
@@ -51,19 +48,12 @@ export const useWidgetLayout = (): UseWidgetLayoutResult => {
   }), []);
   
   const widgetConfigs = useMemo<WidgetConfig[]>(() => {
-    const baseWidgets = [
-      {key: 'chat', component: widgetComponents.chat},
-      {key: 'assignments', component: widgetComponents.assignments},
-      {key: 'course', component: widgetComponents.course},
-      {key: 'learning-schedule', component: widgetComponents['learning-schedule']},
-      {key: 'posts', component: widgetComponents.posts},
-      {key: 'average-score', component: widgetComponents['average-score']},
-    ];
-    
-    return baseWidgets.map(widget => ({
-      ...widget,
-      ref: widgetRefs[widget.key as keyof typeof widgetRefs],
-    }));
+    return WIDGET_ORDER.flatMap(key => {
+      const component = widgetComponents[key];
+      if (!component) return [];
+
+      return [{key, component, ref: widgetRefs[key]}];
+    });
   }, [widgetComponents, widgetRefs]);
   
   const {width, containerRef, mounted} = useContainerWidth();

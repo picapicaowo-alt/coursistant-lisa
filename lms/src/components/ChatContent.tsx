@@ -1,7 +1,7 @@
 // @ts-nocheck — legacy chat bundle; quarantined until chat migration (PROJECT_STANDARDS.md §13).
 import styles from '../sections/chat/chat-main-component/styles.module.scss';
 import {useState, useRef, useEffect, forwardRef, useImperativeHandle, useCallback} from 'react';
-import {FileText, Paperclip, X} from 'lucide-react';
+import {ArrowUp, BookOpen, CalendarClock, CircleCheck, FileText, Paperclip, Plus, Sparkles, X} from 'lucide-react';
 import TypingText from "../utils/typing-text";
 import {renderMessageText} from '@/utils/render-message-text';
 import {useAuth} from '@/contexts/AuthContext.js';
@@ -22,9 +22,27 @@ const STUDY_SUPPORT_THINKING_STEPS = [
 ];
 
 const DASHBOARD_PROMPTS = [
-  'Summarize this week',
-  'Plan my next study session',
-  'Explain my next assignment',
+  {
+    title: 'Summarize this week',
+    description: (courseName) => `Key points from your ${courseName} materials`,
+    prompt: (courseName) => `Summarize this week for ${courseName}.`,
+    icon: Sparkles,
+    tone: 'primary',
+  },
+  {
+    title: 'Plan my study session',
+    description: () => 'A focused plan around your schedule',
+    prompt: (courseName) => `Plan my next study session for ${courseName}.`,
+    icon: CalendarClock,
+    tone: 'cyan',
+  },
+  {
+    title: 'Explain my next assignment',
+    description: () => 'Break down the next item on your course list',
+    prompt: (courseName) => `Explain my next assignment for ${courseName}.`,
+    icon: BookOpen,
+    tone: 'green',
+  },
 ];
 
 interface Props {
@@ -35,6 +53,7 @@ interface Props {
   setIsChatbotOpen?: (a: boolean) => void,
   showHistory?: false,
   setShowHistory?: (a: boolean) => void,
+  dashboardRequest?: {courseId: number; prompt: string; requestId: number} | null,
 }
 
 const ChatContent = forwardRef<HTMLDivElement, Props>(
@@ -130,17 +149,6 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
           : selectedCourseId === 0
             ? `Study Support is locked because an active quiz attempt is open in ${lockedCourseNames || 'one of your courses'}. Select a course without an active attempt to continue.`
             : `Study Support is unavailable for ${currentCourseName} while you have an active quiz attempt. Submit or finalize the attempt before using course assistance.`;
-    const menuItemStyle = (active) => ({
-      display: 'block',
-      width: '100%',
-      textAlign: 'left',
-      padding: '8px 10px',
-      fontSize: 14,
-      background: active ? '#EEF2FF' : 'transparent',
-      color: '#0f172a',
-      border: 'none',
-      cursor: 'pointer',
-    });
     const bottomRef = useRef(null);
     const containerRef = useRef(null);
     const [isUserScrolled, setIsUserScrolled] = useState(false);
@@ -152,6 +160,13 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
     const [input, setInput] = useState('');
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+    useEffect(() => {
+      if (!props.isDashboard || !props.dashboardRequest) return;
+      setSelectedCourseId(props.dashboardRequest.courseId);
+      localStorage.setItem('selectedCourseId', String(props.dashboardRequest.courseId));
+      setInput(props.dashboardRequest.prompt);
+    }, [props.dashboardRequest?.requestId, props.isDashboard]);
 
     const scrollChatToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
       const container = containerRef.current;
@@ -343,7 +358,7 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
       <>
         {(props.isDashboard || props.isPopup) && (
           <>
-            <div className={styles.chatHeader}>
+            <div className={`${styles.chatHeader} ${props.isDashboard ? styles.dashboardHeader : ''}`}>
               <div className={styles.chatHeading}>
                 {props.isDashboard ? (
                   <span className={styles.chatBrandMark} aria-hidden="true">
@@ -361,8 +376,8 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
               <button type="button" className={styles.glassButton} onClick={() => {
                 handleNewChat()
               }}>
-                <img className="w-[1.3rem]" src="/icons/chat/add_plus.png" alt="plus"/>
-                <span className="text-[1rem]">New</span>
+                {props.isDashboard ? <Plus aria-hidden="true"/> : <img className="w-[1.3rem]" src="/icons/chat/add_plus.png" alt=""/>}
+                <span>New</span>
               </button>
               {props.isPopup && (
                 <button
@@ -375,12 +390,12 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
                 </button>
               )}
             </div>
-            <div className={styles.horizontalLine}/>
+            <div className={`${styles.horizontalLine} ${props.isDashboard ? styles.dashboardDivider : ''}`}/>
           </>
         )}
         {/*  Main Content */}
-        <div className={`flex flex-col p-2 ${props.isDashboard ? 'h-[90%]' : props.isSummary ? 'h-[87%]' : 'h-[95%]'}`}>
-          <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4" ref={containerRef}>
+        <div className={`${styles.chatMain} flex flex-col p-2 ${props.isDashboard ? styles.dashboardMain : props.isSummary ? 'h-[87%]' : 'h-[95%]'}`}>
+          <div className={`${styles.messageViewport} ${props.isDashboard ? styles.dashboardViewport : ''} flex flex-1 flex-col gap-3 overflow-y-auto p-4`} ref={containerRef}>
             {isStudySupportUnavailable ? (
               <div
                 id="study-support-lockdown-message"
@@ -407,11 +422,25 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
                     <p>Ask about a concept, an assignment, or how to plan your week.</p>
                   </div>
                   <div className={styles.dashboardPrompts} role="group" aria-label="Suggested questions">
-                    {DASHBOARD_PROMPTS.map(prompt => (
-                      <button type="button" key={prompt} onClick={() => setInput(prompt)}>
-                        {prompt}
-                      </button>
-                    ))}
+                    {DASHBOARD_PROMPTS.map(suggestion => {
+                      const SuggestionIcon = suggestion.icon;
+                      const promptCourse = currentCourseName === 'All Courses' ? 'your courses' : currentCourseName;
+                      return (
+                        <button
+                          type="button"
+                          key={suggestion.title}
+                          onClick={() => setInput(suggestion.prompt(promptCourse))}
+                        >
+                          <span className={`${styles.dashboardPromptIcon} ${styles[suggestion.tone]}`}>
+                            <SuggestionIcon aria-hidden="true"/>
+                          </span>
+                          <span className={styles.dashboardPromptCopy}>
+                            <strong>{suggestion.title}</strong>
+                            <small>{suggestion.description(promptCourse)}</small>
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               ) : props.isSummary ? (
@@ -477,8 +506,9 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
             )}
           </div>
           {/* Input area */}
-          <div className={styles.chatInputContainer}>
-            <div ref={courseBoxRef} style={{position: 'relative', display: 'inline-block'}}>
+          <div className={props.isDashboard ? styles.dashboardComposerDock : styles.composerDock}>
+            <div className={styles.chatInputContainer}>
+            <div ref={courseBoxRef} className={styles.coursePicker}>
               <button
                 type="button"
                 className={styles.chatCourse}
@@ -487,15 +517,9 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
                 aria-expanded={isCourseOpen}
                 title={currentCourseName}
                 disabled={!isCoursesFetched}
-                style={{width: 150}}
               >
-                <img className={styles.chatCourseIcon} src="/icons/ai_course.png" alt="ai-course"/>
-                <p style={{
-                  maxWidth: 110,
-                  overflow: 'hidden',
-                  whiteSpace: 'nowrap',
-                  textOverflow: 'ellipsis',
-                }}>
+                <img className={styles.chatCourseIcon} src="/icons/ai_course.png" alt=""/>
+                <p>
                   {isCoursesFetched ? currentCourseName : 'Loading...'}
                 </p>
               </button>
@@ -504,26 +528,14 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
                 <div
                   role="listbox"
                   tabIndex={-1}
-                  style={{
-                    position: 'absolute',
-                    zIndex: 1000,
-                    top: 'calc(100% + 6px)',
-                    left: 0,
-                    width: 240,
-                    maxHeight: 260,
-                    overflowY: 'auto',
-                    background: '#fff',
-                    border: '1px solid #E2E8F0',
-                    borderRadius: 8,
-                    boxShadow: '0 10px 24px rgba(0,0,0,0.08)',
-                  }}
+                  className={styles.courseListbox}
                 >
                   {courses.map((c) => (
                     <button
                       type="button"
                       key={c.id}
                       onClick={() => handleSelectCourse(c.id)}
-                      style={menuItemStyle(Number(selectedCourseId) === Number(c.id))}
+                      className={`${styles.courseOption} ${Number(selectedCourseId) === Number(c.id) ? styles.courseOptionActive : ''}`}
                       title={c.name}
                     >
                       {c.name || `Course ${c.id}`}
@@ -589,7 +601,7 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
                   </button>
                 </>
               ) : (
-                <span className="text-xs text-slate-500">Enter to send · Shift+Enter for a new line</span>
+                <span className={styles.dashboardSendHint}><CircleCheck aria-hidden="true"/>Enter to send</span>
               )}
               <div className={styles.spacer}/>
               <button
@@ -598,9 +610,12 @@ const ChatContent = forwardRef<HTMLDivElement, Props>(
                 onClick={handleSendClick}
                 disabled={isStudySupportUnavailable || isLoading || (!input.trim() && !selectedFile)}
               >
-                Send
-                <img src="/icons/chat/send-star.png" alt="send-star"/>
+                {props.isDashboard ? <><span className={styles.visuallyHidden}>Send</span><ArrowUp aria-hidden="true"/></> : <>
+                  Send
+                  <img src="/icons/chat/send-star.png" alt=""/>
+                </>}
               </button>
+            </div>
             </div>
           </div>
         </div>

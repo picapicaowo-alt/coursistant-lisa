@@ -146,14 +146,14 @@ $secondary-color: #718096;
 }
 
 .lms-home-header.dashboard-header {
-    min-height: 4.5rem;
+    min-height: t.$dashboard-shell-header-height;
     margin: 0;
-    padding: .7rem 1.25rem;
+    padding: .75rem 1.5rem;
     border-bottom: 1px solid t.$border;
     background: t.$card-bg;
 
     .dashboard-search-slot {
-        width: min(25rem, 40vw);
+        width: min(24rem, 40vw);
         margin-right: auto;
     }
 
