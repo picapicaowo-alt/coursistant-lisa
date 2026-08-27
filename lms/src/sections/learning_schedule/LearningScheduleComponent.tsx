@@ -174,7 +174,7 @@ const LearningScheduleComponent: React.FC = () => {
   return (
     <div className="learning-schedule-container">
       <div className="flex justify-between items-center">
-        <h1 className="font-semibold text-[1.2rem] text-primary-color ml-1">Learning Schedule</h1>
+        <h2 className="font-semibold text-[1.2rem] text-primary-color ml-1">Learning Schedule</h2>
       </div>
       <div className="horizontal-line"/>
       <div className="schedule-container">

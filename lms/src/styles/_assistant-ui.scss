@@ -1,0 +1,80 @@
+@use "tokens" as t;
+
+$content-width: 54rem;
+$compact-breakpoint: 47.5rem;
+
+@mixin mark($size: t.$control-size) {
+    display: grid;
+    width: $size;
+    height: $size;
+    flex: 0 0 auto;
+    border-radius: t.$radius-control;
+    background: t.$brand-subtle;
+    color: t.$brand;
+    place-items: center;
+}
+
+@mixin composer-shell($background: t.$card-bg) {
+    display: flex;
+    min-width: 0;
+    min-height: 4rem;
+    box-sizing: border-box;
+    align-items: flex-end;
+    gap: .5rem;
+    padding: .5rem;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-card;
+    background: $background;
+    transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+
+    &:focus-within {
+        border-color: t.$brand;
+        background: t.$card-bg;
+        box-shadow: 0 0 0 3px rgba(t.$brand, .16);
+    }
+}
+
+@mixin send-button {
+    display: grid;
+    width: t.$control-size;
+    height: t.$control-size;
+    flex: 0 0 auto;
+    padding: 0;
+    border: 0;
+    border-radius: t.$radius-control;
+    background: t.$brand;
+    color: t.$card-bg;
+    cursor: pointer;
+    place-items: center;
+    touch-action: manipulation;
+    transition: background 150ms ease, transform 150ms ease;
+
+    svg {
+        width: 1rem;
+        height: 1rem;
+        stroke-width: 2;
+    }
+
+    &:hover:not(:disabled) {
+        background: t.$brand-strong;
+    }
+
+    &:active:not(:disabled) {
+        transform: scale(.96);
+    }
+
+    &:focus-visible {
+        outline: 3px solid rgba(t.$brand, .28);
+        outline-offset: 2px;
+    }
+
+    &:disabled {
+        background: t.$neutral-fill;
+        color: t.$text-placeholder;
+        cursor: not-allowed;
+    }
+}
+
+@mixin reduced-motion {
+    transition: none;
+}

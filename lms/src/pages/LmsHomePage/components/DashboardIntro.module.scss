@@ -5,10 +5,10 @@
     h2 {
         margin: 0;
         color: t.$text;
-        font-size: clamp(1.75rem, 2.25vw, 2rem);
-        font-weight: t.$fw-extrabold;
-        letter-spacing: -.028em;
-        line-height: 1.12;
+        font-size: 1.5rem;
+        font-weight: t.$fw-bold;
+        letter-spacing: -.025em;
+        line-height: 1.2;
         white-space: nowrap;
     }
 

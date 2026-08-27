@@ -1,21 +1,22 @@
 .card {
     --course-accent: #{t.$brand};
-    display: flex;
+    display: grid;
     min-width: 0;
-    min-height: 8.5rem;
-    flex-direction: column;
-    padding: .9rem;
+    min-height: t.$dashboard-course-card-min-height;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: .75rem;
+    padding: t.$dashboard-course-card-padding;
     border: 1px solid t.$border;
-    border-radius: t.$radius-card;
+    border-radius: t.$radius-control;
     background: t.$card-bg;
     color: t.$text;
     text-decoration: none;
-    transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
 
     &:hover {
         border-color: color-mix(in srgb, var(--course-accent) 42%, t.$border);
-        box-shadow: 0 10px 24px rgba(t.$text, .08);
-        transform: translateY(-2px);
+        box-shadow: t.$shadow-card;
     }
 
     &:focus-visible {
@@ -23,97 +24,62 @@
         outline-offset: 2px;
     }
 
-    h3 {
-        margin: .8rem 0 1.05rem;
-        overflow: hidden;
-        color: t.$text;
-        font-size: 1rem;
-        font-weight: t.$fw-bold;
-        letter-spacing: -.015em;
-        line-height: 1.3;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
 }
 
 .green { --course-accent: #{t.$type-green}; }
 .indigo { --course-accent: #{t.$brand}; }
 .cyan { --course-accent: #{t.$type-cyan}; }
 
-.topline {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: .75rem;
+.mark {
+    display: grid;
+    width: t.$dashboard-course-mark-size;
+    height: t.$dashboard-course-mark-size;
+    border-radius: t.$radius-control-sm;
+    background: var(--course-accent);
+    color: t.$card-bg;
+    place-items: center;
 
-    svg {
-        width: 1rem;
-        height: 1rem;
-        color: t.$text-muted;
-        transition: color 160ms ease, transform 160ms ease;
-    }
-
-    .card:hover & svg { color: var(--course-accent); transform: translate(1px, -1px); }
+    svg { width: 1.15rem; height: 1.15rem; }
 }
 
-.code {
-    display: inline-flex;
-    width: fit-content;
-    min-height: 1.55rem;
-    align-items: center;
-    padding: 0 .55rem;
-    border-radius: t.$radius-pill;
-    background: color-mix(in srgb, var(--course-accent) 14%, t.$card-bg);
-    color: color-mix(in srgb, var(--course-accent) 78%, t.$text);
-    font-size: .7rem;
-    font-weight: t.$fw-bold;
-    letter-spacing: .025em;
-}
-
-.instructor {
+.copy {
     display: flex;
     min-width: 0;
-    align-items: center;
-    gap: .55rem;
-    margin-top: auto;
-
-    img {
-        width: 1.8rem;
-        height: 1.8rem;
-        flex: 0 0 auto;
-        border-radius: 50%;
-        object-fit: cover;
-    }
-
-    span { display: flex; min-width: 0; flex-direction: column; }
+    flex-direction: column;
+    gap: .2rem;
 
     strong {
         overflow: hidden;
-        color: t.$text-muted;
-        font-size: .72rem;
+        color: t.$text;
+        font-size: .86rem;
         font-weight: t.$fw-semibold;
+        line-height: 1.3;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
+}
 
-    small { color: t.$text-muted; font-size: .66rem; }
+.code {
+    overflow: hidden;
+    color: t.$brand;
+    font-size: .68rem;
+    font-weight: t.$fw-bold;
+    letter-spacing: .01em;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 
-    .role {
-        display: inline-flex;
-        min-height: 1.5rem;
-        flex: 0 0 auto;
-        align-items: center;
-        padding: 0 .45rem;
-        border-radius: t.$radius-pill;
-        background: t.$subcard-bg;
-        color: t.$text-muted;
-        font-size: .62rem;
-        font-weight: t.$fw-semibold;
-        white-space: nowrap;
-    }
+.arrow {
+    width: 1rem;
+    height: 1rem;
+    color: t.$text-muted;
+    transition: color 160ms ease, transform 160ms ease;
+
+    .card:hover & { color: var(--course-accent); transform: translate(1px, -1px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
     .card,
-    .topline svg { transition: none; }
+    .arrow { transition: none; }
 }

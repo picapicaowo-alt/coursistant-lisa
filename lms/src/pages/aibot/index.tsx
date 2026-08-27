@@ -1,67 +1,10 @@
-import {lazy, Suspense, useState} from 'react';
-import WorkflowPanel from './WorkflowPanel';
-import PanelExpandButton from './PanelExpandButton';
+import AssistantWorkspace from './AssistantWorkspace';
 import styles from './index.module.scss';
 
-const StudySupportChat = lazy(() => import('../../components/ChatContent'));
-
-type FocusedPanel = 'study' | 'workflow' | null;
-
 export default function AIBotPage() {
-  const [focusedPanel, setFocusedPanel] = useState<FocusedPanel>(null);
-  const togglePanel = (panel: Exclude<FocusedPanel, null>) => {
-    setFocusedPanel(current => current === panel ? null : panel);
-  };
-
   return (
-    <main className={`${styles.page} ${focusedPanel ? styles.focusedPage : ''}`}>
-      <header className={styles.pageHeader}>
-        <p className={styles.eyebrow}>AI WORKPLACE</p>
-        <h1>Study Support &amp; Workflow</h1>
-        <p>Use Study Support to learn and Workflow to complete supported LMS tasks.</p>
-      </header>
-
-      <div className={`${styles.workspaceGrid} ${focusedPanel ? styles.focusedWorkspace : ''}`}>
-        <section
-          className={`${styles.toolCard} ${focusedPanel === 'study' ? styles.expandedCard : ''}`}
-          aria-labelledby="study-support-title"
-          hidden={focusedPanel === 'workflow'}
-        >
-          <div className={styles.toolHeader}>
-            <div className={`${styles.toolIcon} ${styles.studyIcon}`} aria-hidden="true">S</div>
-            <div className={styles.toolHeading}>
-              <h2 id="study-support-title">Study Support</h2>
-              <span className={`${styles.badge} ${styles.studyBadge}`}>Questions · Explanations · Summaries</span>
-            </div>
-            <PanelExpandButton
-              panelName="Study Support"
-              isExpanded={focusedPanel === 'study'}
-              onToggle={() => togglePanel('study')}
-            />
-          </div>
-          <p className={styles.toolDescription}>
-            Ask questions grounded in your course materials, review concepts, and get help studying.
-          </p>
-          <div className={styles.divider}/>
-          <div className={styles.studyChat}>
-            <Suspense fallback={<div className={styles.loading}>Loading Study Support…</div>}>
-              <StudySupportChat
-                isIntroTop
-                isSummary={false}
-                isDashboard={false}
-                isPopup={false}
-                showHistory={false}
-              />
-            </Suspense>
-          </div>
-        </section>
-
-        <WorkflowPanel
-          isExpanded={focusedPanel === 'workflow'}
-          isHidden={focusedPanel === 'study'}
-          onToggleExpand={() => togglePanel('workflow')}
-        />
-      </div>
-    </main>
+    <div className={styles.page}>
+      <AssistantWorkspace/>
+    </div>
   );
 }

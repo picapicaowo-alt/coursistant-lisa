@@ -9,36 +9,30 @@ const layoutAt = (containerWidth: number) => {
 describe('dashboard layout at full width', () => {
   const l = layoutAt(1400);
 
-  it('uses three columns in a 4 : 5 : 3 ratio', () => {
+  it('uses an 8 : 4 content and schedule split', () => {
     expect(getColumns(1400)).toBe(12);
-    expect(l['chat'].w).toBe(4);
-    expect(l['course'].w).toBe(5);
-    expect(l['learning-schedule'].w).toBe(3);
+    expect(l['course'].w).toBe(8);
+    expect(l['learning-schedule'].w).toBe(4);
   });
 
   it('puts the schedule at the top of the right rail, not below the course card', () => {
-    expect(l['learning-schedule']).toMatchObject({x: 9, y: 0});
+    expect(l['learning-schedule']).toMatchObject({x: 8, y: 0});
   });
 
   it('makes the schedule twice the height of a middle card', () => {
     expect(l['learning-schedule'].h).toBe(l['course'].h * 2);
   });
 
-  it('runs the chat rail the full height of the middle stack', () => {
-    expect(l['chat']).toMatchObject({x: 0, y: 0});
-    expect(l['chat'].h).toBe(l['course'].h + l['assignments'].h + l['posts'].h);
-  });
-
-  it('stacks the middle column top to bottom without gaps', () => {
-    expect(l['course']).toMatchObject({x: 4, y: 0});
-    expect(l['assignments'].x).toBe(4);
+  it('stacks the main column top to bottom without gaps', () => {
+    expect(l['course']).toMatchObject({x: 0, y: 0});
+    expect(l['assignments'].x).toBe(0);
     expect(l['assignments'].y).toBe(l['course'].h);
-    expect(l['posts'].x).toBe(4);
+    expect(l['posts'].x).toBe(0);
     expect(l['posts'].y).toBe(l['course'].h + l['assignments'].h);
   });
 
   it('puts the bottom right card under the schedule', () => {
-    expect(l['average-score'].x).toBe(9);
+    expect(l['average-score'].x).toBe(8);
     expect(l['average-score'].y).toBe(l['learning-schedule'].h);
   });
 

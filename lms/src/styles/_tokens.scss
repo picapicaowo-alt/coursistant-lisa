@@ -78,28 +78,64 @@ $dashboard-section-title-color: $text-muted;
 $dashboard-section-title-size: $fs-dashboard-section;
 $dashboard-section-title-weight: $fw-semibold;
 $dashboard-section-title-tracking: -0.01em;
-$dashboard-section-content-gap: 10px;
+$dashboard-section-content-gap: 12px;
 
-// Dashboard spatial roles mirror the pinned reference: a calm outer gutter,
-// a little extra air before the welcome, and a branded assistant heading that
-// does not cling to the rail boundary.
-$dashboard-shell-gutter: 24px;
-$dashboard-shell-column-gap: 16px;
-$dashboard-intro-top-space: 12px;
+// Dashboard composition tokens. These describe semantic regions rather than
+// individual selectors so the shell, records and assistant stay in rhythm as
+// the page adapts across breakpoints.
+$dashboard-shell-inset: 12px;
+$dashboard-shell-sidebar-width: 80px;
+$dashboard-shell-header-height: 64px;
+$dashboard-shell-gutter-inline: 28px;
+$dashboard-shell-gutter-block: 24px;
+$dashboard-shell-column-gap: 0;
+$dashboard-assistant-width: 360px;
+$dashboard-assistant-divider: $border;
+
+$dashboard-intro-top-space: 0;
 $dashboard-intro-copy-gap: 8px;
-$dashboard-main-group-gap: 28px;
-$dashboard-work-column-gap: 20px;
+$dashboard-main-group-gap: 24px;
+$dashboard-work-column-gap: 24px;
 $dashboard-course-card-gap: 12px;
 $dashboard-record-gap: 8px;
-$dashboard-mobile-shell-gutter: 12px;
+$dashboard-mobile-shell-gutter: 16px;
 $dashboard-mobile-main-gap: 24px;
-$dashboard-assistant-sticky-offset: 16px;
-$dashboard-assistant-header-top-space: 16px;
+
+$dashboard-due-card-min-height: 128px;
+$dashboard-due-card-padding: 20px;
+$dashboard-due-card-background: rgba($brand, .045);
+$dashboard-due-card-border: rgba($brand, .3);
+$dashboard-due-card-action-gap: 10px;
+$dashboard-course-card-min-height: 66px;
+$dashboard-course-card-padding: 12px 14px;
+$dashboard-course-mark-size: 40px;
+$dashboard-record-min-height: 63px;
+$dashboard-record-padding: 12px 14px;
+$dashboard-record-mark-size: 36px;
+$dashboard-empty-card-min-height: 205px;
+$dashboard-empty-card-padding: 28px;
+$dashboard-empty-card-gap: 8px;
+$dashboard-empty-card-accent-width: 40px;
+$dashboard-empty-card-accent-height: 3px;
+$dashboard-empty-card-mixed-padding-block: 10px;
+$dashboard-empty-card-mixed-padding-inline: 20px;
+$dashboard-empty-card-mixed-gap: 4px;
+
+$dashboard-assistant-header-top-space: 0;
 $dashboard-assistant-header-layout-gap: 16px;
-$dashboard-assistant-header-gutter: 16px;
-$dashboard-assistant-brand-gap: 8px;
-$dashboard-assistant-mark-size: 28px;
-$dashboard-assistant-divider-space: 16px;
+$dashboard-assistant-header-gutter: 20px;
+$dashboard-assistant-brand-gap: 10px;
+$dashboard-assistant-mark-size: 36px;
+$dashboard-assistant-divider-space: 0;
+$dashboard-assistant-content-gutter: 20px;
+$dashboard-assistant-prompt-gap: 10px;
+$dashboard-assistant-prompt-min-height: 74px;
+$dashboard-assistant-composer-min-height: 138px;
+
+$dashboard-scrollbar-size: 8px;
+$dashboard-scrollbar-track: transparent;
+$dashboard-scrollbar-thumb: rgba($text-muted, .34);
+$dashboard-scrollbar-thumb-hover: rgba($text-muted, .52);
 
 // ---------------------------------------------------------------- Shape
 

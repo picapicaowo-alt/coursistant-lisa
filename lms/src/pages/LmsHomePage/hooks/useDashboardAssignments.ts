@@ -1,10 +1,10 @@
 import {useQuery} from '@tanstack/react-query';
-import {dashboardApiService} from '@/apis/services/dashboard-api';
+import {dashboardApiService, DASHBOARD_LIMITS} from '@/apis/services/dashboard-api';
 import {SubmissionStatus, TeachingDeadline, UpcomingDeadline} from '@/apis';
 import {useRequiredAuth} from '@/contexts/RequiredAuthContext';
 
 /**
- * One row of the per-course list widget.
+ * One dated-work row shared by the dashboard's deadline surfaces.
  *
  * Students and teaching staff see different things here — it is the only
  * widget whose contents change by role (design spec 4.2) — but both are a
@@ -70,13 +70,15 @@ export interface DashboardAssignmentsResult {
 }
 
 /**
- * Upcoming work for the dashboard's per-course list.
+ * The dashboard's 14-day deadline window, used by Due Next and the weekly
+ * task count. The unrestricted More Assignments list has its own course-level
+ * summary query in `useDashboardMoreAssignments`.
  *
  * Which endpoint runs depends on the platform level, and the choice is not
  * cosmetic: the teaching endpoints reject anyone whose level is not
  * INSTRUCTOR with 403, so calling the wrong one guarantees a failed region.
  *
- * Both default to a 14-day window. The server filters that window in UTC
+ * Both endpoints use the 14-day semantic default. The server filters that window in UTC
  * rather than by tenant calendar days, so the boundary can look a day off from
  * the activities widget — that difference is in the API, not a bug here.
  */
@@ -88,18 +90,22 @@ export const useDashboardAssignments = (): DashboardAssignmentsResult => {
     queryKey: ['dashboard', 'assignments', user.id, isInstructor],
     queryFn: async (): Promise<AssignmentRow[]> => {
       if (isInstructor) {
-        const response = await dashboardApiService.getTeachingDeadlines();
+        const response = await dashboardApiService.getTeachingDeadlines(DASHBOARD_LIMITS.deadlineDays.default);
         if (!response.data) {
           throw new Error('Malformed response from /v2/me/teaching/deadlines/upcoming');
         }
-        return response.data.map(fromTeachingDeadline);
+        return [...response.data]
+          .sort((a, b) => a.atLocal.localeCompare(b.atLocal))
+          .map(fromTeachingDeadline);
       }
 
-      const response = await dashboardApiService.getUpcomingDeadlines();
+      const response = await dashboardApiService.getUpcomingDeadlines(DASHBOARD_LIMITS.deadlineDays.default);
       if (!response.data) {
         throw new Error('Malformed response from /v2/me/assignments/upcoming');
       }
-      return response.data.map(fromStudentDeadline);
+      return [...response.data]
+        .sort((a, b) => a.dueAtUtc.localeCompare(b.dueAtUtc))
+        .map(fromStudentDeadline);
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 5 * 60 * 1000,

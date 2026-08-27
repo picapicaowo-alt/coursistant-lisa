@@ -1,0 +1,637 @@
+@use "../../styles/assistant-ui" as assistant;
+
+$compact-breakpoint: assistant.$compact-breakpoint;
+
+.workspace {
+    --assistant-header-height: 4.75rem;
+    --assistant-content-width: #{assistant.$content-width};
+    --assistant-control-size: #{t.$control-size};
+    display: grid;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    grid-template-columns: 18rem minmax(0, 1fr);
+    border: 1px solid t.$border;
+    border-radius: t.$radius-card-lg;
+    background: t.$card-bg;
+
+    ::selection {
+        background: t.$brand-subtle;
+        color: t.$text;
+    }
+}
+
+.historyClosed {
+    grid-template-columns: 0 minmax(0, 1fr);
+
+    .history {
+        visibility: hidden;
+        opacity: 0;
+        pointer-events: none;
+    }
+}
+
+.history {
+    display: flex;
+    min-width: 0;
+    padding: 0 .75rem .75rem;
+    overflow: hidden;
+    flex-direction: column;
+    border-right: 1px solid t.$border;
+    background: t.$subcard-bg;
+    transition: opacity 160ms ease;
+}
+
+.historyHeader {
+    display: flex;
+    min-height: var(--assistant-header-height);
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: 0 .25rem;
+    box-sizing: border-box;
+
+    h2 {
+        min-width: 0;
+        margin: 0;
+        overflow: hidden;
+        color: t.$text;
+        font-size: t.$fs-label;
+        font-weight: t.$fw-bold;
+        line-height: 1.35;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+.historyActions {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.newChatButton,
+.historyToggle,
+.historyCloseButton,
+.mobileNewChat {
+    display: grid;
+    width: var(--assistant-control-size);
+    height: var(--assistant-control-size);
+    flex: 0 0 auto;
+    padding: 0;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-control;
+    background: t.$card-bg;
+    color: t.$text-muted;
+    cursor: pointer;
+    place-items: center;
+    touch-action: manipulation;
+    transition: border-color 150ms ease, background 150ms ease, color 150ms ease;
+
+    svg {
+        width: 1rem;
+        height: 1rem;
+        stroke-width: 1.8;
+    }
+
+    &:hover:not(:disabled) {
+        border-color: t.$brand;
+        background: t.$brand-subtle;
+        color: t.$brand;
+    }
+
+    &:active:not(:disabled) {
+        background: t.$brand-subtle;
+    }
+
+    &:focus-visible {
+        outline: 3px solid rgba(t.$brand, .22);
+        outline-offset: 2px;
+    }
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: .45;
+    }
+}
+
+.historyCloseButton {
+    display: none;
+}
+
+.threadList {
+    display: flex;
+    min-height: 0;
+    padding-right: .125rem;
+    overflow-y: auto;
+    flex: 1;
+    flex-direction: column;
+    gap: .25rem;
+    scrollbar-color: rgba(t.$text-muted, .45) transparent;
+    scrollbar-width: thin;
+}
+
+.thread {
+    display: grid;
+    width: 100%;
+    min-width: 0;
+    min-height: var(--assistant-control-size);
+    grid-template-columns: 1.125rem minmax(0, 1fr);
+    align-items: start;
+    gap: .625rem;
+    padding: .6875rem .625rem;
+    border: 1px solid transparent;
+    border-radius: t.$radius-control;
+    background: transparent;
+    color: t.$text-muted;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+    touch-action: manipulation;
+    transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+
+    > svg {
+        width: 1rem;
+        height: 1rem;
+        margin-top: .125rem;
+        stroke-width: 1.7;
+    }
+
+    > span {
+        display: grid;
+        min-width: 0;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: .375rem;
+    }
+
+    strong {
+        overflow: hidden;
+        color: inherit;
+        font-size: .875rem;
+        font-weight: t.$fw-semibold;
+        line-height: 1.35;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    small {
+        color: t.$text-muted;
+        font-size: .75rem;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.55;
+        white-space: nowrap;
+    }
+
+    &:hover:not(:disabled) {
+        background: rgba(t.$brand, .06);
+        color: t.$text;
+    }
+
+    &:focus-visible {
+        outline: 3px solid rgba(t.$brand, .2);
+        outline-offset: -1px;
+    }
+
+    &:disabled {
+        cursor: not-allowed;
+    }
+}
+
+.activeThread {
+    border-color: rgba(t.$brand, .18);
+    background: t.$brand-subtle;
+    color: t.$brand-strong;
+}
+
+.storageNote {
+    margin: .75rem .375rem .125rem;
+    color: t.$text-muted;
+    font-size: .75rem;
+    line-height: 1.4;
+}
+
+.chat {
+    display: grid;
+    min-width: 0;
+    min-height: 0;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    background: t.$card-bg;
+}
+
+.chatHeader {
+    display: flex;
+    min-height: var(--assistant-header-height);
+    align-items: center;
+    gap: .75rem;
+    padding: .75rem 1rem;
+    border-bottom: 1px solid t.$border;
+
+    > div {
+        min-width: 0;
+    }
+
+    h1 {
+        margin: 0;
+        color: t.$text;
+        font-size: 1rem;
+        font-weight: t.$fw-bold;
+        line-height: 1.25;
+    }
+
+    p {
+        margin: .125rem 0 0;
+        overflow: hidden;
+        color: t.$text-muted;
+        font-size: .75rem;
+        line-height: 1.4;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+.assistantMark,
+.welcomeIcon,
+.messageMark {
+    @include assistant.mark;
+
+    svg {
+        stroke-width: 1.8;
+    }
+}
+
+.assistantMark {
+    svg {
+        width: 1.0625rem;
+        height: 1.0625rem;
+    }
+}
+
+.mobileNewChat {
+    display: none;
+    margin-left: auto;
+}
+
+.conversation {
+    min-height: 0;
+    padding: 1.5rem 1rem 1rem;
+    overflow-y: auto;
+    background: t.$card-bg;
+    scrollbar-color: rgba(t.$text-muted, .45) transparent;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+}
+
+.welcome {
+    width: min(100%, 42rem);
+    padding: clamp(1.5rem, 5vh, 3.25rem) 0 1.5rem;
+    margin: 0 auto;
+    text-align: center;
+
+    h2 {
+        margin: .875rem 0 .375rem;
+        color: t.$text;
+        font-size: clamp(1.625rem, 3vw, 2.125rem);
+        font-weight: t.$fw-bold;
+        letter-spacing: -.025em;
+        line-height: 1.2;
+        text-wrap: balance;
+    }
+
+    > p {
+        margin: 0;
+        color: t.$text-muted;
+        font-size: .9375rem;
+        line-height: 1.5;
+    }
+}
+
+.welcomeIcon {
+    width: 3rem;
+    height: 3rem;
+    border: 1px solid rgba(t.$brand, .1);
+    border-radius: t.$radius-card;
+    margin: 0 auto;
+
+    svg {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+}
+
+.quickPrompts {
+    display: grid;
+    width: min(100%, 35rem);
+    gap: .5rem;
+    margin: 1.5rem auto 0;
+
+    button {
+        display: flex;
+        width: 100%;
+        min-height: var(--assistant-control-size);
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: .6875rem .875rem .6875rem 1rem;
+        border: 1px solid t.$border;
+        border-radius: t.$radius-control;
+        background: t.$subcard-bg;
+        color: t.$text;
+        cursor: pointer;
+        font: inherit;
+        font-size: .875rem;
+        line-height: 1.4;
+        text-align: left;
+        touch-action: manipulation;
+        transition: border-color 150ms ease, background 150ms ease;
+
+        svg {
+            width: 1rem;
+            height: 1rem;
+            flex: 0 0 auto;
+            color: t.$brand;
+            stroke-width: 1.8;
+            transform: rotate(45deg);
+        }
+
+        &:hover {
+            border-color: rgba(t.$brand, .45);
+            background: t.$brand-subtle;
+        }
+
+        &:active {
+            background: t.$brand-subtle;
+        }
+
+        &:focus-visible {
+            outline: 3px solid rgba(t.$brand, .2);
+            outline-offset: 2px;
+        }
+    }
+}
+
+.messages {
+    width: min(100%, var(--assistant-content-width));
+    margin: 0 auto;
+}
+
+.message {
+    display: flex;
+    width: fit-content;
+    max-width: 84%;
+    gap: .625rem;
+    margin: 0 0 1rem;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+
+    > div {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    :global(pre),
+    :global(table) {
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    :global(table) {
+        display: block;
+    }
+
+    p:first-child {
+        margin-top: 0;
+    }
+
+    p:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.agentMessage {
+    align-items: flex-start;
+    color: t.$text;
+
+    > div {
+        padding-top: .25rem;
+    }
+}
+
+.messageMark {
+    width: 2rem;
+    height: 2rem;
+    border-radius: t.$radius-control-sm;
+
+    svg {
+        width: .875rem;
+        height: .875rem;
+    }
+}
+
+.userMessage {
+    padding: .75rem .875rem;
+    border-radius: t.$radius-control t.$radius-control .25rem t.$radius-control;
+    margin-left: auto;
+    background: t.$brand;
+    color: t.$card-bg;
+}
+
+.thinking {
+    margin: .5rem 0 1rem 2.625rem;
+}
+
+.composer {
+    @include assistant.composer-shell;
+    width: min(calc(100% - 2rem), var(--assistant-content-width));
+    margin: 0 auto 1rem;
+
+    > button {
+        @include assistant.send-button;
+    }
+}
+
+.editor {
+    min-width: 0;
+    min-height: var(--assistant-control-size);
+    max-height: 9rem;
+    flex: 1;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    --composer-min-height: var(--assistant-control-size);
+    --composer-max-height: 9rem;
+    --composer-padding: .75rem .5rem;
+
+    &:focus-within {
+        border: 0;
+        box-shadow: none;
+    }
+}
+
+.historyScrim {
+    display: none;
+}
+
+.srOnly {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    margin: -1px;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}
+
+@container (max-width: 60rem) {
+    .workspace {
+        grid-template-columns: 15rem minmax(0, 1fr);
+    }
+}
+
+@container (max-width: #{$compact-breakpoint}) {
+    .workspace {
+        position: relative;
+        height: 100%;
+        min-height: 0;
+        grid-template-columns: minmax(0, 1fr);
+        border-radius: t.$radius-card;
+    }
+
+    .history,
+    .historyClosed .history {
+        position: absolute;
+        z-index: 3;
+        width: min(86%, 18rem);
+        height: 100%;
+        visibility: visible;
+        border-right: 1px solid t.$border;
+        box-shadow: 1rem 0 2.375rem rgba(t.$text, .16);
+        opacity: 1;
+        transform: translateX(0);
+        pointer-events: auto;
+        transition: transform 180ms ease, opacity 180ms ease;
+    }
+
+    .historyClosed .history {
+        visibility: hidden;
+        opacity: 0;
+        transform: translateX(-102%);
+        pointer-events: none;
+    }
+
+    .historyCloseButton {
+        display: grid;
+    }
+
+    .historyScrim {
+        position: absolute;
+        z-index: 2;
+        display: block;
+        border: 0;
+        background: t.$modal-backdrop;
+        cursor: pointer;
+        opacity: 1;
+        inset: 0;
+        transition: opacity 180ms ease;
+    }
+
+    .historyClosed .historyScrim {
+        visibility: hidden;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .chatHeader {
+        min-height: 4.25rem;
+        padding: .625rem .75rem;
+
+        p {
+            display: none;
+        }
+    }
+
+    .mobileNewChat {
+        display: grid;
+    }
+
+    .conversation {
+        padding: 1rem .75rem .75rem;
+    }
+
+    .welcome {
+        padding-top: 2rem;
+    }
+
+    .message {
+        max-width: 88%;
+    }
+
+    .composer {
+        width: calc(100% - 1.25rem);
+        margin-bottom: max(.625rem, env(safe-area-inset-bottom));
+    }
+}
+
+@media (max-height: 700px) {
+    @container (min-width: 47.51rem) {
+        .welcome {
+            padding: .75rem 0;
+
+            h2 {
+                margin: .5rem 0 .25rem;
+                font-size: 1.75rem;
+            }
+        }
+
+        .welcomeIcon {
+            width: 2.5rem;
+            height: 2.5rem;
+        }
+
+        .quickPrompts {
+            gap: .375rem;
+            margin-top: 1rem;
+
+            button {
+                min-height: var(--assistant-control-size);
+                padding: .5rem .875rem;
+            }
+        }
+    }
+}
+
+@media (max-height: 500px) {
+    .welcome {
+        padding: .625rem 0;
+
+        h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        > p {
+            display: none;
+        }
+    }
+
+    .welcomeIcon,
+    .quickPrompts {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .history,
+    .newChatButton,
+    .historyToggle,
+    .historyCloseButton,
+    .historyScrim,
+    .mobileNewChat,
+    .thread,
+    .quickPrompts button,
+    .composer,
+    .composer > button {
+        @include assistant.reduced-motion;
+    }
+}

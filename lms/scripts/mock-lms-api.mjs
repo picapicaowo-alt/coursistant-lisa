@@ -117,18 +117,44 @@ let previewEvents = [{
 }];
 
 let nextAnnouncementId = 22;
-let previewAnnouncements = [{
-  id: 21,
-  courseId: 4,
-  courseCode: 'BIO-210',
-  title: 'Lab orientation update',
-  body: 'Please bring closed-toe shoes and your lab notebook to the first lab session.',
-  authorUserId: 7,
-  authorName: 'Demo Instructor',
-  postedAt: '2026-08-17T19:00:00Z',
-  editedAt: null,
-  read: false,
-}];
+let previewAnnouncements = [
+  {
+    id: 21,
+    courseId: 4,
+    courseCode: 'BIO-210',
+    title: 'Lab orientation moved to Science 204',
+    body: 'Please bring closed-toe shoes and your lab notebook to Science 204 for the first lab session.',
+    authorUserId: 7,
+    authorName: 'Demo Instructor',
+    postedAt: '2026-08-26T16:30:00Z',
+    editedAt: null,
+    read: false,
+  },
+  {
+    id: 20,
+    courseId: 4,
+    courseCode: 'BIO-210',
+    title: 'Office hours added before the lab report',
+    body: 'An additional office hour is available before the Week 3 lab report deadline.',
+    authorUserId: 7,
+    authorName: 'Demo Instructor',
+    postedAt: '2026-08-25T18:00:00Z',
+    editedAt: null,
+    read: false,
+  },
+  {
+    id: 19,
+    courseId: 4,
+    courseCode: 'BIO-210',
+    title: 'Week 3 slides are available',
+    body: 'The slides for Week 3 are now available in course content.',
+    authorUserId: 7,
+    authorName: 'Demo Instructor',
+    postedAt: '2026-08-24T17:00:00Z',
+    editedAt: null,
+    read: true,
+  },
+];
 
 let nextGroupSetId = 12;
 let nextGroupId = 113;
@@ -707,6 +733,7 @@ const server = createServer(async (request, response) => {
         status: previewCourse.status,
         courseRole,
         role: courseRole,
+        primaryInstructor: previewCourse.primaryInstructor,
         canGrade: isInstructor,
         canPostAnnouncements: isInstructor,
         canManageGroups: isInstructor,
@@ -717,6 +744,104 @@ const server = createServer(async (request, response) => {
       size: 100,
       total: 1,
     });
+    return;
+  }
+
+  if (request.method === 'GET' && url.pathname === '/api/v2/me/assignments/upcoming') {
+    send(response, 200, [
+      {
+        courseId: 4,
+        courseCode: 'BIO-210',
+        assignmentId: 9,
+        title: 'Week 3 Lab Report',
+        dueAtUtc: '2026-08-28T06:59:00Z',
+        dueAtLocal: '2026-08-27T23:59:00',
+        timezone: 'America/Los_Angeles',
+        submissionStatus: 'NotSubmitted',
+      },
+      {
+        courseId: 4,
+        courseCode: 'BIO-210',
+        assignmentId: 8,
+        title: 'Membrane transport notes',
+        dueAtUtc: '2026-08-30T06:59:00Z',
+        dueAtLocal: '2026-08-29T23:59:00',
+        timezone: 'America/Los_Angeles',
+        submissionStatus: 'Submitted',
+      },
+      {
+        courseId: 4,
+        courseCode: 'BIO-210',
+        assignmentId: 7,
+        title: 'Cell cycle knowledge check',
+        dueAtUtc: '2026-09-02T06:59:00Z',
+        dueAtLocal: '2026-09-01T23:59:00',
+        timezone: 'America/Los_Angeles',
+        submissionStatus: 'NotSubmitted',
+      },
+    ]);
+    return;
+  }
+
+  if (request.method === 'GET' && url.pathname === '/api/v2/me/events/upcoming') {
+    send(response, 200, [
+      {
+        courseId: 4,
+        courseCode: 'BIO-210',
+        type: 'Lecture',
+        title: 'Cell membranes',
+        date: '2026-08-27',
+        startTime: '10:00:00',
+        endTime: '11:15:00',
+        location: 'Science 204',
+        source: 'Session',
+        sourceId: 1,
+        timezone: 'America/Los_Angeles',
+      },
+      {
+        courseId: 4,
+        courseCode: 'BIO-210',
+        type: 'Lab',
+        title: 'Microscopy lab',
+        date: '2026-08-29',
+        startTime: '14:00:00',
+        endTime: '16:50:00',
+        location: 'Lab 3',
+        source: 'Session',
+        sourceId: 2,
+        timezone: 'America/Los_Angeles',
+      },
+    ]);
+    return;
+  }
+
+  if (request.method === 'GET' && url.pathname === '/api/v2/me/announcements/recent') {
+    send(response, 200, [
+      {
+        courseId: 4,
+        id: 21,
+        courseCode: 'BIO-210',
+        title: 'Lab orientation moved to Science 204',
+        postedAt: '2026-08-26T16:30:00Z',
+        unread: true,
+      },
+      {
+        courseId: 4,
+        id: 20,
+        courseCode: 'BIO-210',
+        title: 'Office hours added before the lab report',
+        postedAt: '2026-08-25T18:00:00Z',
+        unread: true,
+      },
+      {
+        courseId: 4,
+        id: 19,
+        courseCode: 'BIO-210',
+        title: 'Week 3 slides are available',
+        postedAt: '2026-08-24T17:00:00Z',
+        unread: false,
+      },
+    ]);
     return;
   }
 
@@ -1138,20 +1263,55 @@ const server = createServer(async (request, response) => {
   }
 
   if (request.method === 'GET' && url.pathname === '/api/v2/courses/4/assignments/summaries') {
-    send(response, 200, [{
-      id: 9,
-      title: assignment.title,
-      dueAtUtc: assignment.dueAtUtc,
-      dueAtLocal: assignment.dueAtLocal,
-      timezone: assignment.timezone,
-      submissionType: assignment.submissionType,
-    }]);
+    send(response, 200, [
+      {
+        id: 9,
+        title: 'Week 3 Lab Report',
+        dueAtUtc: '2026-08-28T06:59:00Z',
+        dueAtLocal: '2026-08-27T23:59:00',
+        timezone: 'America/Los_Angeles',
+        submissionType: 'Individual',
+        submissionStatus: 'NotSubmitted',
+      },
+      {
+        id: 8,
+        title: 'Membrane transport notes',
+        dueAtUtc: '2026-08-30T06:59:00Z',
+        dueAtLocal: '2026-08-29T23:59:00',
+        timezone: 'America/Los_Angeles',
+        submissionType: 'Individual',
+        submissionStatus: 'Submitted',
+      },
+      {
+        id: 7,
+        title: 'Cell cycle knowledge check',
+        dueAtUtc: '2026-09-02T06:59:00Z',
+        dueAtLocal: '2026-09-01T23:59:00',
+        timezone: 'America/Los_Angeles',
+        submissionType: 'Individual',
+        submissionStatus: 'NotSubmitted',
+      },
+      {
+        id: 6,
+        title: 'Research reflection',
+        dueAtUtc: '2026-10-02T06:59:00Z',
+        dueAtLocal: '2026-10-01T23:59:00',
+        timezone: 'America/Los_Angeles',
+        submissionType: 'Individual',
+        submissionStatus: 'NotSubmitted',
+      },
+    ]);
     return;
   }
 
   if (url.pathname === '/api/v2/courses/4/quizzes' && request.method === 'GET') {
     const isInstructor = request.headers.authorization === 'Bearer local-instructor-token';
-    send(response, 200, previewQuizzes.filter(quiz => isInstructor || quiz.state === 'Published').map(withQuizWindow));
+    send(response, 200, previewQuizzes
+      .filter(quiz => isInstructor || quiz.state === 'Published')
+      .map(quiz => ({
+        ...withQuizWindow(quiz),
+        hasOpenAttempt: isInstructor ? null : previewQuizAttempt?.status === 'InProgress',
+      })));
     return;
   }
 

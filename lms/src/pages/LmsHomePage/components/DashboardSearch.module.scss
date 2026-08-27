@@ -12,7 +12,7 @@
     padding: 0 .95rem;
     border: 1px solid t.$border;
     border-radius: t.$radius-pill;
-    background: t.$card-bg;
+    background: t.$subcard-bg;
     transition: border-color 160ms ease, box-shadow 160ms ease;
 
     &:focus-within {
