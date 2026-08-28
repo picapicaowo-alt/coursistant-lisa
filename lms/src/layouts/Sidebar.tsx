@@ -5,11 +5,7 @@ import {useTranslation} from 'react-i18next';
 import {getSidebarIndex, SIDEBAR_CONFIGS} from "@/configs/routes.config";
 import {useRequiredAuth} from "@/contexts/RequiredAuthContext";
 
-interface SidebarProps {
-  compact?: boolean;
-}
-
-const Sidebar: React.FC<SidebarProps> = ({compact = false}) => {
+const Sidebar: React.FC = () => {
   const {t} = useTranslation();
   const {user} = useRequiredAuth();
   const {pathname} = useLocation();
@@ -22,7 +18,7 @@ const Sidebar: React.FC<SidebarProps> = ({compact = false}) => {
     .filter(({item}) => isUserAccount || item.path === '/course');
   
   return (
-    <aside className={`${styles.sidebar} ${compact ? styles.compact : ''}`} aria-label="Primary navigation">
+    <aside className={styles.sidebar} aria-label="Primary navigation">
       <Link
         to={homePath}
         className={styles.logo}

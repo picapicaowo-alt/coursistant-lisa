@@ -8,8 +8,8 @@
     background-color: t.$card-bg;
     border: 1px solid t.$border;
     border-radius: t.$radius-card-lg;
-    padding: 1.25rem;
-    box-shadow: t.$shadow-card;
+    padding: 1rem;
+    box-shadow: none;
     transition: box-shadow 0.2s ease, transform 0.2s ease;
 
     &:hover {
@@ -67,7 +67,7 @@
 }
 
 .courseTitle {
-    font-size: t.$fs-course-name;
+    font-size: 1.125rem;
     font-weight: t.$fw-bold;
     color: t.$text;
     line-height: 1.3;
@@ -115,7 +115,8 @@
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.55rem 1.1rem;
+    min-height: 2.5rem;
+    padding: 0 .85rem;
     border-radius: t.$radius-control;
     background-color: t.$subcard-bg;
     color: t.$text;
@@ -125,8 +126,8 @@
     transition: background-color 0.15s, color 0.15s;
 
     &:hover {
-        background-color: t.$brand;
-        color: #ffffff;
+        background-color: t.$brand-subtle;
+        color: t.$brand-strong;
     }
 }
 
@@ -142,7 +143,6 @@
     height: 2rem;
     border-radius: t.$radius-control-sm;
     color: t.$text-muted;
-    font-size: 1.1rem;
     line-height: 1;
     cursor: pointer;
 
@@ -150,6 +150,14 @@
         background-color: t.$subcard-bg;
         color: t.$text;
     }
+}
+
+.viewDetails:focus-visible,
+.menuButton:focus-visible,
+.menuItem:focus-visible,
+.confirmDelete button:focus-visible {
+    outline: 3px solid rgba(t.$brand, .22);
+    outline-offset: 2px;
 }
 
 .menu {

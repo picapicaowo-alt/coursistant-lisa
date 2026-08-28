@@ -13,11 +13,10 @@ interface MenuItem {
 }
 
 interface HeaderProps {
-  compact?: boolean;
   children?: ReactNode;
 }
 
-const Header = ({compact = false, children}: HeaderProps) => {
+const Header = ({children}: HeaderProps) => {
   const {t} = useTranslation();
   const {user, logout} = useAuth();
   const navigate = useNavigate();
@@ -59,7 +58,7 @@ const Header = ({compact = false, children}: HeaderProps) => {
   };
 
   return (
-    <header className={`lms-home-header${compact ? ' dashboard-header' : ''}`}>
+    <header className="lms-home-header app-shell-header">
       {children ? <div className="dashboard-search-slot">{children}</div> : <div className="spacer"/>}
       {user?.role === 'USER' && <NotificationCenter/>}
       <div className="profile">

@@ -1,6 +1,6 @@
 ---
-name: Coursistant Student Dashboard
-description: A compact course command desk with truthful LMS records and course-aware assistance.
+name: Coursistant LMS Product System
+description: A compact course command desk shared across student, teaching, and administration workflows.
 colors:
   page-canvas: "#F1F3F8"
   surface: "#FFFFFF"
@@ -95,21 +95,21 @@ components:
     height: "1.75rem"
 ---
 
-# Design System: Coursistant Student Dashboard
+# Design System: Coursistant LMS
 
 ## Overview
 
 **Creative North Star: "The Course Command Desk"**
 
-The authenticated student dashboard is a compact operating surface for answering three questions quickly: what course am I in, what needs attention, and where can I get help? Its form follows the user-pinned reference: a framed application shell, course overview, paired work and announcement lists, and a persistent assistant rail on wide screens. Coursistant's own indigo identity and real LMS data remain authoritative; the reference supplies structure, not palette, content, or third-party branding.
+The authenticated LMS is a compact operating surface for students, instructors, teaching assistants, and administrators. The student dashboard established the visual authority: a framed application shell, narrow navigation rail, compact header, cool canvas, precise white operating surfaces, and restrained indigo state. Every authenticated route now extends that same language while preserving the information architecture and permissions appropriate to its role.
 
 The visual system is calm, dense, and operational. Section headings sit directly on the cool gray canvas while white course and record cards carry the actionable content. This proximity-led grouping avoids redundant outer panels. AI assistance remains visible but user-initiated, and every data region must preserve distinct loading, empty, and error states.
 
-This document is scoped to the signed-in student dashboard and its dashboard-specific shell treatment. Use it when extending that surface; do not restyle unrelated LMS screens without a separate design decision.
+This document governs every authenticated LMS surface, including student, teaching, and administration routes. Authentication screens keep their purpose-built layout while sharing the same brand tokens, typography, control geometry, focus treatment, and responsive quality floor.
 
 **Key Characteristics:**
 
-- Compact framed shell with a narrow navigation rail and a task-first content column.
+- Compact framed shell with a narrow navigation rail and a task-first content column for every authenticated role.
 - White operating surfaces over a cool gray canvas, with quiet borders and minimal shadow.
 - Coursistant indigo reserved for identity, focus, links, selection, and primary action.
 - Real course and state colors used sparingly for meaning, never as decorative palette copying.
@@ -170,7 +170,7 @@ The palette combines a cool paper-like neutral foundation with one recognizable 
 
 ## Layout
 
-The desktop shell is framed inside the viewport. A narrow icon navigation rail sits beside a top header containing search and profile controls, followed by an independently scrolling dashboard area. The dashboard uses a 24px outer gutter and a two-column grid: a flexible main column and a sticky assistant rail between 20rem and 24rem wide, separated by a 1rem rhythm. The welcome receives another 12px of top air while its title and summary remain tightly grouped. The main column then presents course overview followed by paired assignments and announcements. Calendar owns the full schedule; the summary exposes only the next class. Aggregate grades do not appear on this dashboard.
+The desktop shell is framed inside the viewport. A narrow icon navigation rail sits beside a top header containing role-appropriate utilities and profile controls, followed by an independently scrolling page area. Students retain global course and assignment search; teaching and administration roles keep the same header geometry without invoking student-only endpoints. Pages use a 24–28px outer gutter and align their principal content to a deliberate reading width. The dashboard alone adds its two-column main/assistant composition.
 
 At 1040px and below, the assistant leaves the sticky rail and becomes a normal stacked region after the main content. At 760px and below, paired regions become a single column, dashboard padding tightens, and search spans the available width. At 700px and below, navigation becomes a fixed bottom bar with safe-area padding and the framed shell border/radius treatment is removed. No breakpoint may force the assistant composer or record rows below usable control widths.
 
@@ -242,9 +242,9 @@ The dashboard uses gently rounded geometry rather than capsules everywhere. The 
 - **Composer:** Bordered 16px field group with course selection, attachment, multiline input, explicit send control, and visible disabled/locked states.
 - **Behavior:** AI generation begins only after an explicit user action. The rail becomes a normal-height stacked region before its controls can clip.
 
-### Dashboard Navigation
+### Application Navigation
 
-- **Desktop:** Narrow vertical icon rail; the active destination uses a compact indigo tile with white content.
+- **Desktop:** Every authenticated role uses the same narrow vertical rail; the active destination uses a compact indigo tile with white content.
 - **Mobile:** Fixed bottom navigation with safe-area padding, equal-width destinations, and no decorative active shadow.
 - **Focus:** Every destination retains a visible outline independent of active color.
 

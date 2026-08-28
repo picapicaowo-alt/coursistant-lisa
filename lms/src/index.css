@@ -7,8 +7,30 @@ html,
     padding: 0;
     height: 100vh;
     overflow: hidden;
-    background-color: #EDF2F7;
-    font-family: 'Inter', sans-serif;
+    background-color: var(--xl-page-bg);
+    color: var(--xl-text);
+    font-family: var(--xl-font-family);
+}
+
+::selection {
+    background: var(--xl-brand-subtle);
+    color: var(--xl-text);
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+a,
+button,
+input,
+select,
+textarea,
+summary {
+    accent-color: var(--xl-brand);
 }
 
 * {
@@ -40,11 +62,17 @@ html,
 }
 
 *:hover::-webkit-scrollbar-thumb {
-    background: rgba(160, 160, 160, 0.4);
+    background: color-mix(in srgb, var(--xl-text-muted) 38%, transparent);
     border-radius: 3px;
     
     &:hover {
-        background: rgba(160, 160, 160, 0.6);
+        background: color-mix(in srgb, var(--xl-text-muted) 58%, transparent);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        scroll-behavior: auto;
     }
 }
 

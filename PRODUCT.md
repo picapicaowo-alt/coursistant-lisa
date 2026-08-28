@@ -8,7 +8,7 @@ web
 
 ## Users
 
-Coursistant serves authenticated students, instructors, teaching assistants, and tenant administrators. The dashboard redesigned in this task is the signed-in student home: it helps a student orient themselves quickly before opening a course or beginning a piece of work.
+Coursistant serves authenticated students, instructors, teaching assistants, and tenant administrators. The student dashboard is the visual baseline for the signed-in product; all role-specific pages extend its compact shell and operating-surface language.
 
 ## Product Purpose
 
@@ -35,7 +35,7 @@ Students use the web application throughout a teaching term to scan active cours
 
 - The product name is Coursistant.
 - The existing Coursistant logo and indigo brand family remain recognizable assets.
-- This task binds the dashboard composition to the supplied reference: compact app shell, course overview, paired work and announcement lists, and a persistent right-side assistant rail on wide screens.
+- This task binds the authenticated product shell to the supplied dashboard reference: compact navigation, restrained header, cool canvas, white operating surfaces, and consistent responsive behavior. The dashboard keeps its course overview, paired work and announcement lists, and persistent right-side assistant rail on wide screens.
 
 ## Evidence on Hand
 

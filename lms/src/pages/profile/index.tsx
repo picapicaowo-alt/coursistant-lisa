@@ -124,10 +124,7 @@ const ProfilePage = () => {
 
         <div className={styles.profileDetails}>
           <div className={styles.profileHeading}>
-            <div>
-              <p className={styles.eyebrow}>PROFILE</p>
-              <h1 id="profile-title">{profile.displayName}</h1>
-            </div>
+            <h1 id="profile-title">{profile.displayName}</h1>
             {!editing ? (
               <button
                 type="button"
