@@ -1,94 +1,144 @@
-.horizontalDivider {
-    width: 100%;
-    height: 1px;
-    border: 1px dashed rgba(226, 232, 240, 1);
-    margin: -0.2rem auto;
+.profilePage {
+  width: 100%;
+  min-height: 100%;
+  padding: t.$app-shell-page-gutter-block t.$app-shell-page-gutter-inline 3rem;
+  background: t.$page-bg;
+  color: t.$text;
 }
 
-.verticalDivider {
-    width: 2px;
-    border: 1px dashed rgba(226, 232, 240, 1);
+.profileCover { display: none; }
+
+.profileCard {
+  display: grid;
+  width: min(64rem, 100%);
+  grid-template-columns: 10rem minmax(0, 1fr);
+  gap: 2rem;
+  margin: 0 auto;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid t.$border;
+  border-radius: t.$radius-card-lg;
+  background: t.$card-bg;
+  box-shadow: t.$shadow-card;
 }
 
-.courseListContainer {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
-    margin: 2rem auto;
-    padding: 0 1rem;
-  
-    .course {
-        background-color: #FFFFFF;
-        border-radius: 1rem;
-        padding: 1rem;
-    }
-  }
-
-  .postListContainer {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
-    margin: 2rem auto;
-    padding: 0 1rem;
-  }
-
-.modalOverlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.2);
+.avatarColumn {
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 1000;
+  flex-direction: column;
+  gap: .75rem;
 }
 
-.modalContent {
-  background: #fff;
-  border-radius: 16px;
-  padding: 32px;
-  min-width: 400px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-  position: relative;
+.profileAvatar {
+  width: 7.5rem;
+  height: 7.5rem;
+  border: 4px solid t.$card-bg;
+  border-radius: 50%;
+  background: t.$subcard-bg;
+  box-shadow: 0 4px 16px rgba(t.$text, .12);
+  object-fit: cover;
 }
 
-.closeBtn {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: none;
-  border: none;
-  font-size: 24px;
+.profileDetails { min-width: 0; }
+
+.profileHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+
+  h1 {
+    margin: 0;
+    color: t.$text;
+    font-size: clamp(1.75rem, 3vw, 2.25rem);
+    font-weight: t.$fw-extrabold;
+    letter-spacing: -.03em;
+    line-height: 1.15;
+  }
+}
+
+.profileFacts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem;
+  margin-top: 1.5rem;
+
+  div {
+    padding: .9rem 1rem;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-control;
+    background: t.$subcard-bg;
+  }
+
+  dt { color: t.$text-muted; font-size: t.$fs-caption; }
+  dd { margin: .3rem 0 0; overflow-wrap: anywhere; color: t.$text; font-weight: t.$fw-semibold; }
+}
+
+.profileForm {
+  display: grid;
+  max-width: 32rem;
+  gap: .6rem;
+  margin-top: 1.5rem;
+
+  label { color: t.$text-muted; font-size: t.$fs-caption; font-weight: t.$fw-semibold; }
+  input {
+    min-height: t.$control-size;
+    padding: 0 .85rem;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-control-sm;
+    background: t.$card-bg;
+    color: t.$text;
+  }
+}
+
+.profileActions { display: flex; justify-content: flex-end; gap: .75rem; margin-top: .5rem; }
+
+.primaryButton,
+.secondaryButton,
+.linkButton {
+  min-height: 2.5rem;
+  padding: 0 .9rem;
+  border-radius: t.$radius-control-sm;
+  font-size: t.$fs-caption;
+  font-weight: t.$fw-semibold;
   cursor: pointer;
 }
 
-.profilePage { width: 100%; max-width: 1200px; margin: 0 auto; padding: 2rem; }
-.profileCover { height: 180px; border-radius: 24px; background: linear-gradient(135deg, #566fe8, #67d8cb); }
-.profileCard { display: grid; grid-template-columns: 190px 1fr; gap: 2rem; margin: -72px 2rem 0; padding: 2rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 24px; box-shadow: 0 12px 32px rgba(45,55,72,.08); position: relative; }
-.avatarColumn { display: flex; flex-direction: column; align-items: center; gap: .75rem; }
-.profileAvatar { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 5px solid #fff; box-shadow: 0 3px 14px rgba(45,55,72,.16); }
-.profileDetails { min-width: 0; padding-top: 3.8rem; }
-.profileHeading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
-.profileHeading h1 { margin: 0; font-size: 2rem; color: #1a202c; }
-.eyebrow { margin: 0 0 .25rem; color: #566fe8; font-size: .78rem; font-weight: 700; letter-spacing: .12em; }
-.profileFacts { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 1rem; margin-top: 1.5rem; }
-.profileFacts div { padding: 1rem; background: #f8fafc; border-radius: 12px; }
-.profileFacts dt { color: #718096; font-size: .82rem; }
-.profileFacts dd { margin: .3rem 0 0; color: #2d3748; font-weight: 600; overflow-wrap: anywhere; }
-.profileForm { display: grid; gap: .6rem; margin-top: 1.5rem; max-width: 520px; }
-.profileForm input { padding: .75rem 1rem; border: 1px solid #cbd5e0; border-radius: 10px; }
-.profileActions { display: flex; gap: .75rem; justify-content: flex-end; margin-top: .5rem; }
-.primaryButton, .secondaryButton, .linkButton { border-radius: 9px; padding: .58rem .9rem; font-weight: 600; cursor: pointer; }
-.primaryButton { border: 0; background: #566fe8; color: #fff; }
-.secondaryButton { border: 1px solid #cbd5e0; background: #fff; color: #2d3748; }
-.linkButton { border: 0; background: transparent; color: #b91c1c; }
-.primaryButton:disabled, .secondaryButton:disabled, .linkButton:disabled { opacity: .55; cursor: not-allowed; }
-.profileSuccess, .profileError { margin: 1rem 0 0; padding: .7rem 1rem; border-radius: 9px; }
-.profileSuccess { color: #166534; background: #f0fdf4; }
-.profileError { color: #b91c1c; background: #fef2f2; }
-.visuallyHidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+.primaryButton { border: 1px solid t.$brand; background: t.$brand; color: t.$card-bg; }
+.secondaryButton { border: 1px solid t.$border; background: t.$card-bg; color: t.$text; }
+.linkButton { border: 0; background: transparent; color: t.$danger; }
+
+.primaryButton:disabled,
+.secondaryButton:disabled,
+.linkButton:disabled { cursor: not-allowed; opacity: .55; }
+
+.primaryButton:focus-visible,
+.secondaryButton:focus-visible,
+.linkButton:focus-visible,
+.profileForm input:focus-visible { outline: 3px solid rgba(t.$brand, .22); outline-offset: 2px; }
+
+.profileSuccess,
+.profileError { margin: 1rem 0 0; padding: .7rem 1rem; border-radius: t.$radius-control-sm; }
+.profileSuccess { border: 1px solid t.$success-border; background: t.$success-subtle; color: t.$text; }
+.profileError { border: 1px solid rgba(t.$danger, .25); background: rgba(t.$danger, .08); color: t.$danger; }
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  margin: -1px;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
 
 @media (max-width: 720px) {
-  .profileCard { grid-template-columns: 1fr; margin-inline: 0; }
-  .profileDetails { padding-top: 0; }
+  .profilePage { padding: 1rem t.$dashboard-mobile-shell-gutter 2rem; }
+  .profileCard { grid-template-columns: 1fr; }
+  .profileHeading { flex-direction: column; }
+  .profileHeading .secondaryButton,
+  .profileActions,
+  .profileActions button { width: 100%; }
   .profileFacts { grid-template-columns: 1fr; }
 }

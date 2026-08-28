@@ -5,14 +5,19 @@ import {Outlet, useLocation} from "react-router-dom";
 import styles from './Layout.module.scss';
 import {shouldShowAppShell} from "@/configs/routes.config";
 import {ErrorBoundary} from "@/components/ErrorBoundary";
-import DashboardSearch from '@/pages/LmsHomePage/components/DashboardSearch';
+import {useRequiredAuth} from '@/contexts/RequiredAuthContext';
+
+const DashboardSearch = React.lazy(() => import('@/pages/LmsHomePage/components/DashboardSearch'));
 
 const Layout: React.FC = () => {
   const location = useLocation();
+  const {user} = useRequiredAuth();
   const mainContentRef = React.useRef<HTMLElement | null>(null);
   
   const showLayout = shouldShowAppShell(location.pathname);
   const isDashboard = location.pathname === '/';
+  const isAssistant = location.pathname === '/aibot';
+  const showGlobalSearch = showLayout && user.role === 'USER';
 
   React.useEffect(() => {
     // The shell's main element is the scroll container. React Router reuses it
@@ -22,18 +27,25 @@ const Layout: React.FC = () => {
   }, [location.pathname]);
   
   return (
-    <div className={`${styles.layoutContainer} ${isDashboard ? styles.dashboardLayout : ''}`}>
-      {showLayout && <Sidebar compact={isDashboard}/>}
-      <div className={`${styles.contentArea} ${isDashboard ? styles.dashboardContent : ''}`}>
+    <div className={`${styles.layoutContainer} ${showLayout ? styles.appShell : ''}`}>
+      {showLayout && <Sidebar/>}
+      <div className={`${styles.contentArea} ${showLayout ? styles.appShellContent : ''}`}>
         {showLayout && (
-          <Header compact={isDashboard}>
-            {isDashboard ? <DashboardSearch/> : null}
+          <Header>
+            {showGlobalSearch ? (
+              <React.Suspense fallback={<div className={styles.searchFallback} aria-hidden="true"/>}>
+                <DashboardSearch/>
+              </React.Suspense>
+            ) : null}
           </Header>
         )}
         {/* Scoped to the page so a failed route keeps the shell — the user can
             still navigate somewhere else instead of facing a blank window.
             Keyed on the path so moving to another page clears the error. */}
-        <main ref={mainContentRef} className={styles.mainContent}>
+        <main
+          ref={mainContentRef}
+          className={`${styles.mainContent} ${isDashboard || isAssistant ? styles.viewportPage : ''}`}
+        >
           <ErrorBoundary resetKey={location.pathname}>
             <Outlet/>
           </ErrorBoundary>

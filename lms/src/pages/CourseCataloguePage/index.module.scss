@@ -1,53 +1,76 @@
 .pageContainer {
-    min-height: calc(100vh - 64px);
-    background-color: transparent;
-    padding: 24px;
+    min-height: 100%;
+    background-color: t.$page-bg;
+    padding: t.$app-shell-page-gutter-block t.$app-shell-page-gutter-inline 3rem;
     display: flex;
     justify-content: center;
+    color: t.$text;
 }
 
 .contentContainer {
     width: 100%;
-    max-width: 1200px;
+    max-width: 92rem;
+}
+
+.pageHeader {
+    margin-bottom: 1.25rem;
+
+    h1 {
+        margin: 0;
+        font-size: clamp(1.75rem, 3vw, 2.25rem);
+        font-weight: t.$fw-extrabold;
+        letter-spacing: -.03em;
+        line-height: 1.15;
+    }
+
+    p {
+        max-width: 65ch;
+        margin: .4rem 0 0;
+        color: t.$text-muted;
+        font-size: t.$fs-label;
+    }
 }
 
 .tabsContainer {
     display: flex;
     align-items: center;
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 16px 24px;
+    background: t.$card-bg;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-card;
+    padding: .55rem .75rem;
     margin-bottom: 24px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: t.$shadow-card;
 }
 
 .tab {
-    padding: 10px 20px;
+    min-height: t.$control-size;
+    padding: 0 1rem;
     cursor: pointer;
-    font-size: 16px;
-    font-weight: 500;
-    color: #64748b;
+    font-size: t.$fs-label;
+    font-weight: t.$fw-semibold;
+    color: t.$text-muted;
     position: relative;
-    transition: all 0.3s ease;
-    border-radius: 8px;
+    transition: background-color .15s ease, color .15s ease;
+    border-radius: t.$radius-control;
     
     &:hover {
-        color: #334155;
-        background-color: #f8fafc;
+        color: t.$text;
+        background-color: t.$subcard-bg;
     }
     
     &.active {
-        color: #566FE8;
+        color: t.$brand;
+        background: t.$brand-subtle;
         
         &::after {
             content: "";
             position: absolute;
-            bottom: -10px;
+            bottom: .2rem;
             left: 50%;
             transform: translateX(-50%);
             width: 24px;
             height: 3px;
-            background-color: #566FE8;
+            background-color: t.$brand;
             border-radius: 2px;
         }
     }
@@ -62,26 +85,23 @@
 }
 
 .addButton {
-    background-color: #566FE8;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 20px;
-    font-size: 14px;
-    font-weight: 500;
+    min-height: t.$control-size;
+    background-color: t.$brand;
+    color: t.$card-bg;
+    border: 1px solid t.$brand;
+    border-radius: t.$radius-control;
+    padding: 0 1rem;
+    font-size: t.$fs-caption;
+    font-weight: t.$fw-semibold;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 8px;
-    transition: all 0.3s ease;
+    transition: background-color .15s ease, border-color .15s ease;
     
     &:hover {
-        background-color: #4a5fd1;
-        transform: translateY(-1px);
-    }
-    
-    &:active {
-        transform: translateY(0);
+        background-color: t.$brand-strong;
+        border-color: t.$brand-strong;
     }
 }
 
@@ -96,8 +116,8 @@
 
 .courseGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+    gap: 1rem;
     margin-bottom: 32px;
     
     @media (max-width: 768px) {
@@ -109,28 +129,27 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 16px;
-    padding: 20px;
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    gap: .65rem;
+    padding-top: .5rem;
 }
 
 .paginationButton {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
-    border: 1px solid #e2e8f0;
-    background: #ffffff;
-    border-radius: 8px;
+    width: t.$control-size;
+    height: t.$control-size;
+    border: 1px solid t.$border;
+    background: t.$card-bg;
+    border-radius: t.$radius-control;
     cursor: pointer;
-    transition: all 0.2s ease;
+    color: t.$text-muted;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
     
     &:hover:not(:disabled) {
-        border-color: #566FE8;
-        background-color: #f8fafc;
+        border-color: t.$brand;
+        background-color: t.$brand-subtle;
+        color: t.$brand;
     }
     
     &:disabled {
@@ -139,15 +158,7 @@
     }
 }
 
-.arrowIcon {
-    width: 24px;
-    height: 24px;
-    fill: #64748b;
-    
-    .paginationButton:hover:not(:disabled) & {
-        fill: #566FE8;
-    }
-}
+.paginationButton svg { width: 1.15rem; height: 1.15rem; }
 
 .pageNumbers {
     display: flex;
@@ -155,27 +166,35 @@
 }
 
 .pageButton {
-    width: 40px;
-    height: 40px;
-    border: 1px solid #e2e8f0;
-    background: #ffffff;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    color: #64748b;
+    width: t.$control-size;
+    height: t.$control-size;
+    border: 1px solid t.$border;
+    background: t.$card-bg;
+    border-radius: t.$radius-control;
+    font-size: t.$fs-caption;
+    font-weight: t.$fw-semibold;
+    color: t.$text-muted;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
     
     &:hover {
-        border-color: #566FE8;
-        color: #566FE8;
+        border-color: t.$brand;
+        color: t.$brand;
     }
     
     &.active {
-        background-color: #566FE8;
-        border-color: #566FE8;
-        color: #ffffff;
+        background-color: t.$brand;
+        border-color: t.$brand;
+        color: t.$card-bg;
     }
+}
+
+.tab:focus-visible,
+.addButton:focus-visible,
+.paginationButton:focus-visible,
+.pageButton:focus-visible {
+    outline: 3px solid rgba(t.$brand, .22);
+    outline-offset: 2px;
 }
 .emptyState {
     display: flex;
@@ -184,4 +203,18 @@
     padding: 4rem 1rem;
     color: t.$text-muted;
     font-size: t.$fs-label;
+}
+
+@media (max-width: 700px) {
+    .pageContainer { padding: 1rem t.$dashboard-mobile-shell-gutter 2rem; }
+    .tabsContainer { flex-wrap: wrap; }
+    .tabSpacer { display: none; }
+    .addButton { width: 100%; justify-content: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tab,
+    .addButton,
+    .paginationButton,
+    .pageButton { transition: none; }
 }

@@ -1,335 +1,203 @@
-// Variables
-:root {
-  --color-primary: #566fe8;
-  --color-text-primary: #2d3748;
-  --color-text-secondary: #718096;
-  --color-text-disabled: #a0aec0;
-  --color-border: #e2e8f0;
-  --color-background: #fff;
-  --color-background-hover: #f7fafc;
-  
-  --spacing-xs: 0.5rem;
-  --spacing-sm: 1rem;
-  --spacing-md: 1.5rem;
-  --spacing-lg: 2rem;
-  --spacing-xl: 2.5rem;
-  
-  --border-radius: 0.6rem;
-  --border-width: 1.5px;
-  
-  --font-family: Inter, sans-serif;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.1rem;
-  --font-size-xl: 1.375rem;
-  --font-size-2xl: 2rem;
+.settingsPageWrapper {
+  display: flex;
+  width: 100%;
+  min-height: 100%;
+  align-items: flex-start;
+  flex-direction: column;
+  padding: t.$app-shell-page-gutter-block t.$app-shell-page-gutter-inline 3rem;
+  background: t.$page-bg;
+  color: t.$text;
 }
 
-.settingsPageWrapper {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  padding: var(--spacing-xl) var(--spacing-lg);
-  width: 100%;
-  max-width: 43.75rem; // 700px
-  margin: 0 auto;
+.settingsHeader,
+.tabsContainer,
+.tabDivider,
+.generalSection,
+.successMessage,
+.errorMessage {
+  width: min(48rem, 100%);
+  margin-inline: auto;
 }
 
 .settingsHeader {
   display: flex;
   align-items: flex-start;
-  gap: var(--spacing-sm);
-  width: 100%;
-  margin-bottom: var(--spacing-md);
+  gap: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .backButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: var(--border-radius);
-  border: 1px solid var(--color-border);
-  background: var(--color-background);
-  color: var(--color-text-primary);
+  display: inline-grid;
+  width: t.$control-size;
+  height: t.$control-size;
+  flex: 0 0 t.$control-size;
+  border: 1px solid t.$border;
+  border-radius: t.$radius-control;
+  background: t.$card-bg;
+  color: t.$text;
   cursor: pointer;
-  flex-shrink: 0;
-  margin-top: 0.125rem;
-  transition: all 0.2s ease;
+  place-items: center;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease;
 
-  &:hover {
-    background: var(--color-background-hover);
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-  }
+  &:hover { border-color: t.$brand; background: t.$brand-subtle; color: t.$brand; }
 }
 
-.settingsHeaderText {
-  flex: 1;
-  min-width: 0;
-}
-
-.settingsTitle,
-.settingsSubtitle {
-  text-align: left;
-  width: 100%;
-}
-
-.settingsTitle {
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin-bottom: var(--spacing-xs);
-}
-
-.settingsSubtitle {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-base);
-  margin-bottom: 0;
-}
+.settingsHeaderText { min-width: 0; flex: 1; }
+.settingsTitle { margin: 0; color: t.$text; font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: t.$fw-extrabold; letter-spacing: -.03em; line-height: 1.15; }
+.settingsSubtitle { max-width: 65ch; margin: .4rem 0 0; color: t.$text-muted; font-size: t.$fs-label; }
 
 .tabsContainer {
   display: flex;
-  gap: var(--spacing-xl);
-  margin-bottom: var(--spacing-xs);
-  width: 100%;
-  justify-content: flex-start;
+  gap: .35rem;
+  padding: .35rem;
+  border: 1px solid t.$border;
+  border-radius: t.$radius-control;
+  background: t.$card-bg;
 }
 
 .tab {
-  background: none;
-  border: none;
-  outline: none;
-  font-size: var(--font-size-lg);
-  color: var(--color-text-primary);
-  padding-bottom: var(--spacing-xs);
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  border-radius: t.$radius-control-sm;
+  color: t.$text-muted;
+  font-size: t.$fs-caption;
+  font-weight: t.$fw-semibold;
   cursor: pointer;
-  border-bottom: var(--border-width) solid transparent;
-  transition: color 0.2s, border-color 0.2s;
+  transition: background-color .15s ease, color .15s ease;
+
+  &:hover { background: t.$subcard-bg; color: t.$text; }
 }
 
-.activeTab {
-  color: var(--color-primary);
-  border-bottom: var(--border-width) solid var(--color-primary);
-  font-weight: 100;
-}
-
-.tabDivider {
-  width: 100%;
-  height: 1px;
-  border-bottom: 1px dashed var(--color-border);
-  margin-bottom: var(--spacing-lg);
-}
+.activeTab { background: t.$brand; color: t.$card-bg; }
+.tabDivider { height: 1rem; }
 
 .generalSection {
-  width: 100%;
-  max-width: 42.5rem; // 680px
-  margin: var(--spacing-md) auto 0;
-  background: var(--color-background);
-  border-radius: var(--border-radius);
-  padding: var(--spacing-xl) var(--spacing-lg);
-  box-shadow: 0 1px 6px 0 rgba(0, 0, 0, 0.03);
-  position: relative;
   display: flex;
-  flex-direction: column;
   align-items: flex-start;
-}
-
-.generalTitle {
-  color: var(--color-text-primary);
-  font-family: var(--font-family);
-  font-size: var(--font-size-xl);
-  font-weight: 600;
-  line-height: 1.27;
-  margin-bottom: var(--spacing-xs);
-  width: 100%;
-  text-align: left;
-}
-
-.generalSubtitle {
-  color: var(--color-text-disabled);
-  font-family: var(--font-family);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  line-height: 1.43;
-  margin-bottom: var(--spacing-md);
-  text-align: left;
-  width: 100%;
-  max-width: 36rem; // 577px
-}
-
-.generalForm {
-  display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
-  width: 100%;
-  max-width: 36rem; // 577px
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid t.$border;
+  border-radius: t.$radius-card-lg;
+  background: t.$card-bg;
+  box-shadow: t.$shadow-card;
 }
+
+.generalTitle { width: 100%; margin: 0; color: t.$text; font-size: 1.25rem; font-weight: t.$fw-bold; line-height: 1.3; }
+.generalSubtitle { width: 100%; max-width: 65ch; margin: .35rem 0 1.25rem; color: t.$text-muted; font-size: t.$fs-caption; line-height: 1.5; }
+.generalForm { display: flex; width: 100%; max-width: 36rem; flex-direction: column; gap: 1rem; }
 
 .inputGroup {
   display: flex;
   width: 100%;
   flex-direction: column;
-  gap: var(--spacing-xs);
-  
-  label {
-    color: var(--color-text-primary);
-    font-family: var(--font-family);
-    font-size: var(--font-size-sm);
-    font-weight: 500;
-    line-height: 1.43;
-  }
-  
+  gap: .4rem;
+
+  label { color: t.$text-muted; font-size: t.$fs-caption; font-weight: t.$fw-semibold; }
   input {
     width: 100%;
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    font-size: var(--font-size-base);
-    background: var(--color-background);
-    color: var(--color-text-primary);
-    outline: none;
-    transition: border 0.2s;
-    font-family: var(--font-family);
-    
-    &:focus {
-      border: var(--border-width) solid var(--color-primary);
-    }
-  }
-}
-
-.saveButton {
-  position: absolute;
-  top: var(--spacing-lg);
-  right: var(--spacing-lg);
-  background: var(--color-background-hover);
-  color: var(--color-text-disabled);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--border-radius);
-  display: flex;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  justify-content: center;
-  align-items: center;
-  gap: var(--spacing-xs);
-  font-size: var(--font-size-base);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background: var(--color-primary);
-    color: var(--color-background);
-    border-color: var(--color-primary);
+    min-height: t.$control-size;
+    padding: 0 .85rem;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-control-sm;
+    background: t.$card-bg;
+    color: t.$text;
   }
 }
 
 .passwordInputWrapper {
   position: relative;
-  width: 100%;
   display: flex;
+  width: 100%;
   align-items: center;
 
   input {
     width: 100%;
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
-    padding: var(--spacing-xs) 2.5rem var(--spacing-xs) var(--spacing-sm);
-    font-size: var(--font-size-base);
-    background: var(--color-background);
-    color: var(--color-text-primary);
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    font-family: var(--font-family);
-
-    &::placeholder {
-      color: var(--color-text-disabled);
-    }
-
-    &:focus {
-      border: var(--border-width) solid var(--color-primary);
-    }
+    min-height: t.$control-size;
+    padding: 0 2.75rem 0 .85rem;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-control-sm;
+    background: t.$card-bg;
+    color: t.$text;
   }
+
+  input::placeholder { color: t.$text-placeholder; }
 }
 
 .passwordToggle {
   position: absolute;
-  right: 0.625rem;
+  right: .375rem;
   top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
   padding: 0;
   border: 0;
+  border-radius: t.$radius-control-sm;
   background: transparent;
-  color: var(--color-text-secondary);
-  border-radius: 0.375rem;
+  color: t.$text-muted;
   cursor: pointer;
-  transition: color 0.15s ease, background-color 0.15s ease;
+  place-items: center;
+  transform: translateY(-50%);
 
-  &:hover {
-    color: var(--color-text-primary);
-    background-color: var(--color-background-hover);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 1px;
-  }
+  &:hover { background: t.$subcard-bg; color: t.$text; }
 }
 
 .notificationRow {
   display: flex;
-  align-items: flex-start;
-  gap: 1rem;
   width: 100%;
-}
-.notificationCheckbox {
-  flex: 0 0 24px;
-  display: flex;
   align-items: flex-start;
-  justify-content: flex-start;
-  margin-top: 2px;
-}
-.notificationContent {
-  flex: 1;
-}
+  gap: .75rem;
+  padding: .85rem;
+  border: 1px solid t.$border;
+  border-radius: t.$radius-control;
+  background: t.$subcard-bg;
+  color: t.$text;
+  line-height: 1.5;
 
-.notificationCheckbox input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  margin-top: 2px;
+  input { width: 1.125rem; height: 1.125rem; margin-top: .15rem; }
 }
 
 .primaryButton {
   align-self: flex-start;
-  border: 0;
-  border-radius: var(--border-radius);
-  background: var(--color-primary);
-  color: #fff;
-  padding: 0.7rem 1.1rem;
-  font-weight: 600;
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  border: 1px solid t.$brand;
+  border-radius: t.$radius-control-sm;
+  background: t.$brand;
+  color: t.$card-bg;
+  font-weight: t.$fw-semibold;
   cursor: pointer;
 
-  &:disabled { cursor: not-allowed; opacity: 0.55; }
+  &:hover:not(:disabled) { border-color: t.$brand-strong; background: t.$brand-strong; }
+  &:disabled { cursor: not-allowed; opacity: .55; }
+}
+
+.backButton:focus-visible,
+.tab:focus-visible,
+.primaryButton:focus-visible,
+.passwordToggle:focus-visible,
+.inputGroup input:focus-visible,
+.passwordInputWrapper input:focus-visible,
+.notificationRow:has(input:focus-visible) {
+  outline: 3px solid rgba(t.$brand, .22);
+  outline-offset: 2px;
 }
 
 .successMessage,
-.errorMessage {
-  width: 100%;
-  border-radius: var(--border-radius);
-  padding: 0.75rem 1rem;
-  margin: 0 0 0.5rem;
+.errorMessage { padding: .75rem 1rem; border-radius: t.$radius-control-sm; margin-bottom: .75rem; }
+.successMessage { border: 1px solid t.$success-border; background: t.$success-subtle; color: t.$text; }
+.errorMessage { border: 1px solid rgba(t.$danger, .25); background: rgba(t.$danger, .08); color: t.$danger; }
+
+@media (max-width: 700px) {
+  .settingsPageWrapper { padding: 1rem t.$dashboard-mobile-shell-gutter 2rem; }
+  .tabsContainer { overflow-x: auto; }
+  .tab { flex: 1 0 auto; }
+  .generalSection { padding: 1.25rem; }
+  .primaryButton { width: 100%; }
 }
 
-.successMessage { color: #166534; background: #f0fdf4; }
-.errorMessage { color: #b91c1c; background: #fef2f2; }
+@media (prefers-reduced-motion: reduce) {
+  .backButton,
+  .tab,
+  .primaryButton { transition: none; }
+}

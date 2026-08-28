@@ -6,6 +6,7 @@ import {useTranslation} from "react-i18next";
 import {courseApiService} from "@/apis/services/course-api";
 import {CourseSession, CourseState} from "@/apis";
 import {formatCourseName} from "@/utils/course";
+import {ArrowRight, MoreHorizontal} from 'lucide-react';
 
 interface CoursePreviewProps {
   id: number;
@@ -154,7 +155,7 @@ export const CoursePreview: React.FC<CoursePreviewProps> = ({
           onClick={() => navigate(`/course/${id}`)}
         >
           {t("card.viewDetails")}
-          <span aria-hidden="true">›</span>
+          <ArrowRight size={15} aria-hidden="true"/>
         </button>
 
         {/* The design also offers Share Courses and Delete Course. Sharing has
@@ -172,7 +173,7 @@ export const CoursePreview: React.FC<CoursePreviewProps> = ({
               aria-expanded={menuOpen}
               aria-label={t("card.moreActions")}
             >
-              ⋯
+              <MoreHorizontal size={18} aria-hidden="true"/>
             </button>
 
             {menuOpen && (

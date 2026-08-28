@@ -89,6 +89,14 @@ $dashboard-shell-header-height: 64px;
 $dashboard-shell-gutter-inline: 28px;
 $dashboard-shell-gutter-block: 24px;
 $dashboard-shell-column-gap: 0;
+
+// Shared authenticated application shell. Dashboard established this visual
+// baseline; every student, teaching, and administration route now consumes it.
+$app-shell-inset: $dashboard-shell-inset;
+$app-shell-sidebar-width: $dashboard-shell-sidebar-width;
+$app-shell-header-height: $dashboard-shell-header-height;
+$app-shell-page-gutter-inline: 28px;
+$app-shell-page-gutter-block: 24px;
 $dashboard-assistant-width: 360px;
 $dashboard-assistant-divider: $border;
 

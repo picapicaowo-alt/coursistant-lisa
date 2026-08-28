@@ -9,6 +9,7 @@ import {dashboardApiService} from "@/apis/services/dashboard-api";
 import {CourseState, unwrapData} from "@/apis";
 import {useRequiredAuth} from "@/contexts/RequiredAuthContext";
 import {courseApiService} from "@/apis/services/course-api";
+import {ChevronLeft, ChevronRight} from 'lucide-react';
 
 const CourseCataloguePage: React.FC = () => {
   const {t} = useTranslation("course");
@@ -21,11 +22,16 @@ const CourseCataloguePage: React.FC = () => {
   return (
     <div className={styles.pageContainer}>
       <div className={styles.contentContainer}>
+        <header className={styles.pageHeader}>
+          <h1>{isUserAccount ? t("list.tabs.myCourses") : 'Courses'}</h1>
+          <p>Open active courses or review archived courses.</p>
+        </header>
         <div className={styles.tabsContainer}>
           <button
             type="button"
             className={`${styles.tab} ${courseState === 'Active' ? styles.active : ""}`}
             onClick={() => setCourseState('Active')}
+            aria-pressed={courseState === 'Active'}
           >
             <span className={styles.tabLabel}>
               {isUserAccount ? t("list.tabs.myCourses") : 'Courses'}
@@ -35,6 +41,7 @@ const CourseCataloguePage: React.FC = () => {
             type="button"
             className={`${styles.tab} ${courseState === 'Archived' ? styles.active : ""}`}
             onClick={() => setCourseState('Archived')}
+            aria-pressed={courseState === 'Archived'}
           >
             <span className={styles.tabLabel}>Archived</span>
           </button>
@@ -43,6 +50,7 @@ const CourseCataloguePage: React.FC = () => {
           
           {user?.level !== "STUDENT" && (
             <button
+              type="button"
               className={styles.addButton}
               onClick={() => navigate("/course/add-content")}
             >
@@ -131,24 +139,27 @@ const CoursesList: React.FC<{state: CourseState}> = ({state}) => {
         ))}
       </div>
 
-      {courses.length > 0 && (
+      {totalPages > 1 && (
         <div className={styles.paginationContainer}>
           <button
+            type="button"
             className={styles.paginationButton}
             onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
             disabled={currentPage === 1}
+            aria-label="Previous course page"
           >
-            <svg className={styles.arrowIcon} viewBox="0 0 24 24">
-              <path fill="currentColor" d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/>
-            </svg>
+            <ChevronLeft aria-hidden="true"/>
           </button>
           
           <div className={styles.pageNumbers}>
             {[...Array(totalPages)].map((_, i) => (
               <button
                 key={i}
+                type="button"
                 className={`${styles.pageButton} ${currentPage === i + 1 ? styles.active : ""}`}
                 onClick={() => setCurrentPage(i + 1)}
+                aria-label={`Course page ${i + 1}`}
+                aria-current={currentPage === i + 1 ? 'page' : undefined}
               >
                 {i + 1}
               </button>
@@ -156,13 +167,13 @@ const CoursesList: React.FC<{state: CourseState}> = ({state}) => {
           </div>
           
           <button
+            type="button"
             className={styles.paginationButton}
             onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
             disabled={currentPage === totalPages}
+            aria-label="Next course page"
           >
-            <svg className={styles.arrowIcon} viewBox="0 0 24 24">
-              <path fill="currentColor" d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
-            </svg>
+            <ChevronRight aria-hidden="true"/>
           </button>
         </div>
       )}

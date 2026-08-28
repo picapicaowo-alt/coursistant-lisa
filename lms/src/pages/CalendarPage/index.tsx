@@ -57,7 +57,7 @@ const CalendarPage = () => {
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <div><p className={styles.eyebrow}>My schedule</p><h1>Calendar</h1><p>Class sessions, assignments, quizzes, and course events in one place.</p></div>
+        <div><h1>Calendar</h1><p>Class sessions, assignments, quizzes, and course events in one place.</p></div>
         <div className={styles.viewSwitch} aria-label="Calendar view">
           <button type="button" aria-pressed={view === 'month'} onClick={() => setView('month')}>Month</button>
           <button type="button" aria-pressed={view === 'week'} onClick={() => setView('week')}>Week</button>
