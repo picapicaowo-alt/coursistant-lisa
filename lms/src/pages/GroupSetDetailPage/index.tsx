@@ -2,7 +2,7 @@ import {FormEvent, useEffect, useState} from 'react';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {ArrowLeft, Lock, Pencil, Plus, Shuffle, Trash2, UserMinus, UserPlus, Users, X} from 'lucide-react';
 import {Link, useNavigate, useParams} from 'react-router-dom';
-import type {CourseGroup, PatchGroupSetPayload} from '@/apis';
+import type {CourseGroup, PatchGroupSetPayload, UngroupedStudent} from '@/apis';
 import {unwrapData} from '@/apis';
 import {courseApiService} from '@/apis/services/course-api';
 import {DurationSelect} from '@/components/DurationSelect';
@@ -15,10 +15,23 @@ import {
   LONG_DURATION_OPTIONS,
   presetDuration,
 } from '@/utils/dateTimeRange';
+import {formatPersonName} from '@/utils/personName';
 import styles from './index.module.scss';
 
 interface GroupDraft { name: string; capacityOverride: number | null; }
 interface MembershipAction { kind: 'move' | 'remove'; userId: number; fromGroupId: number; targetGroupId?: number; displayName: string; }
+
+const groupMemberName = (member: CourseGroup['members'][number]): string => formatPersonName({
+  firstName: member.userFirstName,
+  middleName: member.userMiddleName,
+  lastName: member.userLastName,
+}) || `User ${member.userId}`;
+
+const ungroupedStudentName = (student: UngroupedStudent): string => formatPersonName({
+  firstName: student.studentFirstName,
+  middleName: student.studentMiddleName,
+  lastName: student.studentLastName,
+}) || `User ${student.userId}`;
 
 const GroupSetDetailPage = () => {
   const params = useParams();
@@ -236,7 +249,10 @@ const GroupSetDetailPage = () => {
           return <article className={styles.groupCard} key={group.id}>
             <div className={styles.groupHeader}><div><h3>{group.name}</h3><p>{group.memberCount}{group.capacity !== null ? ` / ${group.capacity}` : ''} members</p></div>{isMine ? <span className={styles.myBadge}>Your group</span> : null}</div>
             {editingGroupId === group.id ? <form className={styles.groupEdit} onSubmit={event => { event.preventDefault(); updateGroup.mutate(); }}><label><span>Name</span><input required value={groupDraft.name} onChange={e => setGroupDraft(current => ({...current, name: e.target.value}))}/></label><label><span>Capacity override</span><input type="number" min="1" value={groupDraft.capacityOverride ?? ''} placeholder="Use default" onChange={e => setGroupDraft(current => ({...current, capacityOverride: e.target.value ? Number(e.target.value) : null}))}/></label><label className={styles.confirmCheck}><input type="checkbox" checked={confirmGroupCapacity} onChange={e => setConfirmGroupCapacity(e.target.checked)}/><span>Confirm reduction</span></label><div className={styles.actionRow}><button className={styles.primaryButton}>Save</button><button type="button" className={styles.secondaryButton} onClick={() => setEditingGroupId(null)}>Cancel</button></div></form> : null}
-            {group.members.length ? <ul className={styles.memberList}>{group.members.map(member => <li key={member.userId}><span>{member.displayName || `User ${member.userId}`}</span>{access.canManageGroups ? <div className={styles.memberActions}><label><span className={styles.srOnly}>Move {member.displayName || member.userId}</span><select defaultValue="" onChange={e => { const target = Number(e.target.value); if (target) setMembershipAction({kind: 'move', userId: member.userId, fromGroupId: group.id, targetGroupId: target, displayName: member.displayName || `User ${member.userId}`}); e.currentTarget.value = ''; }}><option value="">Move to…</option>{groups.filter(item => item.id !== group.id).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><button type="button" aria-label={`Remove ${member.displayName || member.userId}`} onClick={() => setMembershipAction({kind: 'remove', userId: member.userId, fromGroupId: group.id, displayName: member.displayName || `User ${member.userId}`})}><UserMinus size={16}/></button></div> : null}</li>)}</ul> : <p className={styles.muted}>No members yet.</p>}
+            {group.members.length ? <ul className={styles.memberList}>{group.members.map(member => {
+              const displayName = groupMemberName(member);
+              return <li key={member.userId}><span>{displayName}</span>{access.canManageGroups ? <div className={styles.memberActions}><label><span className={styles.srOnly}>Move {displayName}</span><select defaultValue="" onChange={e => { const target = Number(e.target.value); if (target) setMembershipAction({kind: 'move', userId: member.userId, fromGroupId: group.id, targetGroupId: target, displayName}); e.currentTarget.value = ''; }}><option value="">Move to…</option>{groups.filter(item => item.id !== group.id).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><button type="button" aria-label={`Remove ${displayName}`} onClick={() => setMembershipAction({kind: 'remove', userId: member.userId, fromGroupId: group.id, displayName})}><UserMinus size={16}/></button></div> : null}</li>;
+            })}</ul> : <p className={styles.muted}>No members yet.</p>}
             <div className={styles.groupFooter}>{access.canManageGroups ? <><button type="button" className={styles.secondaryButton} onClick={() => startGroupEdit(group)}><Pencil size={15}/> Edit</button>{confirmDeleteId === `group-${group.id}` ? <><button type="button" className={styles.dangerButton} onClick={() => deleteItem.mutate({kind: 'group', id: group.id})}>Confirm delete</button><button type="button" className={styles.secondaryButton} onClick={() => setConfirmDeleteId(null)}>Cancel</button></> : <button type="button" className={styles.dangerButton} onClick={() => setConfirmDeleteId(`group-${group.id}`)}><Trash2 size={15}/> Delete</button>}</> : groupSet?.openForSelfService ? isMine ? <button type="button" className={styles.secondaryButton} onClick={() => selfService.mutate({action: 'leave', groupId: group.id})}>Leave group</button> : <button type="button" className={styles.primaryButton} disabled={full || selfService.isPending} onClick={() => selfService.mutate({action: myGroupId ? 'switch' : 'join', groupId: group.id})}>{full ? 'Group full' : myGroupId ? 'Switch to this group' : 'Join group'}</button> : null}</div>
           </article>;
         })}</div>}
@@ -244,7 +260,7 @@ const GroupSetDetailPage = () => {
 
       {access.canManageGroups ? <section className={styles.card}>
         <div className={styles.cardHeader}><div><h2>Assign ungrouped students</h2><p>{ungroupedQuery.data?.length ?? 0} students currently ungrouped.</p></div>{confirmDeleteId === 'random' ? <div className={styles.actionRow}><button type="button" className={styles.primaryButton} onClick={() => randomDistribution.mutate()} disabled={randomDistribution.isPending}>Confirm distribution</button><button type="button" className={styles.secondaryButton} onClick={() => setConfirmDeleteId(null)}>Cancel</button></div> : <button type="button" className={styles.secondaryButton} disabled={!ungroupedQuery.data?.length || !groups.length} onClick={() => setConfirmDeleteId('random')}><Shuffle size={16}/> Distribute randomly</button>}</div>
-        {ungroupedQuery.isError ? <p className={styles.error}>Ungrouped students could not be loaded.</p> : <form className={styles.assignForm} onSubmit={event => { event.preventDefault(); assignStudent.mutate(); }}><label><span>Student</span><select value={selectedStudentId ?? ''} onChange={e => setSelectedStudentId(e.target.value ? Number(e.target.value) : null)}><option value="">Select student</option>{ungroupedQuery.data?.map(student => <option key={student.userId} value={student.userId}>{student.displayName || `User ${student.userId}`}</option>)}</select></label><label><span>Group</span><select value={selectedTargetGroupId ?? ''} onChange={e => setSelectedTargetGroupId(e.target.value ? Number(e.target.value) : null)}><option value="">Select group</option>{groups.map(group => <option key={group.id} value={group.id}>{group.name}</option>)}</select></label><label className={styles.confirmCheck}><input type="checkbox" checked={allowOverfill} onChange={e => setAllowOverfill(e.target.checked)}/><span>Allow confirmed capacity overfill</span></label><button className={styles.primaryButton} disabled={!selectedStudentId || !selectedTargetGroupId || assignStudent.isPending}><UserPlus size={16}/> Assign</button></form>}
+        {ungroupedQuery.isError ? <p className={styles.error}>Ungrouped students could not be loaded.</p> : <form className={styles.assignForm} onSubmit={event => { event.preventDefault(); assignStudent.mutate(); }}><label><span>Student</span><select value={selectedStudentId ?? ''} onChange={e => setSelectedStudentId(e.target.value ? Number(e.target.value) : null)}><option value="">Select student</option>{ungroupedQuery.data?.map(student => <option key={student.userId} value={student.userId}>{ungroupedStudentName(student)}</option>)}</select></label><label><span>Group</span><select value={selectedTargetGroupId ?? ''} onChange={e => setSelectedTargetGroupId(e.target.value ? Number(e.target.value) : null)}><option value="">Select group</option>{groups.map(group => <option key={group.id} value={group.id}>{group.name}</option>)}</select></label><label className={styles.confirmCheck}><input type="checkbox" checked={allowOverfill} onChange={e => setAllowOverfill(e.target.checked)}/><span>Allow confirmed capacity overfill</span></label><button className={styles.primaryButton} disabled={!selectedStudentId || !selectedTargetGroupId || assignStudent.isPending}><UserPlus size={16}/> Assign</button></form>}
       </section> : null}
 
       {membershipAction ? <section className={styles.confirmBar} role="alertdialog" aria-labelledby="membership-confirm-title"><div><strong id="membership-confirm-title">Confirm membership change</strong><p>{membershipAction.kind === 'move' ? `Move ${membershipAction.displayName} to ${groups.find(group => group.id === membershipAction.targetGroupId)?.name}?` : `Remove ${membershipAction.displayName} from this group?`} This may affect group assignment ownership.</p></div><button type="button" className={styles.dangerButton} onClick={() => changeMembership.mutate()} disabled={changeMembership.isPending}>Confirm</button><button type="button" className={styles.secondaryButton} onClick={() => setMembershipAction(null)}>Cancel</button></section> : null}

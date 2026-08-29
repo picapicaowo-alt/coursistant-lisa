@@ -6,6 +6,7 @@ import {courseApiService} from '@/apis/services/course-api';
 import {unwrapData} from '@/apis';
 import {RichTextEditor} from '@/components/RichTextEditor';
 import {formatUtcTimestamp} from '@/utils/datetime';
+import {formatPersonName} from '@/utils/personName';
 import styles from './index.module.scss';
 
 export type NotificationSubjectKind = 'announcement' | 'event' | 'group-set' | 'week';
@@ -43,7 +44,7 @@ const loadSubject = async (
       title: item.title,
       description: item.body,
       metadata: [
-        {icon: 'users', label: item.authorName},
+        {icon: 'users', label: formatPersonName({firstName: item.authorFirstName, middleName: item.authorMiddleName, lastName: item.authorLastName}) || 'Unknown author'},
         {icon: 'calendar', label: formatUtcTimestamp(item.postedAt)},
       ],
     };

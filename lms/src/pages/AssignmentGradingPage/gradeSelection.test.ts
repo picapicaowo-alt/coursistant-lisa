@@ -4,7 +4,9 @@ import {buildGradeSelection, rosterRowKey} from './gradeSelection';
 
 const student: GradingRosterItem = {
   studentUserId: 389,
-  studentName: 'Eden Brooks',
+  studentFirstName: 'Eden',
+  studentMiddleName: null,
+  studentLastName: 'Brooks',
   submissionStatus: 'Submitted',
   gradeStatus: 'Entered',
 };

@@ -19,7 +19,9 @@ export interface CourseSummary {
   instructorId: number | null;
   primaryInstructor: {
     userId: number;
-    name?: string;
+    instructorFirstName?: string | null;
+    instructorMiddleName?: string | null;
+    instructorLastName?: string | null;
     email?: string;
   } | null;
 }
@@ -56,7 +58,9 @@ export interface CourseResponse {
   instructorId: number | null;
   primaryInstructor: {
     userId: number;
-    name?: string;
+    instructorFirstName?: string | null;
+    instructorMiddleName?: string | null;
+    instructorLastName?: string | null;
     email?: string;
   } | null;
   state: 'Active' | 'Archived';
@@ -119,7 +123,9 @@ export interface CourseAnnouncement {
   title: string;
   body: string;
   authorUserId: number;
-  authorName: string;
+  authorFirstName: string | null;
+  authorMiddleName: string | null;
+  authorLastName: string | null;
   postedAt: string;
   editedAt: string | null;
   read: boolean;
@@ -131,7 +137,9 @@ export interface CourseAnnouncementSummary {
   courseCode: string;
   title: string;
   authorUserId: number;
-  authorName: string;
+  authorFirstName: string | null;
+  authorMiddleName: string | null;
+  authorLastName: string | null;
   postedAt: string;
   editedAt: string | null;
   read: boolean;
@@ -170,7 +178,9 @@ export interface CourseEventPayload {
 export interface CourseGroupMembership {
   groupId: number;
   userId: number;
-  displayName: string | null;
+  userFirstName: string | null;
+  userMiddleName: string | null;
+  userLastName: string | null;
   joinedAt: string;
   addedByType: string;
   addedByUserId: number | null;
@@ -221,7 +231,9 @@ export interface CourseMember {
   id: number;
   courseId: number;
   userId: number;
-  userName: string | null;
+  userFirstName: string | null;
+  userMiddleName: string | null;
+  userLastName: string | null;
   userEmail: string | null;
   courseRole: CourseRole;
   canGrade?: boolean;
@@ -288,7 +300,9 @@ export type SyllabusState =
 
 export interface UngroupedStudent {
   userId: number;
-  displayName: string | null;
+  studentFirstName: string | null;
+  studentMiddleName: string | null;
+  studentLastName: string | null;
 }
 
 /** Day codes used by sessions. */

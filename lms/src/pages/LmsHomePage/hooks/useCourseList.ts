@@ -1,6 +1,7 @@
 import {MyCourse} from '@/apis';
 import {useMyCourses} from '@/hooks/useCourseAccess';
 import {DashboardCourse} from '../types';
+import {formatPersonName} from '@/utils/personName';
 
 const INSTRUCTOR_AVATAR_FALLBACK = '/icons/course/instructor.png';
 
@@ -15,7 +16,11 @@ const toDashboardCourse = (course: MyCourse): DashboardCourse => ({
   courseCode: course.courseCode,
   title: course.title ?? course.name,
   courseRole: course.courseRole ?? course.role,
-  instructorName: course.primaryInstructor?.name ?? null,
+  instructorName: course.primaryInstructor ? formatPersonName({
+    firstName: course.primaryInstructor.instructorFirstName,
+    middleName: course.primaryInstructor.instructorMiddleName,
+    lastName: course.primaryInstructor.instructorLastName,
+  }) || null : null,
   instructorAvatar: INSTRUCTOR_AVATAR_FALLBACK,
 });
 

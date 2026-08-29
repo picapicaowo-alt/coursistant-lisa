@@ -47,7 +47,9 @@ export interface UpcomingActivity {
 
 export interface PrimaryInstructor {
   userId: number;
-  name?: string;
+  instructorFirstName?: string | null;
+  instructorMiddleName?: string | null;
+  instructorLastName?: string | null;
   email?: string;
 }
 

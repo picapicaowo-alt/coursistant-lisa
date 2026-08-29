@@ -7,6 +7,7 @@ import {profileApiService} from '@/apis/services/profile-api';
 import {useAuth} from '@/contexts/AuthContext';
 import {getApiErrorMessage} from '@/utils/apiError';
 import {normalizeAvatarUrl} from '@/utils/avatarUrl';
+import {formatPersonName, parsePersonName} from '@/utils/personName';
 
 interface StatusMessage {
   kind: 'success' | 'error';
@@ -28,14 +29,23 @@ const ProfilePage = () => {
 
   const commitProfile = (data: ProfileResponse) => {
     queryClient.setQueryData(['my-profile'], data);
-    updateProfile({name: data.displayName, avatar: data.avatarUrl});
+    updateProfile({
+      firstName: data.firstName,
+      middleName: data.middleName,
+      lastName: data.lastName,
+      avatar: data.avatarUrl,
+    });
   };
 
   const updateName = useMutation({
-    mutationFn: async () => unwrapData(
-      await profileApiService.updateMyProfile({displayName: displayName.trim()}),
-      'Update profile',
-    ),
+    mutationFn: async () => {
+      const parsedName = parsePersonName(displayName);
+      if (!parsedName) throw new Error('Enter both a first name and a last name.');
+      return unwrapData(
+        await profileApiService.updateMyProfile({...parsedName, middleName: ''}),
+        'Update profile',
+      );
+    },
     onSuccess: data => {
       commitProfile(data);
       setEditing(false);
@@ -76,6 +86,7 @@ const ProfilePage = () => {
 
   const profile = profileQuery.data;
   if (!profile) return <main className={styles.profilePage}>Could not load profile.</main>;
+  const profileName = formatPersonName(profile) || 'Unnamed user';
   const avatar = normalizeAvatarUrl(profile.avatarUrl) || '/icons/default_avatar.jpg';
 
   return (
@@ -124,13 +135,13 @@ const ProfilePage = () => {
 
         <div className={styles.profileDetails}>
           <div className={styles.profileHeading}>
-            <h1 id="profile-title">{profile.displayName}</h1>
+            <h1 id="profile-title">{profileName}</h1>
             {!editing ? (
               <button
                 type="button"
                 className={styles.secondaryButton}
                 onClick={() => {
-                  setDisplayName(profile.displayName || '');
+                  setDisplayName(profileName === 'Unnamed user' ? '' : profileName);
                   setEditing(true);
                   setStatus(null);
                 }}
@@ -168,7 +179,7 @@ const ProfilePage = () => {
                 <button
                   type="submit"
                   className={styles.primaryButton}
-                  disabled={updateName.isPending || !displayName.trim()}
+                  disabled={updateName.isPending || !parsePersonName(displayName)}
                 >
                   {updateName.isPending ? 'Saving…' : 'Save changes'}
                 </button>

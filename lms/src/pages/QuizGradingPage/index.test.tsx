@@ -101,9 +101,9 @@ describe('QuizGradingPage', () => {
     }]));
     vi.mocked(courseApiService.listCourseMembers).mockResolvedValue(response({
       items: [
-        {id: 1, courseId: 37, userId: 101, userName: 'Student One', userEmail: 'one@example.com', courseRole: 'Student', active: true},
-        {id: 2, courseId: 37, userId: 102, userName: 'Student Two', userEmail: 'two@example.com', courseRole: 'Student', active: true},
-        {id: 3, courseId: 37, userId: 103, userName: 'Student Three', userEmail: 'three@example.com', courseRole: 'Student', active: true},
+        {id: 1, courseId: 37, userId: 101, userFirstName: 'Student', userMiddleName: null, userLastName: 'One', userEmail: 'one@example.com', courseRole: 'Student', active: true},
+        {id: 2, courseId: 37, userId: 102, userFirstName: 'Student', userMiddleName: null, userLastName: 'Two', userEmail: 'two@example.com', courseRole: 'Student', active: true},
+        {id: 3, courseId: 37, userId: 103, userFirstName: 'Student', userMiddleName: null, userLastName: 'Three', userEmail: 'three@example.com', courseRole: 'Student', active: true},
       ],
       total: 3,
       page: 0,

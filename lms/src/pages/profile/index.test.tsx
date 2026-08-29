@@ -27,7 +27,9 @@ const response = <T,>(data: T) => ({
 
 const profile = {
   userId: 9,
-  displayName: 'Student One',
+  firstName: 'Student',
+  middleName: null,
+  lastName: 'One',
   email: 'student@example.com',
   role: 'USER',
   level: 'STUDENT',
@@ -48,7 +50,7 @@ describe('ProfilePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     api.getMyProfile.mockResolvedValue(response(profile));
-    api.updateMyProfile.mockResolvedValue(response({...profile, displayName: 'Student Two'}));
+    api.updateMyProfile.mockResolvedValue(response({...profile, lastName: 'Two'}));
   });
 
   it('loads the live profile and saves a display-name change', async () => {
@@ -63,7 +65,7 @@ describe('ProfilePage', () => {
     await userEvent.click(screen.getByRole('button', {name: 'Save changes'}));
 
     await waitFor(() => {
-      expect(api.updateMyProfile).toHaveBeenCalledWith({displayName: 'Student Two'});
+      expect(api.updateMyProfile).toHaveBeenCalledWith({firstName: 'Student', lastName: 'Two', middleName: ''});
     });
     expect(await screen.findByText('Profile updated.')).toBeInTheDocument();
   });

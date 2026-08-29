@@ -7,7 +7,9 @@ export interface AssignmentForReview extends AssignmentBase {
 
 export interface StudentState {
   studentId: string;
-  studentName: string;
+  studentFirstName: string | null;
+  studentMiddleName: string | null;
+  studentLastName: string | null;
   submission: SubmissionState | null;
   review: ReviewState | null;
 }

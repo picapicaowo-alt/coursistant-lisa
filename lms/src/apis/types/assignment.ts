@@ -71,7 +71,9 @@ export interface Submission {
   createdAt: Date;
   updatedAt: Date;
   assignmentId: number;
-  studentName: string;
+  studentFirstName: string | null;
+  studentMiddleName: string | null;
+  studentLastName: string | null;
   submissionCount: number;
   submissionContent: string;
 }
@@ -313,7 +315,9 @@ export type GradeStatus = 'Ungraded' | 'Entered' | 'Released' | string;
 
 export interface GradingRosterItem {
   studentUserId?: number;
-  studentName?: string;
+  studentFirstName?: string | null;
+  studentMiddleName?: string | null;
+  studentLastName?: string | null;
   studentEmail?: string;
   groupId?: number;
   groupName?: string;

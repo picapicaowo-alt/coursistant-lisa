@@ -107,9 +107,9 @@ test('teacher reviews quiz results and uses explicit bulk selection', async ({pa
       }];
     } else if (path === '/v2/courses/37/members') {
       data = {items: [
-        {id: 1, courseId: 37, userId: 101, userName: 'Student One', userEmail: 'one@example.com', courseRole: 'Student', active: true},
-        {id: 2, courseId: 37, userId: 102, userName: 'Student Two', userEmail: 'two@example.com', courseRole: 'Student', active: true},
-        {id: 3, courseId: 37, userId: 103, userName: 'Student Three', userEmail: 'three@example.com', courseRole: 'Student', active: true},
+        {id: 1, courseId: 37, userId: 101, userFirstName: 'Student', userMiddleName: null, userLastName: 'One', userEmail: 'one@example.com', courseRole: 'Student', active: true},
+        {id: 2, courseId: 37, userId: 102, userFirstName: 'Student', userMiddleName: null, userLastName: 'Two', userEmail: 'two@example.com', courseRole: 'Student', active: true},
+        {id: 3, courseId: 37, userId: 103, userFirstName: 'Student', userMiddleName: null, userLastName: 'Three', userEmail: 'three@example.com', courseRole: 'Student', active: true},
       ], page: 0, size: 100, total: 3};
     } else if (path === '/v2/courses/37/quizzes/12/attempts/1001/result') {
       data = {

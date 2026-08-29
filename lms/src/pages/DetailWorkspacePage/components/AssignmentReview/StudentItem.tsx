@@ -3,6 +3,7 @@ import {useTranslation} from "react-i18next";
 import styles from "./StudentItem.module.scss";
 import {useAssignmentReviewStore} from "../../stores/useAssignmentReviewStore";
 import {SubmissionEntity} from "@/pages/DetailWorkspacePage/config";
+import {formatPersonName} from '@/utils/personName';
 
 const STATUS_COLORS: Record<string, string> = {
   'not-submitted': '#e53e3e',
@@ -30,6 +31,11 @@ export const StudentItem: React.FC<StudentItemProps> = ({
     const reviewed = getRelated("submissions", submission?.id, "submissionReviews").length > 0;
     return reviewed ? 'graded' : 'submitted';
   }, [submission, getRelated])
+  const studentName = formatPersonName({
+    firstName: submission.studentFirstName,
+    middleName: submission.studentMiddleName,
+    lastName: submission.studentLastName,
+  }) || 'Unknown learner';
   
   return (
     <button
@@ -40,7 +46,7 @@ export const StudentItem: React.FC<StudentItemProps> = ({
       }}
     >
       <div className={styles.studentInfo}>
-        <span className={styles.studentName}>{submission.studentName}</span>
+        <span className={styles.studentName}>{studentName}</span>
         <span className={styles.submissionTime}>
           {new Date(submission.updatedAt).toLocaleDateString('en-US')}
         </span>
