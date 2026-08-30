@@ -30,21 +30,29 @@ const course = {
   archivedAt: null,
 };
 
-const installSession = async (page: Page, role: 'USER' | 'TENANT_ADMIN') => {
-  await page.addInitScript(({accountRole}) => {
+type UserLevel = 'STUDENT' | 'INSTRUCTOR';
+
+const installSession = async (
+  page: Page,
+  role: 'USER' | 'TENANT_ADMIN',
+  level: UserLevel = 'STUDENT',
+) => {
+  await page.addInitScript(({accountRole, accountLevel}) => {
     localStorage.setItem('user', JSON.stringify({
       id: 900,
       userId: 900,
       email: accountRole === 'USER' ? 'student@example.test' : 'admin@example.test',
-      name: accountRole === 'USER' ? 'Student Test' : 'Tenant Admin',
+      name: accountRole === 'USER'
+        ? accountLevel === 'INSTRUCTOR' ? 'Teach Test Two' : 'Student Test'
+        : 'Tenant Admin',
       username: accountRole === 'USER' ? 'student' : 'tenant-admin',
       role: accountRole,
-      level: accountRole === 'USER' ? 'STUDENT' : null,
+      level: accountRole === 'USER' ? accountLevel : null,
       avatar: null,
       accessToken: 'browser-test-token',
     }));
     localStorage.setItem('accToken', 'browser-test-token');
-  }, {accountRole: role});
+  }, {accountRole: role, accountLevel: level});
 
   await page.route('**/v2/**', async route => {
     const url = new URL(route.request().url());
@@ -114,4 +122,38 @@ test('dashboard stacks the assistant rail before the main content becomes crampe
   expect(Math.round(narrowAssistantBox!.x)).toBe(Math.round(narrowMainBox!.x));
   expect(narrowAssistantBox!.y).toBeGreaterThan(narrowMainBox!.y);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1024);
+});
+
+test('student and teacher routes keep one stable global header frame', async ({browser}) => {
+  const routes = ['/course', '/calendar', '/aibot', '/profile', '/settings'];
+
+  for (const level of ['STUDENT', 'INSTRUCTOR'] as const) {
+    const page = await browser.newPage({viewport: {width: 1440, height: 900}});
+    await installSession(page, 'USER', level);
+    let desktopWidth: number | null = null;
+
+    for (const route of routes) {
+      await page.goto(route);
+      const header = page.locator('header.app-shell-header');
+      await expect(header).toBeVisible();
+      await expect(header).toHaveCSS('height', '84px');
+      await expect(header).toHaveCSS('border-bottom-width', '1px');
+
+      const box = await header.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.height).toBe(84);
+      desktopWidth ??= box!.width;
+      expect(box!.width).toBe(desktopWidth);
+    }
+
+    await page.setViewportSize({width: 390, height: 844});
+    await page.goto('/aibot');
+    const mobileHeader = page.locator('header.app-shell-header');
+    await expect(mobileHeader).toHaveCSS('height', '68px');
+    await expect(mobileHeader).toHaveCSS('border-bottom-width', '1px');
+    expect((await mobileHeader.boundingBox())?.height).toBe(68);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+
+    await page.close();
+  }
 });

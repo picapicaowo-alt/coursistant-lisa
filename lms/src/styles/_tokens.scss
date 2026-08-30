@@ -94,7 +94,10 @@ $dashboard-shell-column-gap: 0;
 // baseline; every student, teaching, and administration route now consumes it.
 $app-shell-inset: $dashboard-shell-inset;
 $app-shell-sidebar-width: $dashboard-shell-sidebar-width;
-$app-shell-header-height: $dashboard-shell-header-height;
+// The global account/search bar includes its padding and border in this fixed
+// outer size. Keep it separate from the dashboard's internal panel headers.
+$app-shell-header-height: 84px;
+$app-shell-header-mobile-height: 68px;
 $app-shell-page-gutter-inline: 32px;
 $app-shell-page-gutter-block: 28px;
 $dashboard-assistant-width: 372px;

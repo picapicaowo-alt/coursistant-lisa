@@ -147,7 +147,10 @@ $secondary-color: t.$text-muted;
 }
 
 .lms-home-header.app-shell-header {
+    height: t.$app-shell-header-height;
     min-height: t.$app-shell-header-height;
+    box-sizing: border-box;
+    flex: 0 0 t.$app-shell-header-height;
     margin: 0;
     padding: .875rem 2rem;
     border-bottom: 1px solid t.$border;
@@ -221,7 +224,9 @@ $secondary-color: t.$text-muted;
     }
 
     .lms-home-header.app-shell-header {
-        min-height: 0;
+        height: t.$app-shell-header-mobile-height;
+        min-height: t.$app-shell-header-mobile-height;
+        flex-basis: t.$app-shell-header-mobile-height;
         padding: .75rem 1rem;
 
         .profile { border: 0; padding: 0; }
