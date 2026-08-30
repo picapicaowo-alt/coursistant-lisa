@@ -8,6 +8,7 @@ import type {AssignmentDetail} from '@/apis';
 
 const api = vi.hoisted(() => ({
   createAssignment: vi.fn(),
+  getAssignment: vi.fn(),
   patchAssignment: vi.fn(),
   previewDueDateChange: vi.fn(),
   uploadAttachments: vi.fn(),
@@ -86,7 +87,7 @@ const fillRequiredFields = async () => {
 describe('AssignmentEditorForm recovery workflow', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    api.createAssignment.mockResolvedValue(response(draft));
+    api.createAssignment.mockResolvedValue(response({...draft, allowedFileTypes: ['pdf', 'docx']}));
     api.patchAssignment.mockResolvedValue(response(draft));
     api.previewDueDateChange.mockResolvedValue(response({
       currentDueAt: '2026-08-30T10:00:00',
@@ -137,13 +138,7 @@ describe('AssignmentEditorForm recovery workflow', () => {
 
     await waitFor(() => expect(api.publishAssignment).toHaveBeenCalledTimes(1));
     expect(api.createAssignment).toHaveBeenCalledTimes(1);
-    expect(api.patchAssignment).toHaveBeenCalledTimes(1);
-    expect(api.patchAssignment).toHaveBeenCalledWith(
-      31,
-      88,
-      expect.objectContaining({title: 'Recovery assignment'}),
-      expect.any(String),
-    );
+    expect(api.patchAssignment).not.toHaveBeenCalled();
   });
 
   it('does not upload successful attachments again when publish is retried', async () => {
@@ -166,7 +161,7 @@ describe('AssignmentEditorForm recovery workflow', () => {
     await waitFor(() => expect(api.publishAssignment).toHaveBeenCalledTimes(2));
     expect(api.uploadAttachments).toHaveBeenCalledTimes(1);
     expect(api.createAssignment).toHaveBeenCalledTimes(1);
-    expect(api.patchAssignment).toHaveBeenCalledTimes(1);
+    expect(api.patchAssignment).not.toHaveBeenCalled();
   });
 
   it('uses a named group-set selector for group assignments', async () => {
@@ -191,7 +186,7 @@ describe('AssignmentEditorForm recovery workflow', () => {
     api.createAssignment.mockReset();
     api.createAssignment
       .mockRejectedValueOnce(new Error('timeout'))
-      .mockResolvedValueOnce(response(draft));
+      .mockResolvedValueOnce(response({...draft, allowedFileTypes: ['pdf', 'docx']}));
     renderEditor();
     await fillRequiredFields();
 
@@ -233,8 +228,47 @@ describe('AssignmentEditorForm recovery workflow', () => {
     expect(api.patchAssignment).toHaveBeenCalledWith(
       31,
       88,
-      expect.objectContaining({dueAt: '2026-09-20T23:59:00', expectedVersion: 3}),
+      {dueAt: '2026-09-20T23:59:00', expectedVersion: 3},
       expect.any(String),
     );
+  });
+
+  it('patches a late-work deadline without resending locked assignment structure', async () => {
+    renderEditor({...draft, state: 'Published', submissionCount: 4});
+    fireEvent.change(screen.getByLabelText('Accept late work until'), {
+      target: {value: '12/12/2026, 11:59 PM'},
+    });
+
+    fireEvent.submit(screen.getByRole('button', {name: 'Save changes'}).closest('form')!);
+
+    await waitFor(() => expect(api.patchAssignment).toHaveBeenCalledWith(
+      31,
+      88,
+      {lateUntil: '2026-12-12T23:59:00', expectedVersion: 3},
+      expect.any(String),
+    ));
+    const request = api.patchAssignment.mock.calls[0][2];
+    expect(request).not.toHaveProperty('submissionType');
+    expect(request).not.toHaveProperty('groupSetId');
+    expect(request).not.toHaveProperty('allowedFileTypes');
+  });
+
+  it('shows the structure-lock reason instead of treating it as a version conflict', async () => {
+    api.patchAssignment.mockRejectedValue({
+      code: 409,
+      message: 'Conflict',
+      details: {code: 'ASSIGNMENT_TYPE_LOCKED'},
+    });
+    renderEditor(draft);
+    fireEvent.change(screen.getByLabelText('Accept late work until'), {
+      target: {value: '12/12/2026, 11:59 PM'},
+    });
+    fireEvent.submit(screen.getByRole('button', {name: 'Save changes'}).closest('form')!);
+
+    await waitFor(() => expect(api.patchAssignment).toHaveBeenCalledTimes(1));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Submission type and group set cannot be changed after students have submitted.'
+    );
+    expect(api.getAssignment).not.toHaveBeenCalled();
   });
 });

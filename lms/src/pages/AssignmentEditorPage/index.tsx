@@ -2,7 +2,7 @@ import {ChangeEvent, FormEvent, useRef, useState} from 'react';
 import {useQuery, useQueryClient} from '@tanstack/react-query';
 import {ArrowLeft, CalendarClock, CheckCircle2, Eye, FileText, Trash2, Upload, UsersRound, X} from 'lucide-react';
 import {Link, useNavigate, useParams} from 'react-router-dom';
-import type {ApiResponse, AssignmentDetail, AssignmentSubmissionType, CreateAssignmentPayload, PatchAssignmentPayload} from '@/apis';
+import type {AssignmentDetail, AssignmentSubmissionType, CreateAssignmentPayload, PatchAssignmentPayload} from '@/apis';
 import {unwrapData} from '@/apis';
 import {assignmentApiService} from '@/apis/services/assignment-api';
 import {courseApiService} from '@/apis/services/course-api';
@@ -25,6 +25,62 @@ const formatFileSize = (sizeBytes: number) => {
   if (sizeBytes < 1024 * 1024) return `${Math.max(1, Math.round(sizeBytes / 1024))} KB`;
   return `${(sizeBytes / 1024 / 1024).toFixed(1)} MB`;
 };
+
+const sameStringList = (left?: string[], right?: string[]) => {
+  const normalizedLeft = [...(left ?? [])].sort();
+  const normalizedRight = [...(right ?? [])].sort();
+  return normalizedLeft.length === normalizedRight.length
+    && normalizedLeft.every((value, index) => value === normalizedRight[index]);
+};
+
+/**
+ * Existing assignments use a partial-update contract. Sending unchanged
+ * structure fields is not harmless: once submissions exist, the backend locks
+ * `submissionType` and `groupSetId` even when their values did not change.
+ */
+const buildAssignmentPatch = (
+  payload: CreateAssignmentPayload,
+  saved: AssignmentDetail,
+  confirmShortenDueDate: boolean,
+): PatchAssignmentPayload => {
+  const expectedVersion = saved.version;
+  if (typeof expectedVersion !== 'number' || !Number.isInteger(expectedVersion)) {
+    throw new TypeError('The assignment version is unavailable.');
+  }
+
+  const patch: PatchAssignmentPayload = {expectedVersion};
+  if (payload.title !== saved.title) patch.title = payload.title;
+  if ((payload.description ?? '') !== saved.description) patch.description = payload.description;
+  if (payload.pointsPossible !== saved.pointsPossible) patch.pointsPossible = payload.pointsPossible;
+  if (payload.dueAt !== normalizeCourseLocalDateTime(saved.dueAtLocal)) patch.dueAt = payload.dueAt;
+
+  const savedLateUntil = saved.lateUntilLocal
+    ? normalizeCourseLocalDateTime(saved.lateUntilLocal)
+    : undefined;
+  if (payload.lateUntil !== savedLateUntil) {
+    if (payload.lateUntil) patch.lateUntil = payload.lateUntil;
+    else if (savedLateUntil) patch.clearLateUntil = true;
+  }
+
+  if (!sameStringList(payload.allowedFileTypes, saved.allowedFileTypes)) {
+    patch.allowedFileTypes = payload.allowedFileTypes;
+  }
+  if (payload.maxFileCount !== saved.maxFileCount) patch.maxFileCount = payload.maxFileCount;
+  if (payload.maxFileSizeBytes !== saved.maxFileSizeBytes) patch.maxFileSizeBytes = payload.maxFileSizeBytes;
+
+  if (payload.submissionType !== saved.submissionType) {
+    patch.submissionType = payload.submissionType;
+    if (payload.submissionType === 'Group') patch.groupSetId = payload.groupSetId;
+  } else if (payload.submissionType === 'Group' && payload.groupSetId !== saved.groupSetId) {
+    patch.groupSetId = payload.groupSetId;
+  }
+
+  if (confirmShortenDueDate) patch.confirmShortenDueDate = true;
+  return patch;
+};
+
+const hasAssignmentChanges = (patch: PatchAssignmentPayload) =>
+  Object.keys(patch).some(field => field !== 'expectedVersion');
 
 interface AssignmentEditorFormProps {
   courseId: number;
@@ -247,32 +303,33 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
         }
       }
 
-      let recordOperation: string;
-      let recordKey: string;
-      let response: ApiResponse<AssignmentDetail>;
       if (saved) {
-        const expectedVersion = saved.version;
-        if (typeof expectedVersion !== 'number' || !Number.isInteger(expectedVersion)) {
+        let recordRequest: PatchAssignmentPayload;
+        try {
+          recordRequest = buildAssignmentPatch(payload, saved, confirmShortenDueDate);
+        } catch {
           setError('The assignment version is unavailable. Reload the editor before saving changes.');
           return;
         }
-        const recordRequest: PatchAssignmentPayload = {
-          ...payload,
-          expectedVersion,
-          ...(checkpointAssignment?.lateUntilLocal && !lateUntil ? {clearLateUntil: true} : {}),
-          ...(confirmShortenDueDate ? {confirmShortenDueDate: true} : {}),
-        };
-        recordOperation = `assignment-update-${courseId}-${saved.id}`;
-        recordKey = idempotency.keyFor(recordOperation, idempotencyFingerprint(recordRequest));
-        response = await assignmentApiService.patchAssignment(courseId, saved.id, recordRequest, recordKey);
+        if (hasAssignmentChanges(recordRequest)) {
+          const recordOperation = `assignment-update-${courseId}-${saved.id}`;
+          const recordKey = idempotency.keyFor(recordOperation, idempotencyFingerprint(recordRequest));
+          const response = await assignmentApiService.patchAssignment(courseId, saved.id, recordRequest, recordKey);
+          saved = unwrapData(response, 'patchAssignment');
+          idempotency.complete(recordOperation, recordKey);
+          setCheckpointAssignment(saved);
+        }
       } else {
-        recordOperation = `assignment-create-${courseId}`;
-        recordKey = idempotency.keyFor(recordOperation, idempotencyFingerprint(payload));
-        response = await assignmentApiService.createAssignment(courseId, payload, recordKey);
+        const recordOperation = `assignment-create-${courseId}`;
+        const recordKey = idempotency.keyFor(recordOperation, idempotencyFingerprint(payload));
+        const response = await assignmentApiService.createAssignment(courseId, payload, recordKey);
+        saved = unwrapData(response, 'createAssignment');
+        idempotency.complete(recordOperation, recordKey);
+        setCheckpointAssignment(saved);
       }
-      saved = unwrapData(response, checkpointAssignment ? 'patchAssignment' : 'createAssignment');
-      idempotency.complete(recordOperation, recordKey);
-      setCheckpointAssignment(saved);
+      if (!saved) {
+        throw new Error('Assignment record is unavailable after saving.');
+      }
 
       if (pendingFiles.length > 0) {
         stage = 'attachments';
@@ -311,7 +368,9 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
       ]);
       navigate(`/course/${courseId}/assignments/${saved.id}`);
     } catch (err) {
-      const isVersionConflict = isConflict(err) || getApiErrorCode(err) === 'ASSIGNMENT_VERSION_CONFLICT';
+      const apiErrorCode = getApiErrorCode(err);
+      const isVersionConflict = apiErrorCode === 'ASSIGNMENT_VERSION_CONFLICT'
+        || (isConflict(err) && apiErrorCode === undefined);
       if (isVersionConflict && saved) {
         try {
           const fresh = unwrapData(await assignmentApiService.getAssignment(courseId, saved.id), 'getAssignment');
@@ -320,6 +379,8 @@ export const AssignmentEditorForm = ({courseId, assignment}: AssignmentEditorFor
           // ignore
         }
         setError('This assignment was modified by another user. The latest version has been loaded. Please review your changes and try saving again.');
+      } else if (apiErrorCode === 'ASSIGNMENT_TYPE_LOCKED') {
+        setError('Submission type and group set cannot be changed after students have submitted. Other assignment fields were not changed.');
       } else if (stage === 'attachments' && saved) {
         setError(`Assignment #${saved.id} is saved, but its attachments could not be uploaded. Retry will continue this same assignment.`);
       } else if (stage === 'publish' && saved) {
