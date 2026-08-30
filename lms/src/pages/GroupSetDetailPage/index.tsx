@@ -2,7 +2,7 @@ import {FormEvent, useEffect, useState} from 'react';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {ArrowLeft, Lock, Pencil, Plus, Shuffle, Trash2, UserMinus, UserPlus, Users, X} from 'lucide-react';
 import {Link, useNavigate, useParams} from 'react-router-dom';
-import type {CourseGroup, PatchGroupSetPayload, UngroupedStudent} from '@/apis';
+import type {CourseGroup, PatchGroupSetPayload} from '@/apis';
 import {unwrapData} from '@/apis';
 import {courseApiService} from '@/apis/services/course-api';
 import {DurationSelect} from '@/components/DurationSelect';
@@ -15,23 +15,11 @@ import {
   LONG_DURATION_OPTIONS,
   presetDuration,
 } from '@/utils/dateTimeRange';
-import {formatPersonName} from '@/utils/personName';
 import styles from './index.module.scss';
+import {groupMemberName, ungroupedStudentName} from './memberName';
 
 interface GroupDraft { name: string; capacityOverride: number | null; }
 interface MembershipAction { kind: 'move' | 'remove'; userId: number; fromGroupId: number; targetGroupId?: number; displayName: string; }
-
-const groupMemberName = (member: CourseGroup['members'][number]): string => formatPersonName({
-  firstName: member.userFirstName,
-  middleName: member.userMiddleName,
-  lastName: member.userLastName,
-}) || `User ${member.userId}`;
-
-const ungroupedStudentName = (student: UngroupedStudent): string => formatPersonName({
-  firstName: student.studentFirstName,
-  middleName: student.studentMiddleName,
-  lastName: student.studentLastName,
-}) || `User ${student.userId}`;
 
 const GroupSetDetailPage = () => {
   const params = useParams();
