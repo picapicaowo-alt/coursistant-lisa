@@ -12,7 +12,7 @@
         color: t.$dashboard-section-title-color;
         font-size: t.$dashboard-section-title-size;
         font-weight: t.$dashboard-section-title-weight;
-        letter-spacing: .025em;
+        letter-spacing: t.$dashboard-section-title-tracking;
         text-transform: uppercase;
     }
 
@@ -22,7 +22,7 @@
         align-items: center;
         padding: 0;
         color: t.$brand;
-        font-size: .76rem;
+        font-size: .8rem;
         font-weight: t.$fw-semibold;
         text-decoration: none;
 

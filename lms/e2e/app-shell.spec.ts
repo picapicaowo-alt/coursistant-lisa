@@ -70,7 +70,7 @@ test('student routes share the compact dashboard shell at desktop and mobile wid
 
   await expect(page.getByRole('heading', {name: 'My Course'})).toBeVisible();
   await expect(page.getByRole('textbox', {name: 'Search courses and assignments'})).toBeVisible();
-  await expect(page.getByRole('complementary', {name: 'Primary navigation'})).toHaveCSS('width', '80px');
+  await expect(page.getByRole('complementary', {name: 'Primary navigation'})).toHaveCSS('width', '104px');
   await expect(page.getByRole('button', {name: 'View details'})).toBeVisible();
 
   await page.setViewportSize({width: 390, height: 844});
@@ -86,7 +86,32 @@ test('administration routes use the same shell without student-only search', asy
   await page.goto('/course');
 
   await expect(page.getByRole('heading', {name: 'Courses'})).toBeVisible();
-  await expect(page.getByRole('complementary', {name: 'Primary navigation'})).toHaveCSS('width', '80px');
+  await expect(page.getByRole('complementary', {name: 'Primary navigation'})).toHaveCSS('width', '104px');
   await expect(page.getByRole('link', {name: 'Admin Console'})).toBeVisible();
   await expect(page.getByRole('textbox', {name: 'Search courses and assignments'})).toHaveCount(0);
+});
+
+test('dashboard stacks the assistant rail before the main content becomes cramped', async ({page}) => {
+  await installSession(page, 'USER');
+  await page.setViewportSize({width: 1200, height: 900});
+  await page.goto('/');
+
+  await expect(page.getByRole('heading', {name: 'Welcome back, Student'})).toBeVisible();
+  const dashboard = page.getByRole('region', {name: 'Dashboard overview'});
+  const mainColumn = dashboard.locator(':scope > div').first();
+  const assistant = page.getByRole('complementary', {name: 'Coursistant AI chatbot'});
+  const wideMainBox = await mainColumn.boundingBox();
+  const wideAssistantBox = await assistant.boundingBox();
+  expect(wideMainBox).not.toBeNull();
+  expect(wideAssistantBox).not.toBeNull();
+  expect(wideAssistantBox!.x).toBeGreaterThan(wideMainBox!.x);
+
+  await page.setViewportSize({width: 1024, height: 900});
+  const narrowMainBox = await mainColumn.boundingBox();
+  const narrowAssistantBox = await assistant.boundingBox();
+  expect(narrowMainBox).not.toBeNull();
+  expect(narrowAssistantBox).not.toBeNull();
+  expect(Math.round(narrowAssistantBox!.x)).toBe(Math.round(narrowMainBox!.x));
+  expect(narrowAssistantBox!.y).toBeGreaterThan(narrowMainBox!.y);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1024);
 });
