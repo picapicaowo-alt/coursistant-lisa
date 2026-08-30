@@ -9,6 +9,7 @@ import {useAuth} from '@/contexts/AuthContext';
 import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
 import {getApiErrorCode, isTransportOrServerFailure} from '@/utils/apiError';
 import {isValidPassword} from '@/utils/passwordRules';
+import {formatAccountName, parsePersonName} from '@/utils/personName';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const VERIFICATION_CODE_PATTERN = /^\d{6}$/;
@@ -60,7 +61,7 @@ export default function SignUpView() {
 
   const validate = (): SignupFieldErrors => {
     const errors: SignupFieldErrors = {};
-    if (!name.trim()) errors.name = t('signupErrors.nicknameRequired');
+    if (!parsePersonName(name)) errors.name = t('signupErrors.fullNameRequired');
     if (!email.trim()) errors.email = t('signupErrors.emailRequired');
     else if (!EMAIL_PATTERN.test(email.trim())) errors.email = t('signupErrors.emailInvalid');
     if (!password) errors.password = t('signupErrors.passwordRequired');
@@ -112,8 +113,10 @@ export default function SignUpView() {
     if (Object.keys(errors).length > 0) return;
 
     setIsSubmitting(true);
+    const parsedName = parsePersonName(name);
+    if (!parsedName) return;
     const request = {
-      name: name.trim(),
+      ...parsedName,
       email: email.trim().toLowerCase(),
       password,
       verificationCode: verificationCode.trim(),
@@ -133,7 +136,7 @@ export default function SignUpView() {
       V2ApiClient.setAccessToken(auth.accessToken);
       localStorage.setItem('accToken', auth.accessToken);
       localStorage.setItem('preferredLoginRole', 'USER');
-      login({...auth, id: auth.userId});
+      login({...auth, id: auth.userId, name: formatAccountName(auth) || auth.email});
       navigate('/', {replace: true});
     } catch (error) {
       const code = getApiErrorCode(error);

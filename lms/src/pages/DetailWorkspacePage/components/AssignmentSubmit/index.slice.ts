@@ -27,7 +27,12 @@ export const createAssignmentSubmitSlice: StateCreator<
     addRelations("assignmentFiles", data.assignment.id, fileIds);
     
     if (data.submission !== null && data.submission !== undefined) {
-      load("submissions", {...data.submission, studentName: ""});
+      load("submissions", {
+        ...data.submission,
+        studentFirstName: "",
+        studentMiddleName: null,
+        studentLastName: "",
+      });
       addRelations("assignmentSubmissions", data.assignment.id, [data.submission.id]);
       
       const submissionFileIds = Array<number>();

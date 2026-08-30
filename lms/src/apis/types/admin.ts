@@ -17,7 +17,9 @@ export interface ManagedUser {
   id: number;
   tenantId: number;
   username: string;
-  name: string;
+  firstName: string | null;
+  middleName: string | null;
+  lastName: string | null;
   avatar: string | null;
   role: LoginAccountType;
   level: UserLevel;
@@ -30,7 +32,9 @@ export interface ManagedUser {
 
 export interface CreateManagedUserRequest {
   email: string;
-  name: string;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
   role: 'USER' | 'TENANT_ADMIN';
   level?: UserLevel;
   tenantId?: number;

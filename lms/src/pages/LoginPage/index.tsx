@@ -6,6 +6,7 @@ import {useTranslation} from 'react-i18next';
 import {LoginAccountType, V2ApiClient} from "@/apis";
 import {authApiService} from "@/apis/services/auth-api";
 import {getLoginErrorKind} from './loginErrors';
+import {formatAccountName} from '@/utils/personName';
 
 type ResolvableLoginRole = Extract<LoginAccountType, 'USER' | 'ADMIN'>;
 
@@ -90,7 +91,7 @@ const LoginPage: React.FC = () => {
           return;
         }
 
-        login({...auth, id: auth.userId});
+        login({...auth, id: auth.userId, name: formatAccountName(auth) || auth.email});
         V2ApiClient.setAccessToken(auth.accessToken);
         localStorage.setItem(LOGIN_ROLE_STORAGE_KEY, resolvedRole);
         localStorage.setItem('accToken', auth.accessToken);

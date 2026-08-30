@@ -1,6 +1,8 @@
 export interface ProfileResponse {
   userId: number;
-  displayName: string;
+  firstName: string | null;
+  middleName: string | null;
+  lastName: string | null;
   email: string;
   role: string;
   level: string | null;
@@ -9,6 +11,8 @@ export interface ProfileResponse {
 }
 
 export interface UpdateProfileRequest {
-  displayName?: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
   emailNotifications?: boolean;
 }

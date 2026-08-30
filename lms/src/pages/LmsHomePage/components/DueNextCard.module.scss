@@ -28,7 +28,7 @@
 .emptyDescription {
     margin: .45rem 0 0;
     color: t.$text-muted;
-    font-size: .82rem;
+    font-size: .88rem;
     line-height: 1.45;
 }
 
@@ -38,7 +38,7 @@
     gap: .55rem;
     margin: 0 0 1rem;
     color: t.$brand;
-    font-size: .75rem;
+    font-size: .8rem;
     font-weight: t.$fw-bold;
     letter-spacing: .02em;
     text-transform: uppercase;
@@ -50,7 +50,7 @@
     margin: 0;
     overflow: hidden;
     color: t.$text;
-    font-size: clamp(1.15rem, 1.7vw, 1.45rem);
+    font-size: clamp(1.25rem, 1.7vw, 1.55rem);
     font-weight: t.$fw-bold;
     letter-spacing: -.025em;
     line-height: 1.25;
@@ -64,7 +64,7 @@
     gap: .35rem;
     margin: .55rem 0 0;
     color: t.$text-muted;
-    font-size: .82rem;
+    font-size: .88rem;
     line-height: 1.4;
 
     a {
@@ -94,7 +94,7 @@
     border-radius: t.$radius-pill;
     cursor: pointer;
     font: inherit;
-    font-size: .82rem;
+    font-size: .86rem;
     font-weight: t.$fw-semibold;
     text-decoration: none;
 

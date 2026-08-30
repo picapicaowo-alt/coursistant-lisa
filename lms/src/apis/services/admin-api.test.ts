@@ -25,7 +25,7 @@ describe('AdminApiService', () => {
   });
 
   it('keeps system and tenant managed-user scopes distinct', async () => {
-    const systemRequest = {email: 'instructor@example.com', name: 'Instructor', role: 'USER' as const, level: 'INSTRUCTOR' as const, tenantId: 2};
+    const systemRequest = {email: 'instructor@example.com', firstName: 'Alex', lastName: 'Instructor', role: 'USER' as const, level: 'INSTRUCTOR' as const, tenantId: 2};
     const roleRequest = {role: 'TENANT_ADMIN' as const, level: 'NOT_APPLICABLE' as const};
     client.post.mockResolvedValue({status: 200, data: 41});
     client.put.mockResolvedValue({status: 200, data: null});

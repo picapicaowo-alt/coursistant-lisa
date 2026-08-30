@@ -18,7 +18,9 @@ vi.mock('@/apis/services/assignment-api', () => ({
 
 const row: GradingRosterItem = {
   studentUserId: 389,
-  studentName: 'Eden Brooks',
+  studentFirstName: 'Eden',
+  studentMiddleName: null,
+  studentLastName: 'Brooks',
   studentEmail: 'regtest5@example.com',
   submissionStatus: 'Submitted',
   submissionId: 30,

@@ -34,8 +34,8 @@ const createWrapper = () => {
   return Wrapper;
 };
 
-describe('useRoster sorting', () => {
-  it('sorts members client-side by role priority (Instructor -> TA -> Student)', async () => {
+describe('useRoster server pagination', () => {
+  it('keeps the globally sorted server page in its original order', async () => {
     const mockMembers: ApiResponse<CourseMemberPage> = {
       status: 200,
       code: 'SUCCESS',
@@ -48,7 +48,9 @@ describe('useRoster sorting', () => {
             courseId: 10,
             userId: 101,
             courseRole: 'Student',
-            userName: 'Student A',
+            userFirstName: 'Student',
+            userMiddleName: null,
+            userLastName: 'A',
             userEmail: 'student@example.com',
             active: true,
             joinedAt: '2026-08-01T00:00:00Z',
@@ -58,7 +60,9 @@ describe('useRoster sorting', () => {
             courseId: 10,
             userId: 102,
             courseRole: 'TA',
-            userName: 'TA A',
+            userFirstName: 'TA',
+            userMiddleName: null,
+            userLastName: 'A',
             userEmail: 'ta@example.com',
             active: true,
             joinedAt: '2026-08-01T00:00:00Z',
@@ -68,7 +72,9 @@ describe('useRoster sorting', () => {
             courseId: 10,
             userId: 103,
             courseRole: 'Instructor',
-            userName: 'Instructor A',
+            userFirstName: 'Instructor',
+            userMiddleName: null,
+            userLastName: 'A',
             userEmail: 'instructor@example.com',
             active: true,
             joinedAt: '2026-08-01T00:00:00Z',
@@ -89,8 +95,15 @@ describe('useRoster sorting', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.members).toHaveLength(3);
-    expect(result.current.members[0].courseRole).toBe('Instructor');
+    expect(result.current.members[0].courseRole).toBe('Student');
     expect(result.current.members[1].courseRole).toBe('TA');
-    expect(result.current.members[2].courseRole).toBe('Student');
+    expect(result.current.members[2].courseRole).toBe('Instructor');
+    expect(courseApiService.listCourseMembers).toHaveBeenCalledWith(10, {
+      page: 0,
+      size: 20,
+      q: undefined,
+      courseRole: undefined,
+      active: true,
+    });
   });
 });

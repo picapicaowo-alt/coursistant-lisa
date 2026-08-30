@@ -75,7 +75,9 @@ export const fileEntityConfig: EntityConfig<FileEntity> = {
 };
 
 export interface SubmissionEntity extends BaseEntity {
-  studentName: string;
+  studentFirstName: string | null;
+  studentMiddleName: string | null;
+  studentLastName: string | null;
   submissionCount: number;
   submissionContent: string;
 }

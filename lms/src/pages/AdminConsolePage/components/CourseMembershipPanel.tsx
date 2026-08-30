@@ -1,8 +1,9 @@
-import React, {FormEvent, useMemo, useState} from 'react';
+import React, {FormEvent, useState} from 'react';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {CourseMember, CourseSummary, unwrapData} from '@/apis';
 import {courseApiService} from '@/apis/services/course-api';
 import {getApiErrorMessage} from '@/utils/apiError';
+import {formatPersonName} from '@/utils/personName';
 import styles from '../index.module.scss';
 
 const COURSE_PAGE_SIZE = 100;
@@ -30,7 +31,11 @@ class PartialTaAssignmentError extends Error {
 const instructorLabel = (course: CourseSummary): string => {
   const instructor = course.primaryInstructor;
   if (!instructor) return 'No primary instructor';
-  return instructor.name || instructor.email || `Instructor #${instructor.userId}`;
+  return formatPersonName({
+    firstName: instructor.instructorFirstName,
+    middleName: instructor.instructorMiddleName,
+    lastName: instructor.instructorLastName,
+  }) || instructor.email || `Instructor #${instructor.userId}`;
 };
 
 const memberRoleClass = (member: CourseMember): string => {
@@ -57,7 +62,11 @@ const CourseMemberRow = ({
   onCancelChange: () => void;
 }) => {
   const isThisMemberPending = pendingChange?.member.userId === member.userId;
-  const displayName = member.userName || member.userEmail || `User #${member.userId}`;
+  const displayName = formatPersonName({
+    firstName: member.userFirstName,
+    middleName: member.userMiddleName,
+    lastName: member.userLastName,
+  }) || member.userEmail || `User #${member.userId}`;
 
   return (
     <article className={styles.courseMemberRow}>
@@ -142,12 +151,9 @@ export const CourseMembershipPanel: React.FC = () => {
     retry: 1,
   });
 
-  const members = useMemo(() => {
-    const rolePriority = {Instructor: 0, TA: 1, Student: 2};
-    return [...(membersQuery.data?.items ?? [])].sort((left, right) => (
-      rolePriority[left.courseRole] - rolePriority[right.courseRole] || left.userId - right.userId
-    ));
-  }, [membersQuery.data?.items]);
+  // The API applies role/name/userId ordering to the complete filtered result
+  // before pagination. Keep the page in server order.
+  const members = membersQuery.data?.items ?? [];
 
   const refreshMembers = async (courseId: number) => {
     await queryClient.invalidateQueries({queryKey: ['admin', 'course-members', courseId]});

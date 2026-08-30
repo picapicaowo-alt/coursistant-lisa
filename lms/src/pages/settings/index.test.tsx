@@ -28,7 +28,9 @@ const response = <T,>(data: T) => ({
 
 const profile = {
   userId: 9,
-  displayName: 'Student One',
+  firstName: 'Student',
+  middleName: null,
+  lastName: 'One',
   email: 'student@example.com',
   role: 'USER',
   level: 'STUDENT',

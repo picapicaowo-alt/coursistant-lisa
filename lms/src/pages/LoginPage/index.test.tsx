@@ -138,7 +138,7 @@ describe('LoginPage account routing', () => {
       .mockResolvedValueOnce(response({
         userId: 20,
         email: 'admin@example.com',
-        name: 'Platform Admin',
+        adminName: 'Platform Admin',
         username: 'admin',
         role: 'SYSTEM_ADMIN',
         level: null,

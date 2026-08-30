@@ -10,6 +10,7 @@ import {CourseState, unwrapData} from "@/apis";
 import {useRequiredAuth} from "@/contexts/RequiredAuthContext";
 import {courseApiService} from "@/apis/services/course-api";
 import {ChevronLeft, ChevronRight} from 'lucide-react';
+import {formatPersonName} from '@/utils/personName';
 
 const CourseCataloguePage: React.FC = () => {
   const {t} = useTranslation("course");
@@ -130,7 +131,11 @@ const CoursesList: React.FC<{state: CourseState}> = ({state}) => {
             courseCode={course.courseCode}
             title={course.title}
             state={state}
-            instructorName={course.primaryInstructor?.name ?? null}
+            instructorName={course.primaryInstructor ? formatPersonName({
+              firstName: course.primaryInstructor.instructorFirstName,
+              middleName: course.primaryInstructor.instructorMiddleName,
+              lastName: course.primaryInstructor.instructorLastName,
+            }) || null : null}
             // Archiving is a Course Manager action. A TA never qualifies, no
             // matter which permission flags it holds, so this checks the
             // enrolment role rather than any of them.

@@ -115,7 +115,9 @@ export const setMockAssignments = (data: typeof mockAssignments) => mockAssignme
 export let mockStudentStates = [
   {
     studentId: 'student-1',
-    studentName: 'Alice Johnson',
+    studentFirstName: 'Alice',
+    studentMiddleName: null,
+    studentLastName: 'Johnson',
     assignmentId: 'assignment-1',
     submission: {
       submissionCount: 2,
@@ -131,7 +133,9 @@ export let mockStudentStates = [
   },
   {
     studentId: 'student-2',
-    studentName: 'Bob Williams',
+    studentFirstName: 'Bob',
+    studentMiddleName: null,
+    studentLastName: 'Williams',
     assignmentId: 'assignment-1',
     submission: {
       submissionCount: 1,
@@ -143,7 +147,9 @@ export let mockStudentStates = [
   },
   {
     studentId: 'student-3',
-    studentName: 'Charlie Brown',
+    studentFirstName: 'Charlie',
+    studentMiddleName: null,
+    studentLastName: 'Brown',
     assignmentId: 'assignment-1',
     submission: null,
     review: null,

@@ -68,6 +68,7 @@ const copy: Record<string, string> = {
   'signupErrors.verificationAttemptsExceeded': 'Too many attempts.',
   'signupErrors.resendCooldown': 'Wait before resending.',
   'signupErrors.hourlyLimit': 'Hourly limit reached.',
+  'signupErrors.fullNameRequired': 'Enter first and last name.',
   'signupErrors.sendVerificationFailed': 'Could not send code.',
   'signupErrors.signupFailed': 'Could not register.',
   'signupErrors.serviceUnavailable': 'Registration unavailable.',
@@ -94,7 +95,9 @@ const authResponse = {
   data: {
     userId: 9,
     email: 'student@example.com',
-    name: 'Student One',
+    firstName: 'Student',
+    middleName: null,
+    lastName: 'One',
     username: 'student',
     role: 'USER',
     level: 'STUDENT',
@@ -141,7 +144,8 @@ describe('SignUpView', () => {
 
     expect(mocks.register).toHaveBeenCalledWith(
       {
-        name: 'Student One',
+        firstName: 'Student',
+        lastName: 'One',
         email: 'student@example.com',
         password: 'Passw0rd1',
         verificationCode: '123456',

@@ -79,7 +79,9 @@ test('teacher can remove bold formatting and a newly selected annotated file', a
         gradingWritable: true,
         items: [{
           studentUserId: 389,
-          studentName: 'Eden Brooks',
+          studentFirstName: 'Eden',
+          studentMiddleName: null,
+          studentLastName: 'Brooks',
           studentEmail: 'eden@example.com',
           submissionStatus: 'Submitted',
           gradeStatus: 'Entered',

@@ -13,14 +13,6 @@ export interface RosterFilters {
   includeWithdrawn: boolean;
 }
 
-const ROLE_PRIORITY: Record<string, number> = {
-  Instructor: 1,
-  TA: 2,
-  Student: 3,
-};
-
-const getRolePriority = (role?: string) => (role && ROLE_PRIORITY[role]) || 4;
-
 /**
  * Owns the server-paged roster and every membership mutation for the page.
  * Filters are part of the Query key; successful writes invalidate every page
@@ -78,15 +70,10 @@ export const useRoster = () => {
     onSuccess: () => void refresh(),
   });
   const total = query.data?.total ?? 0;
-  const rawMembers = query.data?.items ?? [];
-  // The API owns filtering and pagination; this local sort only gives each
-  // returned page a stable teaching-role order.
-  const members = [...rawMembers].sort((a, b) => {
-    const pA = getRolePriority(a.courseRole);
-    const pB = getRolePriority(b.courseRole);
-    if (pA !== pB) return pA - pB;
-    return a.userId - b.userId;
-  });
+  // The API sorts the full filtered result by role, last name, first name and
+  // userId before it paginates. Re-sorting this one page would break that
+  // global ordering at page boundaries.
+  const members = query.data?.items ?? [];
 
   return {
     courseId: id,

@@ -2,6 +2,7 @@ import React from "react";
 import {useCourseWorkspaceStore} from "../stores/useCourseWorkspaceStore";
 import {CourseDetailDTO, CourseResponse, CourseWeek} from "@/apis";
 import {useCourseWorkspaceData} from "./useCourseWorkspaceData";
+import {formatPersonName} from '@/utils/personName';
 
 /**
  * Mirrors the loaded course into the workspace store, which edit mode and the
@@ -27,7 +28,11 @@ const toCourseDetail = (course: CourseResponse, weeks: CourseWeek[]): CourseDeta
     termStartDate: course.termStartDate,
     termEndDate: course.termEndDate,
     location: course.location,
-    teacherName: course.primaryInstructor?.name,
+    teacherName: course.primaryInstructor ? formatPersonName({
+      firstName: course.primaryInstructor.instructorFirstName,
+      middleName: course.primaryInstructor.instructorMiddleName,
+      lastName: course.primaryInstructor.instructorLastName,
+    }) || undefined : undefined,
     teacherEmail: course.primaryInstructor?.email,
     createdAt: new Date(course.createdAt),
     updatedAt: new Date(course.updatedAt),

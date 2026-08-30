@@ -14,6 +14,7 @@ import {adminApiService} from '@/apis/services/admin-api';
 import {useRequiredAuth} from '@/contexts/RequiredAuthContext';
 import {getManagedUserCreateError} from './adminFeedback';
 import {CourseMembershipPanel} from './components/CourseMembershipPanel';
+import {formatPersonName, parsePersonName} from '@/utils/personName';
 import styles from './index.module.scss';
 
 type ManagedRole = CreateManagedUserRequest['role'];
@@ -57,6 +58,7 @@ const ManagedUserRow = ({account, tenants, busy, onUpdate, onDisable, onMoveTena
   onDisable: (id: number) => void;
   onMoveTenant: (id: number, tenantId: number) => void;
 }) => {
+  const accountName = formatPersonName(account) || account.email;
   const [role, setRole] = useState<ManagedRole>(account.role === 'TENANT_ADMIN' ? 'TENANT_ADMIN' : 'USER');
   const [level, setLevel] = useState<ManagedLevel>(account.level === 'INSTRUCTOR' ? 'INSTRUCTOR' : 'STUDENT');
   const [confirmDisable, setConfirmDisable] = useState(false);
@@ -66,7 +68,7 @@ const ManagedUserRow = ({account, tenants, busy, onUpdate, onDisable, onMoveTena
   return (
     <article className={styles.listRow}>
       <div className={styles.rowIdentity}>
-        <strong>{account.name || account.email}</strong>
+        <strong>{accountName}</strong>
         <span>{account.email} · User #{account.id} · Tenant #{account.tenantId}</span>
         <small>{account.role}{account.role === 'USER' ? ` / ${account.level}` : ''} · {account.status}</small>
       </div>
@@ -214,17 +216,22 @@ const AdminConsolePage: React.FC = () => {
   const filteredUsers = useMemo(() => {
     const needle = search.trim().toLowerCase();
     if (!needle) return usersQuery.data ?? [];
-    return (usersQuery.data ?? []).filter(account => `${account.name} ${account.email} ${account.id} ${account.tenantId}`.toLowerCase().includes(needle));
+    return (usersQuery.data ?? []).filter(account => `${formatPersonName(account)} ${account.email} ${account.id} ${account.tenantId}`.toLowerCase().includes(needle));
   }, [search, usersQuery.data]);
 
   if (!isSystemAdmin && !isTenantAdmin) return <Navigate to="/" replace/>;
 
   const submitUser = (event: FormEvent) => {
     event.preventDefault();
+    const parsedName = parsePersonName(name);
+    if (!parsedName) {
+      setMessage({tone: 'error', text: 'Enter both a first name and a last name.'});
+      return;
+    }
     const resolvedTenantId = Number(tenantId || tenantsQuery.data?.[0]?.id);
     createUser.mutate({
       email: email.trim(),
-      name: name.trim(),
+      ...parsedName,
       role,
       level: role === 'USER' ? level : 'NOT_APPLICABLE',
       ...(isSystemAdmin ? {tenantId: resolvedTenantId} : {}),
@@ -277,7 +284,7 @@ const AdminConsolePage: React.FC = () => {
               {isSystemAdmin ? <label><span>Tenant</span><select required value={tenantId || tenantsQuery.data?.[0]?.id || ''} onChange={event => setTenantId(event.target.value)}>{tenantsQuery.data?.map(tenant => <option key={tenant.id} value={tenant.id}>{tenant.name} (#{tenant.id})</option>)}</select></label> : null}
               <label><span>Account role</span><select value={role} onChange={event => setRole(event.target.value as ManagedRole)}><option value="USER">User</option><option value="TENANT_ADMIN">Tenant admin</option></select></label>
               {role === 'USER' ? <label><span>Level</span><select value={level} onChange={event => setLevel(event.target.value as ManagedLevel)}><option value="STUDENT">Student</option><option value="INSTRUCTOR">Instructor</option></select></label> : null}
-              <button className={styles.primaryButton} disabled={createUser.isPending || !name.trim() || !email.trim() || (isSystemAdmin && !Number(tenantId || tenantsQuery.data?.[0]?.id))}>{createUser.isPending ? 'Creating…' : 'Create user'}</button>
+              <button className={styles.primaryButton} disabled={createUser.isPending || !parsePersonName(name) || !email.trim() || (isSystemAdmin && !Number(tenantId || tenantsQuery.data?.[0]?.id))}>{createUser.isPending ? 'Creating…' : 'Create user'}</button>
             </form>
             <p className={styles.hint}>New accounts must establish their password through Forgot Password before signing in.</p>
           </section>

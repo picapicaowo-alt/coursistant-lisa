@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {createPortal} from 'react-dom';
 import {CourseMember, TaPermissions} from '@/apis';
+import {formatPersonName} from '@/utils/personName';
 import styles from './index.module.scss';
 
 interface MemberRowProps {
@@ -32,6 +33,12 @@ export const MemberRow: React.FC<MemberRowProps> = ({member, onWithdraw, onPromo
   const canPromote = isStudent && member.active && member.level === 'STUDENT';
   const [permissionOpen, setPermissionOpen] = useState(false);
   const [permissions, setPermissions] = useState<Required<TaPermissions>>(() => permissionsFromMember(member));
+  const structuredName = formatPersonName({
+    firstName: member.userFirstName,
+    middleName: member.userMiddleName,
+    lastName: member.userLastName,
+  });
+  const memberName = structuredName || 'Unnamed member';
 
   useEffect(() => setPermissions(permissionsFromMember(member)), [member]);
 
@@ -42,7 +49,7 @@ export const MemberRow: React.FC<MemberRowProps> = ({member, onWithdraw, onPromo
 
   return <>
     <tr className={member.active ? undefined : styles.withdrawnRow}>
-      <td data-label="Name">{member.userName || 'Unnamed member'}</td>
+      <td data-label="Name">{memberName}</td>
       <td data-label="Email" className={styles.email}>{member.userEmail || '—'}</td>
       <td data-label="Role"><span className={`${styles.roleBadge} ${styles[`role${member.courseRole}`]}`}>{member.courseRole}</span></td>
       <td data-label="Status">
@@ -60,7 +67,7 @@ export const MemberRow: React.FC<MemberRowProps> = ({member, onWithdraw, onPromo
           <div className={styles.dialogBackdrop} role="presentation" onMouseDown={() => setPermissionOpen(false)}>
             <section className={styles.permissionDialog} role="dialog" aria-modal="true" aria-labelledby={`ta-permissions-${member.userId}`} onMouseDown={event => event.stopPropagation()}>
               <div className={styles.dialogHeader}>
-                <div><h2 id={`ta-permissions-${member.userId}`}>TA permissions</h2><p>{member.userName || member.userEmail || 'Teaching assistant'}</p></div>
+                <div><h2 id={`ta-permissions-${member.userId}`}>TA permissions</h2><p>{structuredName || member.userEmail || 'Teaching assistant'}</p></div>
                 <button type="button" className={styles.closeButton} aria-label="Close permissions" onClick={() => setPermissionOpen(false)}>×</button>
               </div>
               <div className={styles.permissionList}>

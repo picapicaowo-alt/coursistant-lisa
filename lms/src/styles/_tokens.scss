@@ -78,50 +78,53 @@ $dashboard-section-title-color: $text-muted;
 $dashboard-section-title-size: $fs-dashboard-section;
 $dashboard-section-title-weight: $fw-semibold;
 $dashboard-section-title-tracking: -0.01em;
-$dashboard-section-content-gap: 12px;
+$dashboard-section-content-gap: 14px;
 
 // Dashboard composition tokens. These describe semantic regions rather than
 // individual selectors so the shell, records and assistant stay in rhythm as
 // the page adapts across breakpoints.
 $dashboard-shell-inset: 12px;
-$dashboard-shell-sidebar-width: 80px;
-$dashboard-shell-header-height: 64px;
-$dashboard-shell-gutter-inline: 28px;
-$dashboard-shell-gutter-block: 24px;
+$dashboard-shell-sidebar-width: 104px;
+$dashboard-shell-header-height: 72px;
+$dashboard-shell-gutter-inline: 32px;
+$dashboard-shell-gutter-block: 28px;
 $dashboard-shell-column-gap: 0;
 
 // Shared authenticated application shell. Dashboard established this visual
 // baseline; every student, teaching, and administration route now consumes it.
 $app-shell-inset: $dashboard-shell-inset;
 $app-shell-sidebar-width: $dashboard-shell-sidebar-width;
-$app-shell-header-height: $dashboard-shell-header-height;
-$app-shell-page-gutter-inline: 28px;
-$app-shell-page-gutter-block: 24px;
-$dashboard-assistant-width: 360px;
+// The global account/search bar includes its padding and border in this fixed
+// outer size. Keep it separate from the dashboard's internal panel headers.
+$app-shell-header-height: 84px;
+$app-shell-header-mobile-height: 68px;
+$app-shell-page-gutter-inline: 32px;
+$app-shell-page-gutter-block: 28px;
+$dashboard-assistant-width: 372px;
 $dashboard-assistant-divider: $border;
 
 $dashboard-intro-top-space: 0;
 $dashboard-intro-copy-gap: 8px;
-$dashboard-main-group-gap: 24px;
-$dashboard-work-column-gap: 24px;
-$dashboard-course-card-gap: 12px;
-$dashboard-record-gap: 8px;
+$dashboard-main-group-gap: 28px;
+$dashboard-work-column-gap: 20px;
+$dashboard-course-card-gap: 14px;
+$dashboard-record-gap: 10px;
 $dashboard-mobile-shell-gutter: 16px;
 $dashboard-mobile-main-gap: 24px;
 
-$dashboard-due-card-min-height: 128px;
-$dashboard-due-card-padding: 20px;
+$dashboard-due-card-min-height: 140px;
+$dashboard-due-card-padding: 24px;
 $dashboard-due-card-background: rgba($brand, .045);
 $dashboard-due-card-border: rgba($brand, .3);
 $dashboard-due-card-action-gap: 10px;
-$dashboard-course-card-min-height: 66px;
-$dashboard-course-card-padding: 12px 14px;
-$dashboard-course-mark-size: 40px;
-$dashboard-record-min-height: 63px;
-$dashboard-record-padding: 12px 14px;
-$dashboard-record-mark-size: 36px;
-$dashboard-empty-card-min-height: 205px;
-$dashboard-empty-card-padding: 28px;
+$dashboard-course-card-min-height: 72px;
+$dashboard-course-card-padding: 14px 16px;
+$dashboard-course-mark-size: 42px;
+$dashboard-record-min-height: 68px;
+$dashboard-record-padding: 14px 16px;
+$dashboard-record-mark-size: 40px;
+$dashboard-empty-card-min-height: 216px;
+$dashboard-empty-card-padding: 30px;
 $dashboard-empty-card-gap: 8px;
 $dashboard-empty-card-accent-width: 40px;
 $dashboard-empty-card-accent-height: 3px;
@@ -139,6 +142,16 @@ $dashboard-assistant-content-gutter: 20px;
 $dashboard-assistant-prompt-gap: 10px;
 $dashboard-assistant-prompt-min-height: 74px;
 $dashboard-assistant-composer-min-height: 138px;
+
+// The assistant is a secondary operating surface, but its supporting copy
+// still follows the dashboard's readable body and utility tiers.
+$dashboard-assistant-brand-title-size: .9rem;
+$dashboard-assistant-status-size: .75rem;
+$dashboard-assistant-heading-size: 1.125rem;
+$dashboard-assistant-body-size: .8125rem;
+$dashboard-assistant-prompt-title-size: .8125rem;
+$dashboard-assistant-prompt-description-size: .75rem;
+$dashboard-assistant-utility-size: .75rem;
 
 $dashboard-scrollbar-size: 8px;
 $dashboard-scrollbar-track: transparent;

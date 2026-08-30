@@ -3,7 +3,7 @@ import {createPortal} from 'react-dom';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {ArrowLeft, CheckCircle2, CheckSquare2, Eye, RotateCcw, Search, Send, Square, Users, X} from 'lucide-react';
 import {Link, useParams} from 'react-router-dom';
-import type {QuizAttemptSummary} from '@/apis';
+import type {CourseMember, QuizAttemptSummary} from '@/apis';
 import {unwrapData} from '@/apis';
 import {quizApiService} from '@/apis/services/quiz-api';
 import {courseApiService} from '@/apis/services/course-api';
@@ -11,6 +11,7 @@ import MarkdownMessage from '@/components/MarkdownMessage';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
 import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
 import {formatUtcTimestamp} from '@/utils/datetime';
+import {formatPersonName} from '@/utils/personName';
 import styles from './index.module.scss';
 
 interface GradeDraft {
@@ -29,6 +30,12 @@ interface AttemptRosterData {
   attempts: OwnedQuizAttemptSummary[];
   failedUserIds: number[];
 }
+
+const courseMemberName = (member: CourseMember): string => formatPersonName({
+  firstName: member.userFirstName,
+  middleName: member.userMiddleName,
+  lastName: member.userLastName,
+}) || `User ${member.userId}`;
 
 const loadCourseStudents = async (courseId: number) => {
   const size = 100;
@@ -300,7 +307,7 @@ const QuizGradingPage = () => {
   const visibleStudentRows = useMemo(() => {
     const normalizedSearch = deferredStudentSearch.trim().toLowerCase();
     return normalizedSearch
-      ? studentRows.filter(({student}) => `${student.userName ?? ''} ${student.userEmail ?? ''} ${student.userId}`.toLowerCase().includes(normalizedSearch))
+      ? studentRows.filter(({student}) => `${courseMemberName(student)} ${student.userEmail ?? ''} ${student.userId}`.toLowerCase().includes(normalizedSearch))
       : studentRows;
   }, [deferredStudentSearch, studentRows]);
   const allSelectableUserIds = useMemo(() => studentRows
@@ -376,7 +383,7 @@ const QuizGradingPage = () => {
             <ul className={styles.studentList}>
               {visibleStudentRows.map(row => {
                 const selectable = row.finalizedAttempts.length > 0;
-                const studentName = row.student.userName || `User ${row.student.userId}`;
+                const studentName = courseMemberName(row.student);
                 return <li key={row.student.userId}>
                   <div className={styles.studentIdentity}>
                     {access.canReleaseGrades ? <input type="checkbox" aria-label={`Select ${studentName}`} checked={selectedUserIds.has(row.student.userId)} disabled={!selectable} onChange={() => toggleStudent(row.student.userId)}/> : null}
@@ -423,7 +430,7 @@ const QuizGradingPage = () => {
               <div className={styles.resultReviewHeader}>
                 <div>
                   <p>Attempt review</p>
-                  <h3 id="attempt-review-title">{reviewStudentRow.student.userName || `User ${reviewStudentRow.student.userId}`}</h3>
+                  <h3 id="attempt-review-title">{courseMemberName(reviewStudentRow.student)}</h3>
                   <small id="attempt-review-student">{reviewStudentRow.student.userEmail || `User ID ${reviewStudentRow.student.userId}`}</small>
                 </div>
                 <div className={styles.reviewHeaderActions}>

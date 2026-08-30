@@ -3,12 +3,13 @@ import {V2ApiClient} from "@/apis";
 import type {LoginResponse} from "@/apis";
 import {authApiService} from "@/apis/services/auth-api";
 import {normalizeAvatarUrl} from "@/utils/avatarUrl";
+import {formatAccountName, formatPersonName, PersonNameParts} from '@/utils/personName';
 
 interface AuthContextValue {
   user: LoginResponse | null;
   login: (userData: LoginResponse) => void;
   logout: () => Promise<void>;
-  updateProfile: (profile: {name?: string; avatar?: string | null}) => void;
+  updateProfile: (profile: PersonNameParts & {avatar?: string | null}) => void;
   loading: boolean;
 }
 
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 const normalizeUser = (user: LoginResponse): LoginResponse => ({
   ...user,
+  name: formatAccountName(user) || user.name || user.email,
   avatar: normalizeAvatarUrl(user.avatar),
 });
 
@@ -131,12 +133,18 @@ export const AuthProvider = ({children}: AuthProviderProps) => {
     }
   };
 
-  const updateProfile = (profile: {name?: string; avatar?: string | null}) => {
+  const updateProfile = (profile: PersonNameParts & {avatar?: string | null}) => {
     setUser(current => {
       if (!current) return current;
+      const firstName = profile.firstName === undefined ? current.firstName : profile.firstName;
+      const middleName = profile.middleName === undefined ? current.middleName : profile.middleName;
+      const lastName = profile.lastName === undefined ? current.lastName : profile.lastName;
       const updated = normalizeUser({
         ...current,
-        name: profile.name ?? current.name,
+        firstName,
+        middleName,
+        lastName,
+        name: formatPersonName({firstName, middleName, lastName}) || current.name,
         avatar: profile.avatar === undefined ? current.avatar : profile.avatar,
       });
       localStorage.setItem('user', JSON.stringify(updated));

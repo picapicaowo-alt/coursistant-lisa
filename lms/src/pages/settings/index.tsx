@@ -11,6 +11,7 @@ import {useAuth} from '@/contexts/AuthContext';
 import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
 import {getApiErrorMessage} from '@/utils/apiError';
 import {isValidPassword} from '@/utils/passwordRules';
+import {formatPersonName, parsePersonName} from '@/utils/personName';
 
 const tabList = ['Account', 'Password', 'Notifications'] as const;
 type SettingsTab = (typeof tabList)[number];
@@ -51,7 +52,7 @@ const SettingsPage = () => {
 
   useEffect(() => {
     if (!profileQuery.data) return;
-    setDisplayName(profileQuery.data.displayName || '');
+    setDisplayName(formatPersonName(profileQuery.data));
     setEmailNotifications(Boolean(profileQuery.data.emailNotifications));
   }, [profileQuery.data]);
 
@@ -62,7 +63,12 @@ const SettingsPage = () => {
     ),
     onSuccess: data => {
       queryClient.setQueryData(['my-profile'], data);
-      updateProfile({name: data.displayName, avatar: data.avatarUrl});
+      updateProfile({
+        firstName: data.firstName,
+        middleName: data.middleName,
+        lastName: data.lastName,
+        avatar: data.avatarUrl,
+      });
       setStatus({kind: 'success', text: 'Settings saved.'});
     },
     onError: error => setStatus({kind: 'error', text: getApiErrorMessage(error, 'Could not save settings.')}),
@@ -167,7 +173,8 @@ const SettingsPage = () => {
             onSubmit={event => {
               event.preventDefault();
               setStatus(null);
-              saveProfile.mutate({displayName: displayName.trim()});
+              const parsedName = parsePersonName(displayName);
+              if (parsedName) saveProfile.mutate({...parsedName, middleName: ''});
             }}
           >
             <div className={styles.inputGroup}>
@@ -190,7 +197,7 @@ const SettingsPage = () => {
             <button
               type="submit"
               className={styles.primaryButton}
-              disabled={saveProfile.isPending || !displayName.trim()}
+              disabled={saveProfile.isPending || !parsePersonName(displayName)}
             >
               {saveProfile.isPending ? 'Saving…' : 'Save account'}
             </button>

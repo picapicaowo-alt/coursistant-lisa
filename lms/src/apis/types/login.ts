@@ -26,7 +26,9 @@ export interface RegisterRequest {
   email: string;
   verificationCode: string;
   password: string;
-  name: string;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
   /** Optional. The backend derives it from the email when omitted. */
   username?: string;
 }
@@ -51,8 +53,12 @@ export interface ChangePasswordRequest {
 export interface AuthResult {
   userId: number;
   email: string;
-  name: string;
-  username: string;
+  firstName?: string | null;
+  middleName?: string | null;
+  lastName?: string | null;
+  /** Present for administrator account tables, which do not have user names. */
+  adminName?: string | null;
+  username?: string;
   role: LoginAccountType;
   /** Admin account tables do not have a student/instructor standing. */
   level: UserLevel | null;
@@ -72,6 +78,8 @@ export interface AuthResult {
  */
 export interface LoginResponse extends AuthResult {
   id: number;
+  /** Frontend-derived display name; never read from the API response. */
+  name: string;
   rocketChatToken?: string;
   rocketChatUserId?: string;
 }
