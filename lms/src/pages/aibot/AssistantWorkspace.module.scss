@@ -214,7 +214,7 @@ $compact-breakpoint: assistant.$compact-breakpoint;
     display: grid;
     min-width: 0;
     min-height: 0;
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
     background: t.$card-bg;
 }
 
@@ -263,6 +263,46 @@ $compact-breakpoint: assistant.$compact-breakpoint;
     svg {
         width: 1.0625rem;
         height: 1.0625rem;
+    }
+}
+
+.courseContext {
+    display: grid;
+    min-width: 0;
+    margin-left: auto;
+    gap: .125rem;
+
+    > span {
+        color: t.$text-muted;
+        font-size: .6875rem;
+        font-weight: t.$fw-semibold;
+        line-height: 1.2;
+    }
+
+    select {
+        width: min(15rem, 28vw);
+        min-height: 2.25rem;
+        padding: 0 2rem 0 .75rem;
+        overflow: hidden;
+        border: 1px solid t.$border;
+        border-radius: t.$radius-control-sm;
+        background: t.$card-bg;
+        color: t.$text;
+        font: inherit;
+        font-size: .8125rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+
+        &:focus-visible {
+            border-color: t.$brand;
+            outline: 3px solid rgba(t.$brand, .2);
+            outline-offset: 1px;
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: .6;
+        }
     }
 }
 
@@ -366,6 +406,11 @@ $compact-breakpoint: assistant.$compact-breakpoint;
             outline: 3px solid rgba(t.$brand, .2);
             outline-offset: 2px;
         }
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: .55;
+        }
     }
 }
 
@@ -437,6 +482,18 @@ $compact-breakpoint: assistant.$compact-breakpoint;
 
 .thinking {
     margin: .5rem 0 1rem 2.625rem;
+}
+
+.supportStatus {
+    width: min(calc(100% - 2rem), var(--assistant-content-width));
+    padding: .625rem .75rem;
+    border: 1px solid t.$border;
+    border-radius: t.$radius-control-sm;
+    margin: 0 auto .625rem;
+    background: t.$subcard-bg;
+    color: t.$text-muted;
+    font-size: .8125rem;
+    line-height: 1.4;
 }
 
 .composer {
@@ -551,8 +608,21 @@ $compact-breakpoint: assistant.$compact-breakpoint;
         }
     }
 
+    .courseContext {
+        margin-left: auto;
+
+        > span {
+            display: none;
+        }
+
+        select {
+            width: min(9rem, 32vw);
+        }
+    }
+
     .mobileNewChat {
         display: grid;
+        margin-left: 0;
     }
 
     .conversation {
@@ -570,6 +640,11 @@ $compact-breakpoint: assistant.$compact-breakpoint;
     .composer {
         width: calc(100% - 1.25rem);
         margin-bottom: max(.625rem, env(safe-area-inset-bottom));
+    }
+
+    .supportStatus {
+        width: calc(100% - 1.25rem);
+        margin-bottom: .5rem;
     }
 }
 
