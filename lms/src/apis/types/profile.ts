@@ -1,8 +1,8 @@
 export interface ProfileResponse {
   userId: number;
-  firstName: string | null;
-  middleName: string | null;
-  lastName: string | null;
+  firstName?: string | null;
+  middleName?: string | null;
+  lastName?: string | null;
   email: string;
   role: string;
   level: string | null;

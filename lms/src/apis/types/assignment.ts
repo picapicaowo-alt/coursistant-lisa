@@ -71,9 +71,9 @@ export interface Submission {
   createdAt: Date;
   updatedAt: Date;
   assignmentId: number;
-  studentFirstName: string | null;
-  studentMiddleName: string | null;
-  studentLastName: string | null;
+  studentFirstName?: string | null;
+  studentMiddleName?: string | null;
+  studentLastName?: string | null;
   submissionCount: number;
   submissionContent: string;
 }

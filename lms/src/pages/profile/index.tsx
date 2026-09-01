@@ -5,9 +5,16 @@ import type {ProfileResponse} from '@/apis';
 import {unwrapData} from '@/apis';
 import {profileApiService} from '@/apis/services/profile-api';
 import {useAuth} from '@/contexts/AuthContext';
-import {getApiErrorMessage} from '@/utils/apiError';
+import {getApiErrorMessage, getStructuredNameWriteError} from '@/utils/apiError';
 import {normalizeAvatarUrl} from '@/utils/avatarUrl';
-import {formatPersonName, parsePersonName} from '@/utils/personName';
+import {
+  emptyPersonNameInput,
+  formatPersonName,
+  isPersonNameInputValid,
+  normalizePersonNameInput,
+  PERSON_NAME_PART_MAX_LENGTH,
+  PersonNameInput,
+} from '@/utils/personName';
 
 interface StatusMessage {
   kind: 'success' | 'error';
@@ -16,7 +23,7 @@ interface StatusMessage {
 
 const ProfilePage = () => {
   const [editing, setEditing] = useState(false);
-  const [displayName, setDisplayName] = useState('');
+  const [personName, setPersonName] = useState<PersonNameInput>(emptyPersonNameInput);
   const [status, setStatus] = useState<StatusMessage | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
@@ -30,28 +37,22 @@ const ProfilePage = () => {
   const commitProfile = (data: ProfileResponse) => {
     queryClient.setQueryData(['my-profile'], data);
     updateProfile({
-      firstName: data.firstName,
-      middleName: data.middleName,
-      lastName: data.lastName,
+      personName: data,
       avatar: data.avatarUrl,
     });
   };
 
   const updateName = useMutation({
-    mutationFn: async () => {
-      const parsedName = parsePersonName(displayName);
-      if (!parsedName) throw new Error('Enter both a first name and a last name.');
-      return unwrapData(
-        await profileApiService.updateMyProfile({...parsedName, middleName: ''}),
-        'Update profile',
-      );
-    },
+    mutationFn: async () => unwrapData(
+      await profileApiService.updateMyProfile(normalizePersonNameInput(personName, {includeEmptyMiddleName: true})),
+      'Update profile',
+    ),
     onSuccess: data => {
       commitProfile(data);
       setEditing(false);
       setStatus({kind: 'success', text: 'Profile updated.'});
     },
-    onError: error => setStatus({kind: 'error', text: getApiErrorMessage(error, 'Could not update profile.')}),
+    onError: error => setStatus({kind: 'error', text: getStructuredNameWriteError(error, 'Could not update profile.')}),
   });
 
   const uploadAvatar = useMutation({
@@ -141,7 +142,7 @@ const ProfilePage = () => {
                 type="button"
                 className={styles.secondaryButton}
                 onClick={() => {
-                  setDisplayName(profileName === 'Unnamed user' ? '' : profileName);
+                  setPersonName({firstName: profile.firstName ?? '', middleName: profile.middleName ?? '', lastName: profile.lastName ?? ''});
                   setEditing(true);
                   setStatus(null);
                 }}
@@ -164,14 +165,9 @@ const ProfilePage = () => {
                 updateName.mutate();
               }}
             >
-              <label htmlFor="profile-display-name">Display name</label>
-              <input
-                id="profile-display-name"
-                value={displayName}
-                onChange={event => setDisplayName(event.target.value)}
-                required
-                autoFocus
-              />
+              <div><label htmlFor="profile-first-name">First name</label><input id="profile-first-name" autoComplete="given-name" maxLength={PERSON_NAME_PART_MAX_LENGTH} value={personName.firstName} onChange={event => setPersonName(current => ({...current, firstName: event.target.value}))} required autoFocus/></div>
+              <div><label htmlFor="profile-middle-name">Middle name <span>(optional)</span></label><input id="profile-middle-name" autoComplete="additional-name" maxLength={PERSON_NAME_PART_MAX_LENGTH} value={personName.middleName} onChange={event => setPersonName(current => ({...current, middleName: event.target.value}))}/></div>
+              <div><label htmlFor="profile-last-name">Last name</label><input id="profile-last-name" autoComplete="family-name" maxLength={PERSON_NAME_PART_MAX_LENGTH} value={personName.lastName} onChange={event => setPersonName(current => ({...current, lastName: event.target.value}))} required/></div>
               <div className={styles.profileActions}>
                 <button type="button" className={styles.secondaryButton} onClick={() => setEditing(false)}>
                   Cancel
@@ -179,7 +175,7 @@ const ProfilePage = () => {
                 <button
                   type="submit"
                   className={styles.primaryButton}
-                  disabled={updateName.isPending || !parsePersonName(displayName)}
+                  disabled={updateName.isPending || !isPersonNameInputValid(personName)}
                 >
                   {updateName.isPending ? 'Saving…' : 'Save changes'}
                 </button>

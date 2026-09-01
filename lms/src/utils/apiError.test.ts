@@ -3,6 +3,7 @@ import {
   getApiErrorCode,
   getApiErrorMessage,
   getHttpStatusDescription,
+  getStructuredNameWriteError,
   isApiError,
   isConflict,
   isHttpStatus,
@@ -36,5 +37,12 @@ describe('apiError helpers', () => {
     expect(getHttpStatusDescription({code: 405, message: 'Not allowed'})).toMatch(/not supported/i);
     expect(getHttpStatusDescription({code: 409, message: 'Conflict'})).toMatch(/conflict/i);
     expect(getHttpStatusDescription({code: 500, message: 'Error'})).toMatch(/unexpected server error/i);
+  });
+
+  it('keeps missing structured names distinct from obsolete combined-name writes', () => {
+    expect(getStructuredNameWriteError({code: 400, details: {code: 'PARAM_MISSING', message: 'firstName is required'}}, 'Could not save.'))
+      .toBe('First name and last name are required.');
+    expect(getStructuredNameWriteError({code: 400, details: {code: 'BAD_REQUEST', message: 'use firstName and lastName'}}, 'Could not save.'))
+      .toContain('obsolete combined-name field');
   });
 });

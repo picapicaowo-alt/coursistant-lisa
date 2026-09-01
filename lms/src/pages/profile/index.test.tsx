@@ -53,19 +53,21 @@ describe('ProfilePage', () => {
     api.updateMyProfile.mockResolvedValue(response({...profile, lastName: 'Two'}));
   });
 
-  it('loads the live profile and saves a display-name change', async () => {
+  it('loads the live profile and saves explicit structured name fields', async () => {
     renderPage();
     expect(await screen.findByRole('heading', {name: 'Student One'})).toBeInTheDocument();
     expect(screen.getByText('student@example.com')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', {name: 'Edit profile'}));
-    const name = screen.getByLabelText('Display name');
-    await userEvent.clear(name);
-    await userEvent.type(name, 'Student Two');
+    const middleName = screen.getByLabelText('Middle name (optional)');
+    const lastName = screen.getByLabelText('Last name');
+    await userEvent.type(middleName, 'Sample');
+    await userEvent.clear(lastName);
+    await userEvent.type(lastName, 'Two');
     await userEvent.click(screen.getByRole('button', {name: 'Save changes'}));
 
     await waitFor(() => {
-      expect(api.updateMyProfile).toHaveBeenCalledWith({firstName: 'Student', lastName: 'Two', middleName: ''});
+      expect(api.updateMyProfile).toHaveBeenCalledWith({firstName: 'Student', middleName: 'Sample', lastName: 'Two'});
     });
     expect(await screen.findByText('Profile updated.')).toBeInTheDocument();
   });

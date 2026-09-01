@@ -37,6 +37,14 @@ describe('AdminApiService', () => {
     expect(client.post).toHaveBeenNthCalledWith(2, '/v2/tenant/managed-users/41/disable', undefined, expect.objectContaining({headers: expect.any(Object)}));
   });
 
+  it('keeps name as a user-list query parameter rather than a response field', async () => {
+    client.get.mockResolvedValue({status: 200, data: []});
+
+    await service.listUsers({name: 'Alex Rivera'});
+
+    expect(client.get).toHaveBeenCalledWith('/v2/users', {params: {name: 'Alex Rivera'}});
+  });
+
   it('uses the audited system operation contracts', async () => {
     client.patch.mockResolvedValue({status: 200, data: {id: 41, tenantId: 2}});
     client.post.mockResolvedValue({status: 200, data: null});

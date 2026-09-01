@@ -3,7 +3,7 @@ import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {CourseMember, CourseSummary, unwrapData} from '@/apis';
 import {courseApiService} from '@/apis/services/course-api';
 import {getApiErrorMessage} from '@/utils/apiError';
-import {formatPersonName} from '@/utils/personName';
+import {formatPersonName, formatPersonNameWithLegacyFallback} from '@/utils/personName';
 import styles from '../index.module.scss';
 
 const COURSE_PAGE_SIZE = 100;
@@ -62,11 +62,11 @@ const CourseMemberRow = ({
   onCancelChange: () => void;
 }) => {
   const isThisMemberPending = pendingChange?.member.userId === member.userId;
-  const displayName = formatPersonName({
+  const displayName = formatPersonNameWithLegacyFallback({
     firstName: member.userFirstName,
     middleName: member.userMiddleName,
     lastName: member.userLastName,
-  }) || member.userEmail || `User #${member.userId}`;
+  }, member.userName) || member.userEmail || `User #${member.userId}`;
 
   return (
     <article className={styles.courseMemberRow}>

@@ -79,7 +79,9 @@
   gap: .6rem;
   margin-top: 1.5rem;
 
+  > div { display: grid; gap: .35rem; }
   label { color: t.$text-muted; font-size: t.$fs-caption; font-weight: t.$fw-semibold; }
+  label span { font-weight: t.$fw-regular; }
   input {
     min-height: t.$control-size;
     padding: 0 .85rem;

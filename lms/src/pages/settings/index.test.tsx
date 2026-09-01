@@ -58,7 +58,7 @@ describe('SettingsPage', () => {
 
   it('rejects a password that would fail the backend letter-and-digit rule', async () => {
     renderPage();
-    expect(await screen.findByLabelText('Display name')).toBeInTheDocument();
+    expect(await screen.findByLabelText('First name')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('tab', {name: 'Password'}));
     await userEvent.type(screen.getByLabelText('Current password'), 'OldPassw0rd');
     await userEvent.type(screen.getByLabelText('New password'), 'passwordonly');
@@ -70,7 +70,7 @@ describe('SettingsPage', () => {
 
   it('updates a valid password through the authenticated change-password route', async () => {
     renderPage();
-    await screen.findByLabelText('Display name');
+    await screen.findByLabelText('First name');
     await userEvent.click(screen.getByRole('tab', {name: 'Password'}));
     await userEvent.type(screen.getByLabelText('Current password'), 'OldPassw0rd');
     await userEvent.type(screen.getByLabelText('New password'), 'NewPassw0rd');
@@ -89,7 +89,7 @@ describe('SettingsPage', () => {
 
   it('toggles password visibility for all password fields', async () => {
     renderPage();
-    await screen.findByLabelText('Display name');
+    await screen.findByLabelText('First name');
     await userEvent.click(screen.getByRole('tab', {name: 'Password'}));
 
     const currentInput = screen.getByLabelText('Current password');
@@ -124,5 +124,18 @@ describe('SettingsPage', () => {
     renderPage();
     const backButton = await screen.findByRole('button', {name: 'Back'});
     expect(backButton).toBeInTheDocument();
+  });
+
+  it('saves first, middle, and last name without parsing a display name', async () => {
+    profileApi.updateMyProfile.mockResolvedValue(response({...profile, middleName: 'Sample', lastName: 'Two'}));
+    renderPage();
+    const middleName = await screen.findByLabelText('Middle name (optional)');
+    const lastName = screen.getByLabelText('Last name');
+    await userEvent.type(middleName, 'Sample');
+    await userEvent.clear(lastName);
+    await userEvent.type(lastName, 'Two');
+    await userEvent.click(screen.getByRole('button', {name: 'Save account'}));
+
+    await waitFor(() => expect(profileApi.updateMyProfile).toHaveBeenCalledWith({firstName: 'Student', middleName: 'Sample', lastName: 'Two'}));
   });
 });

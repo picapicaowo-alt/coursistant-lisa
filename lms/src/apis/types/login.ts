@@ -76,12 +76,17 @@ export interface AuthResult {
  * `user.id`. The RocketChat fields are populated by the chat integration, not
  * by login.
  */
-export interface LoginResponse extends AuthResult {
+export interface LoginSessionInput extends AuthResult {
   id: number;
-  /** Frontend-derived display name; never read from the API response. */
-  name: string;
+  /** Optional only for restoring a session written by an older frontend. */
+  name?: string;
   rocketChatToken?: string;
   rocketChatUserId?: string;
+}
+
+export interface LoginResponse extends LoginSessionInput {
+  /** Frontend-derived display name; never read from the API response. */
+  name: string;
 }
 
 /** Error `code` values login can return. */

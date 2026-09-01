@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {createPortal} from 'react-dom';
 import {CourseMember, TaPermissions} from '@/apis';
-import {formatPersonName} from '@/utils/personName';
+import {formatPersonNameWithLegacyFallback} from '@/utils/personName';
 import styles from './index.module.scss';
 
 interface MemberRowProps {
@@ -33,12 +33,12 @@ export const MemberRow: React.FC<MemberRowProps> = ({member, onWithdraw, onPromo
   const canPromote = isStudent && member.active && member.level === 'STUDENT';
   const [permissionOpen, setPermissionOpen] = useState(false);
   const [permissions, setPermissions] = useState<Required<TaPermissions>>(() => permissionsFromMember(member));
-  const structuredName = formatPersonName({
+  const resolvedName = formatPersonNameWithLegacyFallback({
     firstName: member.userFirstName,
     middleName: member.userMiddleName,
     lastName: member.userLastName,
-  });
-  const memberName = structuredName || 'Unnamed member';
+  }, member.userName);
+  const memberName = resolvedName || 'Unnamed member';
 
   useEffect(() => setPermissions(permissionsFromMember(member)), [member]);
 
@@ -67,7 +67,7 @@ export const MemberRow: React.FC<MemberRowProps> = ({member, onWithdraw, onPromo
           <div className={styles.dialogBackdrop} role="presentation" onMouseDown={() => setPermissionOpen(false)}>
             <section className={styles.permissionDialog} role="dialog" aria-modal="true" aria-labelledby={`ta-permissions-${member.userId}`} onMouseDown={event => event.stopPropagation()}>
               <div className={styles.dialogHeader}>
-                <div><h2 id={`ta-permissions-${member.userId}`}>TA permissions</h2><p>{structuredName || member.userEmail || 'Teaching assistant'}</p></div>
+                <div><h2 id={`ta-permissions-${member.userId}`}>TA permissions</h2><p>{resolvedName || member.userEmail || 'Teaching assistant'}</p></div>
                 <button type="button" className={styles.closeButton} aria-label="Close permissions" onClick={() => setPermissionOpen(false)}>×</button>
               </div>
               <div className={styles.permissionList}>

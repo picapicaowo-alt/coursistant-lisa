@@ -40,10 +40,16 @@ const copy: Record<string, string> = {
   'signup.title': 'Create an account',
   'signup.subtitle': 'Enter your details',
   'signup.nameLabel': 'Name',
+  'signup.firstNameLabel': 'First name',
+  'signup.middleNameLabel': 'Middle name (optional)',
+  'signup.lastNameLabel': 'Last name',
   'signup.emailLabel': 'Email',
   'signup.passwordLabel': 'Password',
   'signup.verificationLabel': 'Verification code',
   'signup.nicknamePlaceholder': 'Enter name',
+  'signup.firstNamePlaceholder': 'First name',
+  'signup.middleNamePlaceholder': 'Middle',
+  'signup.lastNamePlaceholder': 'Last name',
   'signup.emailPlaceholder': 'Enter email',
   'signup.passwordPlaceholder': 'Enter password',
   'signup.passwordHint': 'Password help',
@@ -69,6 +75,9 @@ const copy: Record<string, string> = {
   'signupErrors.resendCooldown': 'Wait before resending.',
   'signupErrors.hourlyLimit': 'Hourly limit reached.',
   'signupErrors.fullNameRequired': 'Enter first and last name.',
+  'signupErrors.firstNameRequired': 'First name is required.',
+  'signupErrors.lastNameRequired': 'Last name is required.',
+  'signupErrors.namePartTooLong': 'Name is too long.',
   'signupErrors.sendVerificationFailed': 'Could not send code.',
   'signupErrors.signupFailed': 'Could not register.',
   'signupErrors.serviceUnavailable': 'Registration unavailable.',
@@ -117,7 +126,9 @@ const renderSignup = () => render(
 
 const fillRegistration = async () => {
   const user = userEvent.setup();
-  await user.type(screen.getByLabelText('Name'), 'Student One');
+  await user.type(screen.getByLabelText('First name'), 'Student');
+  await user.type(screen.getByLabelText('Middle name (optional)'), 'Sample');
+  await user.type(screen.getByLabelText('Last name'), 'One');
   await user.type(screen.getByLabelText('Email'), ' Student@Example.com ');
   await user.type(screen.getByLabelText('Password'), 'Passw0rd1');
   await user.type(screen.getByLabelText('Verification code'), '123456');
@@ -145,6 +156,7 @@ describe('SignUpView', () => {
     expect(mocks.register).toHaveBeenCalledWith(
       {
         firstName: 'Student',
+        middleName: 'Sample',
         lastName: 'One',
         email: 'student@example.com',
         password: 'Passw0rd1',
@@ -160,7 +172,8 @@ describe('SignUpView', () => {
   it('blocks a password that the backend would reject', async () => {
     renderSignup();
     const user = userEvent.setup();
-    await user.type(screen.getByLabelText('Name'), 'Student One');
+    await user.type(screen.getByLabelText('First name'), 'Student');
+    await user.type(screen.getByLabelText('Last name'), 'One');
     await user.type(screen.getByLabelText('Email'), 'student@example.com');
     await user.type(screen.getByLabelText('Password'), 'passwordonly');
     await user.type(screen.getByLabelText('Verification code'), '123456');

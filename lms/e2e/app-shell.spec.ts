@@ -24,7 +24,7 @@ const course = {
   canPostAnnouncements: null,
   canManageGroups: null,
   canManageCourseEvents: null,
-  primaryInstructor: {userId: 42, name: 'Teach Test Two'},
+  primaryInstructor: {userId: 42, instructorFirstName: 'Teach', instructorMiddleName: 'Test', instructorLastName: 'Two'},
   createdAt: '2026-08-01T10:00:00Z',
   updatedAt: '2026-08-27T08:00:00Z',
   archivedAt: null,
@@ -42,9 +42,13 @@ const installSession = async (
       id: 900,
       userId: 900,
       email: accountRole === 'USER' ? 'student@example.test' : 'admin@example.test',
-      name: accountRole === 'USER'
-        ? accountLevel === 'INSTRUCTOR' ? 'Teach Test Two' : 'Student Test'
-        : 'Tenant Admin',
+      firstName: accountRole === 'USER'
+        ? accountLevel === 'INSTRUCTOR' ? 'Teach' : 'Student'
+        : 'Tenant',
+      middleName: accountRole === 'USER' && accountLevel === 'INSTRUCTOR' ? 'Test' : null,
+      lastName: accountRole === 'USER'
+        ? accountLevel === 'INSTRUCTOR' ? 'Two' : 'Test'
+        : 'Admin',
       username: accountRole === 'USER' ? 'student' : 'tenant-admin',
       role: accountRole,
       level: accountRole === 'USER' ? accountLevel : null,
@@ -66,6 +70,37 @@ const installSession = async (
       data = {unreadCount: 0};
     } else if (path === '/v2/courses/17/sessions') {
       data = [{id: 1, dayOfWeek: 'TUE', startTime: '09:00:00', endTime: '10:00:00', location: 'B'}];
+    } else if (path === '/v2/courses/17/members') {
+      data = {
+        items: [
+          {
+            id: 1,
+            courseId: 17,
+            userId: 901,
+            userName: 'Prod Legacy Student',
+            userEmail: 'legacy@example.test',
+            courseRole: 'Student',
+            active: true,
+            level: 'STUDENT',
+          },
+          {
+            id: 2,
+            courseId: 17,
+            userId: 902,
+            userName: 'Ignored Legacy Name',
+            userFirstName: 'Dev',
+            userMiddleName: null,
+            userLastName: 'Structured Student',
+            userEmail: 'structured@example.test',
+            courseRole: 'Student',
+            active: true,
+            level: 'STUDENT',
+          },
+        ],
+        page: 0,
+        size: 20,
+        total: 2,
+      };
     }
 
     await route.fulfill({status: 200, contentType: 'application/json', body: JSON.stringify(apiResponse(data))});
@@ -97,6 +132,17 @@ test('administration routes use the same shell without student-only search', asy
   await expect(page.getByRole('complementary', {name: 'Primary navigation'})).toHaveCSS('width', '104px');
   await expect(page.getByRole('link', {name: 'Admin Console'})).toBeVisible();
   await expect(page.getByRole('textbox', {name: 'Search courses and assignments'})).toHaveCount(0);
+});
+
+test('roster supports the Prod legacy name field while preferring the Dev structured fields', async ({page}) => {
+  await installSession(page, 'USER', 'INSTRUCTOR');
+  await page.goto('/roster/17');
+
+  await expect(page.getByRole('heading', {name: 'Roster'})).toBeVisible();
+  await expect(page.getByRole('cell', {name: 'Prod Legacy Student'})).toBeVisible();
+  await expect(page.getByRole('cell', {name: 'Dev Structured Student'})).toBeVisible();
+  await expect(page.getByText('Ignored Legacy Name')).toHaveCount(0);
+  await expect(page.getByText('Unnamed member')).toHaveCount(0);
 });
 
 test('dashboard stacks the assistant rail before the main content becomes cramped', async ({page}) => {

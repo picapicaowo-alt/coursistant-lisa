@@ -1,4 +1,4 @@
-import React, {FormEvent, useMemo, useState} from 'react';
+import React, {FormEvent, useDeferredValue, useState} from 'react';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {Navigate} from 'react-router-dom';
 import {
@@ -14,7 +14,14 @@ import {adminApiService} from '@/apis/services/admin-api';
 import {useRequiredAuth} from '@/contexts/RequiredAuthContext';
 import {getManagedUserCreateError} from './adminFeedback';
 import {CourseMembershipPanel} from './components/CourseMembershipPanel';
-import {formatPersonName, parsePersonName} from '@/utils/personName';
+import {
+  emptyPersonNameInput,
+  formatPersonName,
+  isPersonNameInputValid,
+  normalizePersonNameInput,
+  PERSON_NAME_PART_MAX_LENGTH,
+  PersonNameInput,
+} from '@/utils/personName';
 import styles from './index.module.scss';
 
 type ManagedRole = CreateManagedUserRequest['role'];
@@ -107,7 +114,7 @@ const AdminConsolePage: React.FC = () => {
   const [tenantName, setTenantName] = useState('');
   const [tenantTimezone, setTenantTimezone] = useState('America/Los_Angeles');
   const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
+  const [personName, setPersonName] = useState<PersonNameInput>(emptyPersonNameInput);
   const [role, setRole] = useState<ManagedRole>('USER');
   const [level, setLevel] = useState<ManagedLevel>('STUDENT');
   const [tenantId, setTenantId] = useState('');
@@ -120,6 +127,7 @@ const AdminConsolePage: React.FC = () => {
   const [confirmReassignment, setConfirmReassignment] = useState(false);
   const [correction, setCorrection] = useState<AssignmentGradeCorrectionRequest>({assignmentId: 0, studentUserId: 0, score: 0, reason: ''});
   const [confirmCorrection, setConfirmCorrection] = useState(false);
+  const deferredSearch = useDeferredValue(search.trim());
 
   const tenantsQuery = useQuery({
     queryKey: ['admin', 'tenants'],
@@ -128,8 +136,15 @@ const AdminConsolePage: React.FC = () => {
     retry: 1,
   });
   const usersQuery = useQuery({
-    queryKey: ['admin', 'users'],
-    queryFn: async () => unwrapData(await adminApiService.listUsers(), 'listUsers'),
+    queryKey: ['admin', 'users', deferredSearch],
+    queryFn: async () => unwrapData(
+      await adminApiService.listUsers(deferredSearch
+        ? deferredSearch.includes('@')
+          ? {email: deferredSearch.toLowerCase()}
+          : {name: deferredSearch}
+        : undefined),
+      'listUsers',
+    ),
     enabled: isSystemAdmin,
     retry: 1,
   });
@@ -165,7 +180,7 @@ const AdminConsolePage: React.FC = () => {
       const id = unwrapData(response, 'createManagedUser');
       setManagedUserId(String(id));
       setEmail('');
-      setName('');
+      setPersonName(emptyPersonNameInput());
       setMessage({tone: 'success', text: `Managed user #${id} created. They must use Forgot Password to establish their first password.`});
       if (isSystemAdmin) await queryClient.invalidateQueries({queryKey: ['admin', 'users']});
     },
@@ -213,25 +228,20 @@ const AdminConsolePage: React.FC = () => {
     onError: () => setMessage({tone: 'error', text: 'The grade could not be corrected. Confirm that an existing grade row matches this assignment and student.'}),
   });
 
-  const filteredUsers = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    if (!needle) return usersQuery.data ?? [];
-    return (usersQuery.data ?? []).filter(account => `${formatPersonName(account)} ${account.email} ${account.id} ${account.tenantId}`.toLowerCase().includes(needle));
-  }, [search, usersQuery.data]);
+  const displayedUsers = usersQuery.data ?? [];
 
   if (!isSystemAdmin && !isTenantAdmin) return <Navigate to="/" replace/>;
 
   const submitUser = (event: FormEvent) => {
     event.preventDefault();
-    const parsedName = parsePersonName(name);
-    if (!parsedName) {
-      setMessage({tone: 'error', text: 'Enter both a first name and a last name.'});
+    if (!isPersonNameInputValid(personName)) {
+      setMessage({tone: 'error', text: 'Enter a first name and last name of no more than 100 characters each.'});
       return;
     }
     const resolvedTenantId = Number(tenantId || tenantsQuery.data?.[0]?.id);
     createUser.mutate({
       email: email.trim(),
-      ...parsedName,
+      ...normalizePersonNameInput(personName),
       role,
       level: role === 'USER' ? level : 'NOT_APPLICABLE',
       ...(isSystemAdmin ? {tenantId: resolvedTenantId} : {}),
@@ -279,23 +289,25 @@ const AdminConsolePage: React.FC = () => {
           <section className={styles.card} aria-labelledby="create-user-title">
             <h2 id="create-user-title">Create managed user</h2>
             <form className={styles.form} onSubmit={submitUser}>
-              <label><span>Name</span><input required value={name} onChange={event => setName(event.target.value)}/></label>
+              <label><span>First name</span><input required autoComplete="given-name" maxLength={PERSON_NAME_PART_MAX_LENGTH} value={personName.firstName} onChange={event => setPersonName(current => ({...current, firstName: event.target.value}))}/></label>
+              <label><span>Middle name <small>(optional)</small></span><input autoComplete="additional-name" maxLength={PERSON_NAME_PART_MAX_LENGTH} value={personName.middleName} onChange={event => setPersonName(current => ({...current, middleName: event.target.value}))}/></label>
+              <label><span>Last name</span><input required autoComplete="family-name" maxLength={PERSON_NAME_PART_MAX_LENGTH} value={personName.lastName} onChange={event => setPersonName(current => ({...current, lastName: event.target.value}))}/></label>
               <label><span>Email</span><input required type="email" value={email} onChange={event => setEmail(event.target.value)}/></label>
               {isSystemAdmin ? <label><span>Tenant</span><select required value={tenantId || tenantsQuery.data?.[0]?.id || ''} onChange={event => setTenantId(event.target.value)}>{tenantsQuery.data?.map(tenant => <option key={tenant.id} value={tenant.id}>{tenant.name} (#{tenant.id})</option>)}</select></label> : null}
               <label><span>Account role</span><select value={role} onChange={event => setRole(event.target.value as ManagedRole)}><option value="USER">User</option><option value="TENANT_ADMIN">Tenant admin</option></select></label>
               {role === 'USER' ? <label><span>Level</span><select value={level} onChange={event => setLevel(event.target.value as ManagedLevel)}><option value="STUDENT">Student</option><option value="INSTRUCTOR">Instructor</option></select></label> : null}
-              <button className={styles.primaryButton} disabled={createUser.isPending || !parsePersonName(name) || !email.trim() || (isSystemAdmin && !Number(tenantId || tenantsQuery.data?.[0]?.id))}>{createUser.isPending ? 'Creating…' : 'Create user'}</button>
+              <button className={styles.primaryButton} disabled={createUser.isPending || !isPersonNameInputValid(personName) || !email.trim() || (isSystemAdmin && !Number(tenantId || tenantsQuery.data?.[0]?.id))}>{createUser.isPending ? 'Creating…' : 'Create user'}</button>
             </form>
             <p className={styles.hint}>New accounts must establish their password through Forgot Password before signing in.</p>
           </section>
 
           {isSystemAdmin ? (
             <section className={`${styles.card} ${styles.listCard}`} aria-labelledby="managed-users-title">
-              <div className={styles.cardHeader}><div><h2 id="managed-users-title">System users</h2><p>Read access is system-admin only.</p></div><span>{filteredUsers.length}</span></div>
-              <label className={styles.search}><span>Search users</span><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Name, email, user ID, or tenant ID"/></label>
+              <div className={styles.cardHeader}><div><h2 id="managed-users-title">System users</h2><p>Read access is system-admin only.</p></div><span>{displayedUsers.length}</span></div>
+              <label className={styles.search}><span>Search users</span><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Name or exact email"/></label>
               {usersQuery.isPending ? <p className={styles.status}>Loading users…</p> : null}
               {usersQuery.isError ? <p className={styles.errorMessage}>Users could not be loaded.</p> : null}
-              <div className={styles.list}>{filteredUsers.map(account => <ManagedUserRow key={`${account.id}-${account.tenantId}`} account={account} tenants={tenantsQuery.data ?? []} busy={busy} onUpdate={(id, request) => changeRole.mutate({id, request})} onDisable={id => disableUser.mutate(id)} onMoveTenant={(id, targetTenantId) => moveTenant.mutate({id, targetTenantId})}/>)}</div>
+              <div className={styles.list}>{displayedUsers.map(account => <ManagedUserRow key={`${account.id}-${account.tenantId}`} account={account} tenants={tenantsQuery.data ?? []} busy={busy} onUpdate={(id, request) => changeRole.mutate({id, request})} onDisable={id => disableUser.mutate(id)} onMoveTenant={(id, targetTenantId) => moveTenant.mutate({id, targetTenantId})}/>)}</div>
             </section>
           ) : (
             <section className={styles.card} aria-labelledby="manage-user-title">

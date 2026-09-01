@@ -11,7 +11,7 @@ import MarkdownMessage from '@/components/MarkdownMessage';
 import {useCourseAccess} from '@/hooks/useCourseAccess';
 import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
 import {formatUtcTimestamp} from '@/utils/datetime';
-import {formatPersonName} from '@/utils/personName';
+import {formatPersonNameWithLegacyFallback} from '@/utils/personName';
 import styles from './index.module.scss';
 
 interface GradeDraft {
@@ -31,11 +31,11 @@ interface AttemptRosterData {
   failedUserIds: number[];
 }
 
-const courseMemberName = (member: CourseMember): string => formatPersonName({
+const courseMemberName = (member: CourseMember): string => formatPersonNameWithLegacyFallback({
   firstName: member.userFirstName,
   middleName: member.userMiddleName,
   lastName: member.userLastName,
-}) || `User ${member.userId}`;
+}, member.userName) || `User ${member.userId}`;
 
 const loadCourseStudents = async (courseId: number) => {
   const size = 100;

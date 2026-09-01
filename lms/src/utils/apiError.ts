@@ -28,6 +28,20 @@ export const getApiErrorMessage = (error: unknown, fallback: string): string => 
   return error.message || fallback;
 };
 
+/** Distinguishes the structured-name contract errors the API intentionally exposes. */
+export const getStructuredNameWriteError = (error: unknown, fallback: string): string => {
+  const code = getApiErrorCode(error);
+  const detail = getApiErrorMessage(error, fallback);
+
+  if (code === 'PARAM_MISSING') {
+    return 'First name and last name are required.';
+  }
+  if (code === 'BAD_REQUEST' && detail.toLowerCase().includes('use firstname and lastname')) {
+    return 'The request used an obsolete combined-name field. Refresh this page and try again.';
+  }
+  return detail;
+};
+
 export const isHttpStatus = (error: unknown, status: number): boolean =>
   isApiError(error) && error.code === status;
 

@@ -40,9 +40,9 @@ export interface AssignmentForReview extends AssignmentBase {
 
 export interface StudentState {
   studentId: string;
-  studentFirstName: string | null;
-  studentMiddleName: string | null;
-  studentLastName: string | null;
+  studentFirstName?: string | null;
+  studentMiddleName?: string | null;
+  studentLastName?: string | null;
   submission: SubmissionState | null;
   review: ReviewState | null;
 }

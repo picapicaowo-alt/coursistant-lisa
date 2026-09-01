@@ -21,6 +21,28 @@ const ta: CourseMember = {
 };
 
 describe('MemberRow TA permissions', () => {
+  it('shows the Prod legacy roster name when structured fields are unavailable', () => {
+    render(
+      <table><tbody><MemberRow
+        member={{
+          ...ta,
+          userFirstName: undefined,
+          userMiddleName: undefined,
+          userLastName: undefined,
+          userName: '  Taylor Legacy  ',
+        }}
+        onWithdraw={vi.fn()}
+        onPromote={vi.fn()}
+        onDemote={vi.fn()}
+        onUpdatePermissions={vi.fn()}
+        isBusy={false}
+      /></tbody></table>,
+    );
+
+    expect(screen.getByText('Taylor Legacy')).toBeInTheDocument();
+    expect(screen.queryByText('Unnamed member')).toBeNull();
+  });
+
   it('edits and submits individual permission flags', async () => {
     const onUpdatePermissions = vi.fn();
     const user = userEvent.setup();

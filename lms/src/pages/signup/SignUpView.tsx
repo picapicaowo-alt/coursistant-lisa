@@ -7,14 +7,20 @@ import {AUTH_ERROR_CODES, V2ApiClient} from '@/apis';
 import {authApiService} from '@/apis/services/auth-api';
 import {useAuth} from '@/contexts/AuthContext';
 import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
-import {getApiErrorCode, isTransportOrServerFailure} from '@/utils/apiError';
+import {getApiErrorCode, getStructuredNameWriteError, isTransportOrServerFailure} from '@/utils/apiError';
 import {isValidPassword} from '@/utils/passwordRules';
-import {formatAccountName, parsePersonName} from '@/utils/personName';
+import {
+  emptyPersonNameInput,
+  isPersonNameInputValid,
+  normalizePersonNameInput,
+  PERSON_NAME_PART_MAX_LENGTH,
+  PersonNameInput,
+} from '@/utils/personName';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const VERIFICATION_CODE_PATTERN = /^\d{6}$/;
 
-type SignupField = 'name' | 'email' | 'password' | 'verificationCode';
+type SignupField = keyof PersonNameInput | 'email' | 'password' | 'verificationCode';
 type SignupFieldErrors = Partial<Record<SignupField, string>>;
 
 const formatCountdown = (seconds: number) => {
@@ -29,7 +35,7 @@ export default function SignUpView() {
   const {t} = useTranslation('auth');
   const idempotency = useIdempotencyCheckpoint();
 
-  const [name, setName] = useState('');
+  const [personName, setPersonName] = useState<PersonNameInput>(emptyPersonNameInput);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
@@ -61,7 +67,11 @@ export default function SignUpView() {
 
   const validate = (): SignupFieldErrors => {
     const errors: SignupFieldErrors = {};
-    if (!parsePersonName(name)) errors.name = t('signupErrors.fullNameRequired');
+    if (!personName.firstName.trim()) errors.firstName = t('signupErrors.firstNameRequired');
+    else if (personName.firstName.trim().length > PERSON_NAME_PART_MAX_LENGTH) errors.firstName = t('signupErrors.namePartTooLong');
+    if (personName.middleName.trim().length > PERSON_NAME_PART_MAX_LENGTH) errors.middleName = t('signupErrors.namePartTooLong');
+    if (!personName.lastName.trim()) errors.lastName = t('signupErrors.lastNameRequired');
+    else if (personName.lastName.trim().length > PERSON_NAME_PART_MAX_LENGTH) errors.lastName = t('signupErrors.namePartTooLong');
     if (!email.trim()) errors.email = t('signupErrors.emailRequired');
     else if (!EMAIL_PATTERN.test(email.trim())) errors.email = t('signupErrors.emailInvalid');
     if (!password) errors.password = t('signupErrors.passwordRequired');
@@ -113,10 +123,8 @@ export default function SignUpView() {
     if (Object.keys(errors).length > 0) return;
 
     setIsSubmitting(true);
-    const parsedName = parsePersonName(name);
-    if (!parsedName) return;
     const request = {
-      ...parsedName,
+      ...normalizePersonNameInput(personName),
       email: email.trim().toLowerCase(),
       password,
       verificationCode: verificationCode.trim(),
@@ -136,7 +144,7 @@ export default function SignUpView() {
       V2ApiClient.setAccessToken(auth.accessToken);
       localStorage.setItem('accToken', auth.accessToken);
       localStorage.setItem('preferredLoginRole', 'USER');
-      login({...auth, id: auth.userId, name: formatAccountName(auth) || auth.email});
+      login({...auth, id: auth.userId});
       navigate('/', {replace: true});
     } catch (error) {
       const code = getApiErrorCode(error);
@@ -148,6 +156,8 @@ export default function SignUpView() {
         setFieldErrors({verificationCode: t('signupErrors.verificationExpired')});
       } else if (code === AUTH_ERROR_CODES.verificationAttemptsExceeded) {
         setFieldErrors({verificationCode: t('signupErrors.verificationAttemptsExceeded')});
+      } else if (code === AUTH_ERROR_CODES.paramMissing || code === 'BAD_REQUEST') {
+        setFormError(getStructuredNameWriteError(error, t('signupErrors.signupFailed')));
       } else {
         const unavailable = isTransportOrServerFailure(error);
         setFormError(unavailable ? t('signupErrors.serviceUnavailable') : t('signupErrors.signupFailed'));
@@ -181,23 +191,24 @@ export default function SignUpView() {
           <p className="mb-10 text-sm text-[#718096]">{t('signup.subtitle')}</p>
 
           <form className="space-y-5" onSubmit={handleSubmit} noValidate>
-            <div>
-              <label className="sr-only" htmlFor="signup-name">{t('signup.nameLabel')}</label>
-              <input
-                id="signup-name"
-                type="text"
-                autoComplete="name"
-                value={name}
-                onChange={event => {
-                  setName(event.target.value);
-                  clearFieldError('name');
-                }}
-                placeholder={t('signup.nicknamePlaceholder')}
-                aria-invalid={Boolean(fieldErrors.name)}
-                aria-describedby={fieldErrors.name ? 'signup-name-error' : undefined}
-                className={`h-[50px] w-full rounded-[15px] border bg-white px-[18px] text-sm outline-none transition focus:border-[#566FE8] focus:ring-2 focus:ring-[#566FE8]/15 ${fieldErrors.name ? 'border-red-500' : 'border-[#E2E8F0]'}`}
-              />
-              {fieldErrors.name ? <p id="signup-name-error" className="mt-1 text-right text-xs text-red-500">{fieldErrors.name}</p> : null}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {([
+                ['firstName', 'given-name', 'signup.firstNameLabel', 'signup.firstNamePlaceholder'],
+                ['middleName', 'additional-name', 'signup.middleNameLabel', 'signup.middleNamePlaceholder'],
+                ['lastName', 'family-name', 'signup.lastNameLabel', 'signup.lastNamePlaceholder'],
+              ] as const).map(([field, autoComplete, labelKey, placeholderKey]) => (
+                <div key={field}>
+                  <label className="sr-only" htmlFor={`signup-${field}`}>{t(labelKey)}</label>
+                  <input id={`signup-${field}`} type="text" autoComplete={autoComplete} maxLength={PERSON_NAME_PART_MAX_LENGTH}
+                    value={personName[field]}
+                    onChange={event => { setPersonName(current => ({...current, [field]: event.target.value})); clearFieldError(field); }}
+                    placeholder={t(placeholderKey)} required={field !== 'middleName'}
+                    aria-invalid={Boolean(fieldErrors[field])}
+                    aria-describedby={fieldErrors[field] ? `signup-${field}-error` : undefined}
+                    className={`h-[50px] w-full rounded-[15px] border bg-white px-[18px] text-sm outline-none transition focus:border-[#566FE8] focus:ring-2 focus:ring-[#566FE8]/15 ${fieldErrors[field] ? 'border-red-500' : 'border-[#E2E8F0]'}`}/>
+                  {fieldErrors[field] ? <p id={`signup-${field}-error`} className="mt-1 text-right text-xs text-red-500">{fieldErrors[field]}</p> : null}
+                </div>
+              ))}
             </div>
 
             <div>
@@ -290,7 +301,7 @@ export default function SignUpView() {
 
             <button
               type="submit"
-              disabled={isSubmitting || isSendingCode}
+              disabled={isSubmitting || isSendingCode || !isPersonNameInputValid(personName)}
               className="h-[50px] w-full rounded-[15px] bg-[#566FE8] text-base font-semibold text-white transition hover:bg-[#465CCE] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#566FE8]"
             >
               {isSubmitting ? t('signup.creatingAccount') : t('signup.continueButton')}

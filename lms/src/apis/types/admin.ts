@@ -17,9 +17,9 @@ export interface ManagedUser {
   id: number;
   tenantId: number;
   username: string;
-  firstName: string | null;
-  middleName: string | null;
-  lastName: string | null;
+  firstName?: string | null;
+  middleName?: string | null;
+  lastName?: string | null;
   avatar: string | null;
   role: LoginAccountType;
   level: UserLevel;
@@ -28,6 +28,13 @@ export interface ManagedUser {
   emailNotifications: boolean;
   status: 'ACTIVE' | 'DISABLED';
   authVersion: number;
+}
+
+export interface ManagedUserQueryParams {
+  /** Searches the structured name parts and their joined display value. */
+  name?: string;
+  /** The API treats email as an exact-match filter. */
+  email?: string;
 }
 
 export interface CreateManagedUserRequest {

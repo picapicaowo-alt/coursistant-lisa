@@ -93,6 +93,7 @@
   gap: .4rem;
 
   label { color: t.$text-muted; font-size: t.$fs-caption; font-weight: t.$fw-semibold; }
+  label span { font-weight: t.$fw-regular; }
   input {
     width: 100%;
     min-height: t.$control-size;

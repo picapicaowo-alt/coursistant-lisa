@@ -4,6 +4,26 @@ export interface PersonNameParts {
   lastName?: string | null;
 }
 
+export interface PersonNameInput {
+  firstName: string;
+  middleName: string;
+  lastName: string;
+}
+
+export interface NormalizedPersonName {
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+}
+
+export const PERSON_NAME_PART_MAX_LENGTH = 100;
+
+export const emptyPersonNameInput = (): PersonNameInput => ({
+  firstName: '',
+  middleName: '',
+  lastName: '',
+});
+
 const normalizeNamePart = (value?: string | null): string => value?.trim() ?? '';
 
 /** Builds the UI display name from the structured person-name contract. */
@@ -23,25 +43,46 @@ export const formatAccountName = (parts: AccountNameParts): string => (
   normalizeNamePart(parts.adminName) || formatPersonName(parts)
 );
 
-export interface ParsedPersonName {
-  firstName: string;
-  lastName: string;
-}
+/**
+ * Keeps read compatibility while Dev and Prod return different roster
+ * contracts. Structured fields are authoritative; legacyName is display-only
+ * and must never be parsed back into first/middle/last name writes.
+ */
+export const formatPersonNameWithLegacyFallback = (
+  parts: PersonNameParts,
+  legacyName?: string | null,
+): string => (
+  formatPersonName(parts) || normalizeNamePart(legacyName)
+);
 
 /**
- * Converts the product's single full-name input into the API contract.
- * The final whitespace-delimited word is the family name; every preceding
- * word stays together as the given name. A one-word value is incomplete.
+ * Mirrors the API's per-part validation without guessing how a full name
+ * should be split. Whitespace-only middle names are valid and mean "empty".
  */
-export const parsePersonName = (value: string): ParsedPersonName | null => {
-  const words = value.trim().split(/\s+/).filter(Boolean);
-  if (words.length < 2) return null;
+export const isPersonNameInputValid = ({firstName, middleName, lastName}: PersonNameInput): boolean => {
+  const normalizedFirstName = normalizeNamePart(firstName);
+  const normalizedMiddleName = normalizeNamePart(middleName);
+  const normalizedLastName = normalizeNamePart(lastName);
 
-  const lastName = words[words.length - 1];
-  if (!lastName) return null;
+  return normalizedFirstName.length >= 1
+    && normalizedFirstName.length <= PERSON_NAME_PART_MAX_LENGTH
+    && normalizedMiddleName.length <= PERSON_NAME_PART_MAX_LENGTH
+    && normalizedLastName.length >= 1
+    && normalizedLastName.length <= PERSON_NAME_PART_MAX_LENGTH;
+};
 
+/**
+ * Builds a write payload from explicit inputs. Profile edits include an empty
+ * middleName so users can deliberately clear a previously stored value.
+ */
+export const normalizePersonNameInput = (
+  {firstName, middleName, lastName}: PersonNameInput,
+  options: {includeEmptyMiddleName?: boolean} = {},
+): NormalizedPersonName => {
+  const normalizedMiddleName = normalizeNamePart(middleName);
   return {
-    firstName: words.slice(0, -1).join(' '),
-    lastName,
+    firstName: normalizeNamePart(firstName),
+    ...(normalizedMiddleName || options.includeEmptyMiddleName ? {middleName: normalizedMiddleName} : {}),
+    lastName: normalizeNamePart(lastName),
   };
 };

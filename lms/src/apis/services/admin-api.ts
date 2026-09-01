@@ -9,6 +9,7 @@ import {
   CreateManagedUserRequest,
   idempotent,
   ManagedUser,
+  ManagedUserQueryParams,
   ReassignPrimaryInstructorRequest,
   V2ApiClient,
 } from '@/apis';
@@ -42,8 +43,8 @@ export class AdminApiService {
     return this.apiClient.delete(`/v2/admin/tenants/${tenantId}`, idempotent());
   }
 
-  listUsers(): Promise<ApiResponse<ManagedUser[]>> {
-    return this.apiClient.get('/v2/users');
+  listUsers(params?: ManagedUserQueryParams): Promise<ApiResponse<ManagedUser[]>> {
+    return this.apiClient.get('/v2/users', {params});
   }
 
   createManagedUser(scope: 'system' | 'tenant', request: CreateManagedUserRequest): Promise<ApiResponse<number>> {

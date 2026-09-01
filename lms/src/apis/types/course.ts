@@ -123,9 +123,9 @@ export interface CourseAnnouncement {
   title: string;
   body: string;
   authorUserId: number;
-  authorFirstName: string | null;
-  authorMiddleName: string | null;
-  authorLastName: string | null;
+  authorFirstName?: string | null;
+  authorMiddleName?: string | null;
+  authorLastName?: string | null;
   postedAt: string;
   editedAt: string | null;
   read: boolean;
@@ -137,9 +137,9 @@ export interface CourseAnnouncementSummary {
   courseCode: string;
   title: string;
   authorUserId: number;
-  authorFirstName: string | null;
-  authorMiddleName: string | null;
-  authorLastName: string | null;
+  authorFirstName?: string | null;
+  authorMiddleName?: string | null;
+  authorLastName?: string | null;
   postedAt: string;
   editedAt: string | null;
   read: boolean;
@@ -233,9 +233,11 @@ export interface CourseMember {
   id: number;
   courseId: number;
   userId: number;
-  userFirstName: string | null;
-  userMiddleName: string | null;
-  userLastName: string | null;
+  /** Temporary read compatibility for the USC Prod roster API. */
+  userName?: string | null;
+  userFirstName?: string | null;
+  userMiddleName?: string | null;
+  userLastName?: string | null;
   userEmail: string | null;
   courseRole: CourseRole;
   canGrade?: boolean;

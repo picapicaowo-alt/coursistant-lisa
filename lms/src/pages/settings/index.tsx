@@ -9,9 +9,9 @@ import {authApiService} from '@/apis/services/auth-api';
 import {profileApiService} from '@/apis/services/profile-api';
 import {useAuth} from '@/contexts/AuthContext';
 import {idempotencyFingerprint, useIdempotencyCheckpoint} from '@/hooks/useIdempotencyCheckpoint';
-import {getApiErrorMessage} from '@/utils/apiError';
+import {getApiErrorMessage, getStructuredNameWriteError} from '@/utils/apiError';
 import {isValidPassword} from '@/utils/passwordRules';
-import {formatPersonName, parsePersonName} from '@/utils/personName';
+import {emptyPersonNameInput, isPersonNameInputValid, normalizePersonNameInput, PERSON_NAME_PART_MAX_LENGTH, PersonNameInput} from '@/utils/personName';
 
 const tabList = ['Account', 'Password', 'Notifications'] as const;
 type SettingsTab = (typeof tabList)[number];
@@ -24,7 +24,7 @@ interface StatusMessage {
 const SettingsPage = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<SettingsTab>('Account');
-  const [displayName, setDisplayName] = useState('');
+  const [personName, setPersonName] = useState<PersonNameInput>(emptyPersonNameInput);
   const [emailNotifications, setEmailNotifications] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -52,7 +52,7 @@ const SettingsPage = () => {
 
   useEffect(() => {
     if (!profileQuery.data) return;
-    setDisplayName(formatPersonName(profileQuery.data));
+    setPersonName({firstName: profileQuery.data.firstName ?? '', middleName: profileQuery.data.middleName ?? '', lastName: profileQuery.data.lastName ?? ''});
     setEmailNotifications(Boolean(profileQuery.data.emailNotifications));
   }, [profileQuery.data]);
 
@@ -64,14 +64,12 @@ const SettingsPage = () => {
     onSuccess: data => {
       queryClient.setQueryData(['my-profile'], data);
       updateProfile({
-        firstName: data.firstName,
-        middleName: data.middleName,
-        lastName: data.lastName,
+        personName: data,
         avatar: data.avatarUrl,
       });
       setStatus({kind: 'success', text: 'Settings saved.'});
     },
-    onError: error => setStatus({kind: 'error', text: getApiErrorMessage(error, 'Could not save settings.')}),
+    onError: error => setStatus({kind: 'error', text: getStructuredNameWriteError(error, 'Could not save settings.')}),
   });
 
   const changePassword = useMutation({
@@ -173,13 +171,20 @@ const SettingsPage = () => {
             onSubmit={event => {
               event.preventDefault();
               setStatus(null);
-              const parsedName = parsePersonName(displayName);
-              if (parsedName) saveProfile.mutate({...parsedName, middleName: ''});
+              if (isPersonNameInputValid(personName)) saveProfile.mutate(normalizePersonNameInput(personName, {includeEmptyMiddleName: true}));
             }}
           >
             <div className={styles.inputGroup}>
-              <label htmlFor="displayName">Display name</label>
-              <input id="displayName" value={displayName} onChange={event => setDisplayName(event.target.value)} required/>
+              <label htmlFor="settings-first-name">First name</label>
+              <input id="settings-first-name" autoComplete="given-name" maxLength={PERSON_NAME_PART_MAX_LENGTH} value={personName.firstName} onChange={event => setPersonName(current => ({...current, firstName: event.target.value}))} required/>
+            </div>
+            <div className={styles.inputGroup}>
+              <label htmlFor="settings-middle-name">Middle name <span>(optional)</span></label>
+              <input id="settings-middle-name" autoComplete="additional-name" maxLength={PERSON_NAME_PART_MAX_LENGTH} value={personName.middleName} onChange={event => setPersonName(current => ({...current, middleName: event.target.value}))}/>
+            </div>
+            <div className={styles.inputGroup}>
+              <label htmlFor="settings-last-name">Last name</label>
+              <input id="settings-last-name" autoComplete="family-name" maxLength={PERSON_NAME_PART_MAX_LENGTH} value={personName.lastName} onChange={event => setPersonName(current => ({...current, lastName: event.target.value}))} required/>
             </div>
             <div className={styles.inputGroup}>
               <label htmlFor="email">Email</label>
@@ -197,7 +202,7 @@ const SettingsPage = () => {
             <button
               type="submit"
               className={styles.primaryButton}
-              disabled={saveProfile.isPending || !parsePersonName(displayName)}
+              disabled={saveProfile.isPending || !isPersonNameInputValid(personName)}
             >
               {saveProfile.isPending ? 'Saving…' : 'Save account'}
             </button>
