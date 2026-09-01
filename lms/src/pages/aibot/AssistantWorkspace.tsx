@@ -8,10 +8,16 @@ import {
   type AiAgentRole,
   type DeadlineDecision,
 } from '@/apis/services/ai-agent-api';
+import {studentStudySupportApiService} from '@/apis/services/student-study-support-api';
 import {getApiErrorCode} from '@/utils/apiError';
+import {loadActiveChatCourses, SELECTED_CHAT_COURSE_STORAGE_KEY} from '@/utils/chatCourses';
+import {useAiExamLockdown} from '@/hooks/useAiExamLockdown';
 import DynamicThinking from '@/components/DynamicThinking/DynamicThinking';
+import type {ThinkingStep} from '@/components/DynamicThinking/DynamicThinking';
 import MarkdownMessage from '@/components/MarkdownMessage';
 import {RichTextEditor} from '@/components/RichTextEditor';
+import {safeStudySupportProgress} from '@/utils/studySupportProgress';
+import type {MyCourse} from '@/apis';
 import DeadlineDecisionModal from './DeadlineDecisionModal';
 import {
   buildDetailsConfirmationMessage,
@@ -50,6 +56,16 @@ const THINKING_STEPS = [
 ];
 
 const ASSISTANT_COMPACT_WIDTH = 760;
+
+type StudentCourseLoadStatus = 'loading' | 'ready' | 'error';
+
+const storedCourseId = (): number => {
+  const value = Number(localStorage.getItem(SELECTED_CHAT_COURSE_STORAGE_KEY));
+  return Number.isInteger(value) && value > 0 ? value : 0;
+};
+
+const browserTimeZone = (): string =>
+  Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Los_Angeles';
 
 const getAgentRole = (level: string | null): AiAgentRole =>
   level === 'INSTRUCTOR' ? 'INSTRUCTOR' : 'STUDENT';
@@ -104,6 +120,12 @@ const AssistantWorkspace = () => {
   const [awaitingDetailsConfirmation, setAwaitingDetailsConfirmation] = useState(false);
   const [detailsConfirmation, setDetailsConfirmation] = useState('');
   const [decisionError, setDecisionError] = useState<string | null>(null);
+  const [studentCourses, setStudentCourses] = useState<MyCourse[]>([]);
+  const [studentCourseLoadStatus, setStudentCourseLoadStatus] =
+    useState<StudentCourseLoadStatus>('loading');
+  const [selectedStudentCourseId, setSelectedStudentCourseId] = useState(storedCourseId);
+  const [studySupportSteps, setStudySupportSteps] = useState<ThinkingStep[]>([]);
+  const studySupportStepId = useRef(0);
   const conversationEndRef = useRef<HTMLDivElement | null>(null);
   const workspaceRef = useRef<HTMLDivElement | null>(null);
   const historyRef = useRef<HTMLElement | null>(null);
@@ -119,6 +141,66 @@ const AssistantWorkspace = () => {
   const messages = activeThread.messages;
   const blockingDecision = Boolean(pendingAction) || awaitingDetailsConfirmation;
   const showWelcome = messages.length === 1 && !isSending;
+
+  useEffect(() => {
+    if (role !== 'STUDENT') return;
+
+    let cancelled = false;
+    setStudentCourseLoadStatus('loading');
+
+    void loadActiveChatCourses()
+      .then(courses => {
+        if (cancelled) return;
+        setStudentCourses(courses);
+        setSelectedStudentCourseId(currentCourseId => {
+          const nextCourseId = courses.some(course => Number(course.id) === currentCourseId)
+            ? currentCourseId
+            : Number(courses[0]?.id ?? 0);
+          if (nextCourseId > 0) {
+            localStorage.setItem(SELECTED_CHAT_COURSE_STORAGE_KEY, String(nextCourseId));
+          }
+          return nextCourseId;
+        });
+        setStudentCourseLoadStatus('ready');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setStudentCourses([]);
+        setStudentCourseLoadStatus('error');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [role, user.accessToken, user.id]);
+
+  const studentExamLockdown = useAiExamLockdown(
+    selectedStudentCourseId > 0 ? [selectedStudentCourseId] : [],
+    user.id,
+    role === 'STUDENT'
+      && studentCourseLoadStatus === 'ready'
+      && selectedStudentCourseId > 0,
+  );
+  const isStudentSupportReady = role !== 'STUDENT' || (
+    studentCourseLoadStatus === 'ready'
+    && selectedStudentCourseId > 0
+    && studentExamLockdown.status === 'unlocked'
+  );
+  const studentSupportStatusMessage = role !== 'STUDENT'
+    ? null
+    : studentCourseLoadStatus === 'loading'
+      ? 'Loading your course context…'
+      : studentCourseLoadStatus === 'error'
+        ? 'Coursistant is temporarily unavailable because your course list could not be verified.'
+        : selectedStudentCourseId <= 0
+          ? 'Coursistant is unavailable because no active courses were found.'
+          : studentExamLockdown.status === 'checking'
+            ? 'Checking quiz attempt status before enabling Coursistant…'
+            : studentExamLockdown.status === 'locked'
+              ? 'Coursistant is unavailable for this course while you have an active quiz attempt.'
+              : studentExamLockdown.status === 'error'
+                ? 'Coursistant is temporarily unavailable because quiz attempt status could not be verified.'
+                : null;
 
   useEffect(() => {
     saveAssistantThreads(user.id, threads);
@@ -223,6 +305,7 @@ const AssistantWorkspace = () => {
     setAwaitingDetailsConfirmation(false);
     setDetailsConfirmation('');
     setDecisionError(null);
+    setStudySupportSteps([]);
   };
 
   const applyAgentResponse = (response: AiAgentResponse, options?: {afterDetailsConfirm?: boolean}) => {
@@ -283,6 +366,7 @@ const AssistantWorkspace = () => {
     const trimmedMessage = message.trim();
     if (!trimmedMessage || isSending || pendingAction) return;
     if (awaitingDetailsConfirmation && !options?.afterDetailsConfirm) return;
+    if (role === 'STUDENT' && !isStudentSupportReady) return;
 
     const requestThread = activeThread;
     addMessage('user', options?.displayText ?? trimmedMessage);
@@ -292,18 +376,41 @@ const AssistantWorkspace = () => {
     setIsSending(true);
 
     try {
-      const history = toChatHistory(requestThread.messages);
-      const response = await aiAgentApiService.chat({
-        message: trimmedMessage,
-        role,
-        ...(requestThread.conversationId ? {conversationId: requestThread.conversationId} : {}),
-        ...(history.length ? {history} : {}),
-      });
-      applyAgentResponse(response, {afterDetailsConfirm: options?.afterDetailsConfirm});
+      if (role === 'STUDENT') {
+        const reply = await studentStudySupportApiService.chat({
+          courseId: selectedStudentCourseId,
+          message: trimmedMessage,
+          accessToken: user.accessToken,
+          timeZone: browserTimeZone(),
+          onProgress: progress => {
+            setStudySupportSteps(current => {
+              const nextStep = safeStudySupportProgress(
+                progress,
+                `${progress.phase}-${studySupportStepId.current++}`,
+              );
+              return current[current.length - 1]?.text === nextStep.text
+                ? current
+                : [...current, nextStep];
+            });
+          },
+        });
+        clearApprovalState();
+        addMessage('agent', reply);
+      } else {
+        const history = toChatHistory(requestThread.messages);
+        const response = await aiAgentApiService.chat({
+          message: trimmedMessage,
+          role,
+          ...(requestThread.conversationId ? {conversationId: requestThread.conversationId} : {}),
+          ...(history.length ? {history} : {}),
+        });
+        applyAgentResponse(response, {afterDetailsConfirm: options?.afterDetailsConfirm});
+      }
     } catch (error) {
       addMessage('agent', getErrorMessage(error));
       if (options?.afterDetailsConfirm) setDecisionError(getErrorMessage(error));
     } finally {
+      setStudySupportSteps([]);
       setIsSending(false);
     }
   };
@@ -313,6 +420,7 @@ const AssistantWorkspace = () => {
 
   useEffect(() => {
     if (handoffConsumedRef.current) return;
+    if (role === 'STUDENT' && !isStudentSupportReady) return;
     const raw = sessionStorage.getItem('pendingChat');
     if (!raw) return;
     handoffConsumedRef.current = true;
@@ -327,7 +435,7 @@ const AssistantWorkspace = () => {
     } catch {
       // Invalid handoff data is discarded so the Assistant remains usable.
     }
-  }, []);
+  }, [isStudentSupportReady, role]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -402,6 +510,7 @@ const AssistantWorkspace = () => {
     : awaitingDetailsConfirmation
       ? 'Confirm or cancel the details above.'
       : 'Ask about a course, deadline, or task...';
+  const composerDisabled = isSending || blockingDecision || !isStudentSupportReady;
 
   return (
     <div ref={workspaceRef} className={`${styles.workspace} ${historyOpen ? '' : styles.historyClosed}`}>
@@ -478,6 +587,29 @@ const AssistantWorkspace = () => {
             <h1 id="assistant-title">Coursistant</h1>
             <p>One assistant for learning, planning, and LMS tasks</p>
           </div>
+          {role === 'STUDENT' ? (
+            <label className={styles.courseContext}>
+              <span>Course</span>
+              <select
+                aria-label="Course context"
+                value={selectedStudentCourseId || ''}
+                disabled={studentCourseLoadStatus !== 'ready' || isSending}
+                onChange={event => {
+                  const courseId = Number(event.target.value);
+                  setSelectedStudentCourseId(courseId);
+                  localStorage.setItem(SELECTED_CHAT_COURSE_STORAGE_KEY, String(courseId));
+                }}
+              >
+                {studentCourses.length === 0 ? (
+                  <option value="">
+                    {studentCourseLoadStatus === 'loading' ? 'Loading courses…' : 'No active courses'}
+                  </option>
+                ) : studentCourses.map(course => (
+                  <option key={course.id} value={course.id}>{course.name || `Course ${course.id}`}</option>
+                ))}
+              </select>
+            </label>
+          ) : null}
           <button
             type="button"
             className={styles.mobileNewChat}
@@ -497,7 +629,12 @@ const AssistantWorkspace = () => {
               <p>Ask a question or choose a starting point.</p>
               <div className={styles.quickPrompts} role="group" aria-label="Suggested prompts">
                 {quickPrompts.map(prompt => (
-                  <button type="button" key={prompt} onClick={() => void sendMessage(prompt)}>
+                  <button
+                    type="button"
+                    key={prompt}
+                    disabled={!isStudentSupportReady}
+                    onClick={() => void sendMessage(prompt)}
+                  >
                     {prompt}
                     <ArrowUp aria-hidden="true"/>
                   </button>
@@ -527,12 +664,20 @@ const AssistantWorkspace = () => {
             ))}
             {isSending ? (
               <div className={styles.thinking}>
-                <DynamicThinking label="Coursistant is thinking" fallbackSteps={THINKING_STEPS}/>
+                <DynamicThinking
+                  label="Coursistant is thinking"
+                  steps={role === 'STUDENT' ? studySupportSteps : undefined}
+                  fallbackSteps={THINKING_STEPS}
+                />
               </div>
             ) : null}
             <div ref={conversationEndRef}/>
           </div>
         </div>
+
+        {studentSupportStatusMessage ? (
+          <p className={styles.supportStatus} role="status">{studentSupportStatusMessage}</p>
+        ) : null}
 
         <form className={styles.composer} onSubmit={handleSubmit}>
           <RichTextEditor
@@ -543,12 +688,12 @@ const AssistantWorkspace = () => {
             onChange={setInput}
             onSubmit={() => void sendMessage(input)}
             placeholder={inputPlaceholder}
-            disabled={isSending || blockingDecision}
+            disabled={composerDisabled}
             ariaLabel="Message Coursistant"
           />
           <button
             type="submit"
-            disabled={isSending || blockingDecision || !input.trim()}
+            disabled={composerDisabled || !input.trim()}
             aria-label="Send message"
           >
             <ArrowUp aria-hidden="true"/>
