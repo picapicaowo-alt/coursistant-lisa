@@ -3,6 +3,7 @@ import {unwrapData} from '@/apis';
 import {dashboardApiService} from '@/apis/services/dashboard-api';
 
 const CHAT_COURSE_PAGE_SIZE = 100;
+export const SELECTED_CHAT_COURSE_STORAGE_KEY = 'selectedCourseId';
 
 /**
  * Loads every active enrolment used by the AI course selector and lockdown.
