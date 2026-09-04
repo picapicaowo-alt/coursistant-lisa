@@ -60,7 +60,6 @@ export const shouldEndSessionAfterAuthFailure = (
 export class ApiClient {
   private readonly client: AxiosInstance;
   private config: ApiClientConfig;
-  private accessToken?: string;
   
   constructor(config: ApiClientConfig) {
     this.config = {
@@ -94,13 +93,17 @@ export class ApiClient {
   }
   
   public setAccessToken(token: string): void {
-    this.accessToken = token;
-    this.client.defaults.headers.common['Authorization'] = `Bearer ${this.accessToken}`;
+    localStorage.setItem('accToken', token);
   }
   
   public clearAccessToken(): void {
-    this.accessToken = undefined;
+    localStorage.removeItem('accToken');
     delete this.client.defaults.headers.common['Authorization'];
+  }
+
+  /** Read at dispatch time: every LMS/AI client and browser tab shares rotation. */
+  public getAccessToken(): string | null {
+    return localStorage.getItem('accToken');
   }
   
   private handleRequest(config: InternalAxiosRequestConfig): InternalAxiosRequestConfig {
@@ -121,14 +124,11 @@ export class ApiClient {
     if (requestConfig.skipAuth !== undefined && requestConfig.skipAuth) {
       delete config.headers.Authorization;
     } else {
-      if (this.accessToken === undefined) {
-        const token = localStorage.getItem('accToken');
-        if (token !== null) {
-          this.accessToken = token;
-          config.headers.Authorization = `Bearer ${this.accessToken}`;
-        }
+      const token = this.getAccessToken();
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
       } else {
-        config.headers.Authorization = `Bearer ${this.accessToken}`;
+        delete config.headers.Authorization;
       }
     }
     
@@ -205,17 +205,27 @@ export class ApiClient {
 
     if (canRetry && original) {
       try {
-        await this.recoverSession();
-        const token = localStorage.getItem('accToken');
-        if (token) this.setAccessToken(token);
-        original.isRetryAfterRefresh = true;
-        original.headers.Authorization = `Bearer ${this.accessToken}`;
-        return await this.client.request(original) as never;
+        const authorization = original.headers.Authorization;
+        const rejectedToken = typeof authorization === 'string' && authorization.startsWith('Bearer ')
+          ? authorization.slice('Bearer '.length)
+          : null;
+        await this.recoverSession(rejectedToken);
       } catch {
         if (shouldEndSessionAfterAuthFailure(this.config.preserveSessionOnAuthFailure)) {
           this.endSession();
         }
+        return Promise.reject({code: 401, message: 'Authentication required'});
       }
+
+      original.isRetryAfterRefresh = true;
+      // The interceptor attaches the current shared token. A replay's network
+      // or business error must not be mistaken for a failed session refresh.
+      return await this.client.request(original) as never;
+    }
+
+    if (original?.isRetryAfterRefresh
+      && shouldEndSessionAfterAuthFailure(this.config.preserveSessionOnAuthFailure)) {
+      this.endSession();
     }
 
     return Promise.reject({
@@ -226,7 +236,12 @@ export class ApiClient {
   }
 
   /** Rotates the LMS access token, including for clients that share this session. */
-  public recoverSession(): Promise<void> {
+  public recoverSession(rejectedToken?: string | null): Promise<void> {
+    const currentToken = this.getAccessToken();
+    // A late 401 may belong to a request sent before another client refreshed.
+    if (rejectedToken !== undefined && currentToken && currentToken !== rejectedToken) {
+      return Promise.resolve();
+    }
     if (this.config.refreshDelegate) return this.config.refreshDelegate();
     return this.refreshAccessToken();
   }
@@ -258,7 +273,6 @@ export class ApiClient {
       }
 
       this.setAccessToken(token);
-      localStorage.setItem('accToken', token);
     })();
 
     return this.refreshInFlight.finally(() => {
@@ -268,7 +282,6 @@ export class ApiClient {
 
   private endSession(): void {
     this.clearAccessToken();
-    localStorage.removeItem('accToken');
     this.config.onSessionExpired?.();
   }
   

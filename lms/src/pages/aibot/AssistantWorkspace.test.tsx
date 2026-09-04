@@ -1,5 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {render, screen, waitFor} from '@testing-library/react';
+import {act, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 const agentApi = vi.hoisted(() => ({
@@ -98,26 +98,22 @@ describe('AssistantWorkspace API routing', () => {
     });
   });
 
-  it('routes a student prompt to course-grounded Study Support', async () => {
+  it('routes a student prompt to the Assistant API', async () => {
     const user = userEvent.setup();
     render(<AssistantWorkspace/>);
 
-    expect(await screen.findByRole('option', {name: 'Database Systems'})).toBeInTheDocument();
-    await user.selectOptions(screen.getByLabelText('Course context'), '41');
+    await waitFor(() => expect(screen.getByRole('button', {name: 'Help me understand a difficult course concept.'})).toBeEnabled());
     await user.click(screen.getByRole('button', {name: 'Help me understand a difficult course concept.'}));
 
-    await waitFor(() => expect(studentSupportApi.chat).toHaveBeenCalledWith({
-      courseId: 41,
+    await waitFor(() => expect(agentApi.chat).toHaveBeenCalledWith({
       message: 'Help me understand a difficult course concept.',
-      accessToken: 'student-token',
-      timeZone: expect.any(String),
-      onProgress: expect.any(Function),
-    }));
-    expect(agentApi.chat).not.toHaveBeenCalled();
-    expect(await screen.findByText('DDL means Data Definition Language.')).toBeInTheDocument();
+      role: 'STUDENT',
+    }, {onReply: expect.any(Function)}));
+    expect(studentSupportApi.chat).not.toHaveBeenCalled();
+    expect(await screen.findByText('Instructor workflow response.')).toBeInTheDocument();
   });
 
-  it('keeps instructor requests on the Workflow API', async () => {
+  it('routes instructor requests to the same Assistant API', async () => {
     auth.user = {
       id: 42,
       name: 'Instructor',
@@ -133,8 +129,25 @@ describe('AssistantWorkspace API routing', () => {
     await waitFor(() => expect(agentApi.chat).toHaveBeenCalledWith({
       message: 'What assignments are due in the next 14 days?',
       role: 'INSTRUCTOR',
-    }));
+    }, {onReply: expect.any(Function)}));
     expect(studentSupportApi.chat).not.toHaveBeenCalled();
     expect(courseApi.loadActiveChatCourses).not.toHaveBeenCalled();
   });
+  it('shows streamed text before completion without saving it as a finished message', async () => {
+    auth.user.level = 'INSTRUCTOR';
+    let finish!: (value: unknown) => void;
+    agentApi.chat.mockImplementation((_body, options) => {
+      options.onReply('Partial response');
+      return new Promise(resolve => { finish = resolve; });
+    });
+    const user = userEvent.setup();
+    render(<AssistantWorkspace/>);
+    await user.click(screen.getByRole('button', {name: 'What assignments are due in the next 14 days?'}));
+    expect(await screen.findByText('Partial response')).toBeInTheDocument();
+    expect(localStorage.getItem('coursistant.ai-assistant.history.v1.43')).not.toContain('Partial response');
+    await act(async () => finish({reply: 'Complete response', pendingAction: null, conversationId: null, confirmationRequired: false}));
+    expect(await screen.findByText('Complete response')).toBeInTheDocument();
+    expect(screen.queryByText('Partial response')).not.toBeInTheDocument();
+  });
+
 });
