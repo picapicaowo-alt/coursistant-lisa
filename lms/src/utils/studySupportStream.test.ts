@@ -1,4 +1,4 @@
-import {describe, expect, it, vi} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {queryStudySupportWithFile, streamStudySupport} from './studySupportStream';
 
 const streamResponse = (chunks: string[], status = 200) => new Response(
@@ -12,6 +12,11 @@ const streamResponse = (chunks: string[], status = 200) => new Response(
   {status, headers: {'Content-Type': 'text/event-stream'}},
 );
 
+beforeEach(() => {
+  localStorage.clear();
+  localStorage.setItem('accToken', 'test-token');
+});
+
 describe('streamStudySupport', () => {
   it('emits progress in order and returns the final answer across chunk boundaries', async () => {
     const onProgress = vi.fn();
@@ -24,7 +29,7 @@ describe('streamStudySupport', () => {
 
     const result = await streamStudySupport({
       url: '/study-support/api/query/stream',
-      body: new URLSearchParams({courseId: '37', query: 'Explain DP'}),
+      body: new URLSearchParams(),
       headers: {Authorization: 'Bearer test-token'},
       onProgress,
       fetcher,
@@ -92,12 +97,12 @@ describe('queryStudySupportWithFile', () => {
 
     expect(fetcher).toHaveBeenCalledWith('/study-support/api/query', {
       method: 'POST',
-      headers: {
-        Authorization: 'Bearer test-token',
-        Accept: 'application/json',
-      },
+      headers: expect.any(Headers),
       body,
     });
-    expect(fetcher.mock.calls[0][1].headers).not.toHaveProperty('Content-Type');
+    const headers = fetcher.mock.calls[0][1].headers as Headers;
+    expect(headers.has('Content-Type')).toBe(false);
+    expect(headers.get('Authorization')).toBe('Bearer test-token');
+    expect(headers.get('Accept')).toBe('application/json');
   });
 });

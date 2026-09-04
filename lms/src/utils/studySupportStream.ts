@@ -1,3 +1,5 @@
+import {fetchWithAiSession} from '@/apis/ai-session-fetch';
+
 export interface StudySupportProgress {
   phase: string;
   text: string;
@@ -60,7 +62,7 @@ export const streamStudySupport = async ({
   onProgress,
   fetcher = fetch,
 }: StreamStudySupportOptions): Promise<unknown> => {
-  const response = await fetcher(url, {
+  const response = await fetchWithAiSession(url, {
     method: 'POST',
     headers: {
       ...headers,
@@ -68,7 +70,7 @@ export const streamStudySupport = async ({
       Accept: 'text/event-stream',
     },
     body,
-  });
+  }, fetcher);
 
   if (!response.ok) {
     throw new Error(`Study Support returned HTTP ${response.status}.`);
@@ -124,14 +126,14 @@ export const queryStudySupportWithFile = async ({
   headers,
   fetcher = fetch,
 }: QueryStudySupportOptions): Promise<unknown> => {
-  const response = await fetcher(url, {
+  const response = await fetchWithAiSession(url, {
     method: 'POST',
     headers: {
       ...headers,
       Accept: 'application/json',
     },
     body,
-  });
+  }, fetcher);
 
   if (!response.ok) {
     throw new Error(`Study Support returned HTTP ${response.status}.`);
